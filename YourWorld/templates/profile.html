@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="settings">
+  <h2>Profile</h2>
+  <div class="settings-card">
+    <p><strong>Email:</strong> {{ current_user.email }}</p>
+    <p>Your activity calendar is shown below.</p>
+  </div>
+  <div class="activity-card">
+    <h3>Writing Activity</h3>
+    <p class="activity-sub">Colors show how often you updated your pages.</p>
+    <div class="heatmap-scroll">
+      <div class="heatmap" id="activityHeatmap" aria-label="Writing activity heatmap"></div>
+    </div>
+    <div class="heatmap-legend">
+      <span>Less</span>
+      <div class="legend-scale">
+        <span class="heatmap-cell level-0"></span>
+        <span class="heatmap-cell level-1"></span>
+        <span class="heatmap-cell level-2"></span>
+        <span class="heatmap-cell level-3"></span>
+        <span class="heatmap-cell level-4"></span>
+      </div>
+      <span>More</span>
+    </div>
+  </div>
+</section>
+{% endblock %}

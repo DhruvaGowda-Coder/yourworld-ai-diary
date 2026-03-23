@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="workspace" data-entry-type="story">
+  <aside class="entry-sidebar">
+    <div class="sidebar-header">
+      <h3>Story Pages</h3>
+      <div class="sidebar-actions">
+        <button class="btn ghost" id="newEntryBtn" type="button">Add Page</button>
+        <button class="btn ghost" id="deleteEntryBtn" type="button">Delete</button>
+      </div>
+    </div>
+    <div class="entry-list" id="entryList"></div>
+    <div class="story-image-panel">
+      <h4>Scene Illustration</h4>
+      <input id="imagePrompt" type="text" placeholder="Describe the scene..." />
+      <button class="btn primary" id="imageGenBtn" type="button">Generate Image</button>
+      <div class="image-actions">
+        <button class="btn ghost" id="imageViewBtn" type="button" disabled>View Full</button>
+        <button class="btn ghost" id="imageDownloadBtn" type="button" disabled>Download PNG</button>
+        <button class="btn ghost" id="imageAttachBtn" type="button" disabled>Insert in Page</button>
+      </div>
+      <div class="image-preview" id="imagePreview">
+        <div class="image-placeholder">No image yet</div>
+      </div>
+      <div class="share-panel">
+        <label class="field-label" for="shareCode">Share code</label>
+        <div class="share-row">
+          <input id="shareCode" type="text" placeholder="Not shared" readonly />
+          <button class="btn ghost" id="shareCopyBtn" type="button" disabled>Copy</button>
+        </div>
+        <div class="share-actions">
+          <div class="share-mode-wrap">
+            <button type="button" id="shareModeBtn" class="share-mode-btn" aria-haspopup="listbox" aria-expanded="false">
+              Full story
+            </button>
+            <div id="shareModeMenu" class="share-mode-menu" role="listbox" aria-label="Share mode">
+              <button type="button" class="share-mode-option is-active" data-value="story" role="option" aria-selected="true">
+                Full story
+              </button>
+              <button type="button" class="share-mode-option" data-value="single" role="option" aria-selected="false">
+                Single page
+              </button>
+            </div>
+            <input type="hidden" id="shareModeSelect" value="story" />
+          </div>
+          <button class="btn ghost" id="shareGenerateBtn" type="button">Generate</button>
+          <button class="btn ghost" id="shareRemoveBtn" type="button" disabled>Remove</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="book-area">
+    <div class="status-bar">
+      <div class="status-info">
+        <span id="saveStatus">Ready</span>
+        <span id="pageCount"></span>
+        <span id="saveTime"></span>
+      </div>
+      <label class="autosave-toggle">
+        <input type="checkbox" id="autosaveToggle" />
+        <span class="autosave-track"></span>
+        <span class="autosave-label">Autosave</span>
+      </label>
+    </div>
+    <div class="editor-toolbar" id="editorToolbar" aria-label="Text formatting">
+      <button class="tool-btn" id="formatBoldBtn" type="button" title="Bold">B</button>
+      <button class="tool-btn" id="formatItalicBtn" type="button" title="Italic">I</button>
+      <button class="tool-btn" id="formatUnderlineBtn" type="button" title="Underline">U</button>
+      <label class="tool-size" for="fontSizeSelect">Size</label>
+      <select id="fontSizeSelect" class="tool-select" aria-label="Font size">
+        <option value="0.9">Small</option>
+        <option value="1.05" selected>Normal</option>
+        <option value="1.25">Medium</option>
+        <option value="1.45">Large</option>
+        <option value="1.75">XL</option>
+      </select>
+    </div>
+    <div class="book" id="book">
+      <div class="page" id="page">
+        <input id="entryTitle" class="page-title" placeholder="Story title..." />
+        <div class="page-scroll">
+          <textarea id="entryContent" class="page-content" placeholder="Write your story..."></textarea>
+        </div>
+        <div class="page-illustration" id="pageIllustration">
+          <img id="pageIllustrationImg" alt="Story illustration" />
+        </div>
+      </div>
+      <div class="page-turn" id="pageTurn"></div>
+    </div>
+    <div class="page-controls">
+      <button class="btn ghost" id="prevEntryBtn" type="button">Previous</button>
+      <button class="btn ghost" id="nextEntryBtn" type="button">Next</button>
+    </div>
+  </div>
+</section>
+<div class="image-modal" id="imageModal" aria-hidden="true">
+  <div class="image-modal-card">
+    <button class="image-modal-close" id="imageModalClose" type="button">&times;</button>
+    <img id="imageModalImg" alt="Full illustration view" />
+  </div>
+</div>
+{% endblock %}

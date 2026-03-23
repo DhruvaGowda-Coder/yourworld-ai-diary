@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="public-story">
+  {% if not_found %}
+    <div class="public-notice">
+      <h2>Story not found</h2>
+      <p>The code <strong>{{ code }}</strong> does not match any shared story.</p>
+      <a class="btn ghost" href="/">Back to Home</a>
+    </div>
+  {% else %}
+    <div class="public-layout">
+      {% if share_type == "story" %}
+        <aside class="public-sidebar">
+          <div class="public-sidebar-title">Pages</div>
+          <div class="public-page-list" id="publicPageList"></div>
+        </aside>
+      {% endif %}
+      <div class="public-main">
+        <div class="book public-book" id="publicBook">
+          <div class="public-page">
+            <h2 class="public-title" id="publicTitle"></h2>
+            <div class="public-content" id="publicContent"></div>
+            <div class="page-illustration" id="publicIllustration">
+              <img id="publicIllustrationImg" alt="Story illustration" />
+            </div>
+          </div>
+        </div>
+        <div class="page-controls public-controls" id="publicControls">
+          <span class="public-page-count" id="publicPageCount"></span>
+          <button class="btn ghost" id="publicPrevBtn" type="button">Previous</button>
+          <button class="btn ghost" id="publicNextBtn" type="button">Next</button>
+        </div>
+        <div class="public-meta">
+          Shared code: {{ code }}
+          <span class="public-mode">{{ "Full story" if share_type == "story" else "Single page" }}</span>
+        </div>
+      </div>
+    </div>
+    <script id="publicPagesData" type="application/json">{{ pages | tojson }}</script>
+    <noscript>
+      {% for page in pages %}
+        <h3 class="public-title">{{ page.title or "Untitled" }}</h3>
+        <div class="public-content">{{ page.content }}</div>
+      {% endfor %}
+    </noscript>
+  {% endif %}
+</section>
+{% endblock %}

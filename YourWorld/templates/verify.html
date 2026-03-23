@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="auth-panel">
+  <h2>Verify your email</h2>
+  <p class="auth-sub">We sent a 6-digit code to {{ email }}.</p>
+  {% if info %}
+    <div class="auth-info">{{ info }}</div>
+  {% endif %}
+  {% if error %}
+    <div class="auth-error">{{ error }}</div>
+  {% endif %}
+  <form class="auth-form" method="post">
+    <label>Verification code</label>
+    <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required />
+    <button class="btn primary" type="submit">Verify</button>
+  </form>
+  <form class="auth-form" method="post" action="/verify/resend">
+    <button class="btn ghost" type="submit">Resend code</button>
+  </form>
+</section>
+{% endblock %}

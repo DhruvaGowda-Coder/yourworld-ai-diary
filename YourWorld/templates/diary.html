@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="workspace" data-entry-type="diary">
+  <aside class="entry-sidebar">
+    <div class="sidebar-header">
+      <h3>My Pages</h3>
+      <div class="sidebar-actions">
+        <button class="btn ghost" id="newEntryBtn" type="button">Add Page</button>
+        <button class="btn ghost" id="deleteEntryBtn" type="button">Delete</button>
+      </div>
+    </div>
+    <div class="entry-list" id="entryList"></div>
+  </aside>
+
+  <div class="book-area">
+    <div class="status-bar">
+      <div class="status-info">
+        <span id="saveStatus">Ready</span>
+        <span id="pageCount"></span>
+        <span id="saveTime"></span>
+      </div>
+      <label class="autosave-toggle">
+        <input type="checkbox" id="autosaveToggle" />
+        <span class="autosave-track"></span>
+        <span class="autosave-label">Autosave</span>
+      </label>
+    </div>
+    <div class="editor-toolbar" id="editorToolbar" aria-label="Text formatting">
+      <button class="tool-btn" id="formatBoldBtn" type="button" title="Bold">B</button>
+      <button class="tool-btn" id="formatItalicBtn" type="button" title="Italic">I</button>
+      <button class="tool-btn" id="formatUnderlineBtn" type="button" title="Underline">U</button>
+      <label class="tool-size" for="fontSizeSelect">Size</label>
+      <select id="fontSizeSelect" class="tool-select" aria-label="Font size">
+        <option value="0.9">Small</option>
+        <option value="1.05" selected>Normal</option>
+        <option value="1.25">Medium</option>
+        <option value="1.45">Large</option>
+        <option value="1.75">XL</option>
+      </select>
+    </div>
+    <div class="book" id="book">
+      <div class="page" id="page">
+        <input id="entryTitle" class="page-title" placeholder="Title your page..." />
+        <div class="page-scroll">
+          <textarea id="entryContent" class="page-content" placeholder="Start writing..."></textarea>
+        </div>
+      </div>
+      <div class="page-turn" id="pageTurn"></div>
+    </div>
+    <div class="page-controls">
+      <button class="btn ghost" id="prevEntryBtn" type="button">Previous</button>
+      <button class="btn ghost" id="nextEntryBtn" type="button">Next</button>
+    </div>
+  </div>
+</section>
+{% endblock %}

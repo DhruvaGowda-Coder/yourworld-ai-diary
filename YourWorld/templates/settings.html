@@ -1,0 +1,26 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<section class="settings">
+  <h2>Settings</h2>
+  <div class="settings-card">
+    <p>Your diary is private and linked to your account.</p>
+    {% if info %}
+      <div class="auth-info">{{ info }}</div>
+    {% endif %}
+    <h3 class="settings-subtitle">Theme Temple</h3>
+    <form method="post" action="/settings/theme" class="theme-form" id="themeForm">
+      <div class="theme-grid">
+        {% for theme in themes %}
+          <label class="theme-tile theme-{{ theme.id }}" data-theme-preview="{{ theme.id }}">
+            <input type="radio" name="theme" value="{{ theme.id }}" {% if theme.id == current_theme %}checked{% endif %} />
+            <span class="theme-icon">{{ theme.icon }}</span>
+            <span class="theme-name">{{ theme.name }}</span>
+            <span class="theme-desc">{{ theme.desc }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      <button class="btn primary" type="submit">Apply Theme</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

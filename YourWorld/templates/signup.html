@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="auth-panel">
+  <h2>Create your diary</h2>
+  <p class="auth-sub">Private pages, saved in real time.</p>
+  {% if info %}
+    <div class="auth-info">{{ info }}</div>
+  {% endif %}
+  {% if error %}
+    <div class="auth-error">{{ error }}</div>
+  {% endif %}
+  <form class="auth-form" method="post">
+    <label>Email</label>
+    <input type="email" name="email" autocomplete="username" autocapitalize="off" spellcheck="false" required />
+    <label>Password</label>
+    <div class="password-field">
+      <input id="signupPassword" type="password" name="password" autocomplete="new-password" required />
+      <button
+        class="password-toggle"
+        type="button"
+        data-password-toggle
+        data-target="signupPassword"
+        aria-label="Show password"
+        aria-pressed="false"
+      >
+        Show
+      </button>
+    </div>
+    <button class="btn primary" type="submit">Sign Up</button>
+  </form>
+  <p class="auth-footer">Already have an account? <a href="/login">Login</a>.</p>
+</section>
+{% endblock %}

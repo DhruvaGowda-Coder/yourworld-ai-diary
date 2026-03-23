@@ -1,0 +1,70 @@
+﻿﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YourWorld Diary</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v='20260219b') }}" />
+</head>
+<body data-theme="{{ current_theme or 'campfire' }}" data-cycle="day">
+  <div class="ambient-bg"></div>
+  <div class="theme-motion theme-motion-a" aria-hidden="true"></div>
+  <div class="theme-motion theme-motion-b" aria-hidden="true"></div>
+  <div class="theme-motion theme-motion-c" aria-hidden="true"></div>
+  <div class="theme-particle-layer" id="themeParticleLayer" aria-hidden="true"></div>
+  <canvas id="emberFieldCanvas" class="ember-field-canvas" aria-hidden="true"></canvas>
+  <canvas id="fireBandCanvas" class="fire-band-canvas" aria-hidden="true"></canvas>
+  <canvas id="waterCanvas" class="water-canvas" aria-hidden="true"></canvas>
+  <canvas id="windCanvas" class="wind-canvas" aria-hidden="true"></canvas>
+  <canvas id="earthCanvas" class="earth-canvas" aria-hidden="true"></canvas>
+  <canvas id="iceCanvas" class="ice-canvas" aria-hidden="true"></canvas>
+  <canvas id="stormCanvas" class="storm-canvas" aria-hidden="true"></canvas>
+  <canvas id="spaceCanvas" class="space-canvas" aria-hidden="true"></canvas>
+  <canvas id="cherryCanvas" class="cherry-canvas" aria-hidden="true"></canvas>
+  <canvas id="gardenCanvas" class="garden-canvas" aria-hidden="true"></canvas>
+  <header class="site-header">
+    <div class="logo">YourWorld</div>
+    <nav class="nav-links">
+      {% if current_user %}
+        <form class="share-header" action="/view" method="get">
+          <input type="text" name="code" placeholder="Enter code" aria-label="Share code" />
+          <button class="btn ghost" type="submit">View</button>
+        </form>
+      {% endif %}
+      <a href="/" class="nav-link">Home</a>
+      <a href="/diary" class="nav-link">Diary</a>
+      <a href="/story" class="nav-link">Story Mode</a>
+      <a href="/profile" class="nav-link">Profile</a>
+      <a href="/settings" class="nav-link">Settings</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    {% block content %}{% endblock %}
+  </main>
+
+  <div class="chat-launch" id="chatLaunch" aria-label="Open Aura">
+    <span>Aura</span>
+  </div>
+  <div class="chat-panel" id="chatPanel" aria-hidden="true">
+    <button class="chat-drag-handle" id="chatDragHandle" type="button" aria-label="Drag chat panel"></button>
+    <div class="chat-header">
+      <div>
+        <div class="chat-title">Aura</div>
+        <div class="chat-subtitle" id="chatSubtitle">{{ current_theme_meta.chat_subtitle }}</div>
+      </div>
+      <div class="chat-actions">
+        <button class="chat-close" id="chatClose" aria-label="Close chat">&times;</button>
+      </div>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <form class="chat-input" id="chatForm">
+      <input type="text" id="chatText" placeholder="Say something..." autocomplete="off" />
+      <button type="submit">Send</button>
+    </form>
+    <button class="chat-resize-handle" id="chatResizeHandle" type="button" aria-label="Resize chat panel"></button>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js', v='20260219b') }}" defer></script>
+</body>
+</html>

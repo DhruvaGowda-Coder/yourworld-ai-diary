@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Diary icon">
+  <defs>
+    <linearGradient id="bgGlow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b86bff" stop-opacity="0.0"/>
+      <stop offset="0.45" stop-color="#ff71b3" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#ffd36a" stop-opacity="0.0"/>
+    </linearGradient>
+
+    <linearGradient id="coverGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9b6cff"/>
+      <stop offset="0.55" stop-color="#c75dff"/>
+      <stop offset="1" stop-color="#ff78b6"/>
+    </linearGradient>
+
+    <linearGradient id="coverShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="0.6" stop-color="#000000" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.18"/>
+    </linearGradient>
+
+    <linearGradient id="spineGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#53206f"/>
+      <stop offset="0.6" stop-color="#7a2ea2"/>
+      <stop offset="1" stop-color="#3b154f"/>
+    </linearGradient>
+
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe08b"/>
+      <stop offset="0.5" stop-color="#ffbf43"/>
+      <stop offset="1" stop-color="#c57a12"/>
+    </linearGradient>
+
+    <linearGradient id="bubbleGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#ffe6f2"/>
+    </linearGradient>
+
+    <linearGradient id="penGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8ec6ff"/>
+      <stop offset="0.55" stop-color="#6f8bff"/>
+      <stop offset="1" stop-color="#f0b7ff"/>
+    </linearGradient>
+
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="14" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+
+    <filter id="sparkle" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="0.6" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Ambient glow -->
+  <circle cx="256" cy="250" r="210" fill="url(#bgGlow)"/>
+
+  <g transform="translate(256 272) rotate(-14) translate(-256 -272)" filter="url(#softShadow)">
+    <!-- Book -->
+    <rect x="132" y="120" width="258" height="320" rx="44" fill="url(#coverGrad)"/>
+    <rect x="132" y="120" width="258" height="320" rx="44" fill="url(#coverShade)"/>
+    <rect x="132" y="130" width="38" height="300" rx="22" fill="url(#spineGrad)" opacity="0.95"/>
+
+    <!-- Stitches -->
+    <path d="M172 152 C220 132 300 132 350 152" fill="none" stroke="#ffd3ff" stroke-opacity="0.22" stroke-width="4" stroke-linecap="round"/>
+    <path d="M172 408 C220 428 300 428 350 408" fill="none" stroke="#ffd3ff" stroke-opacity="0.18" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Golden corners -->
+    <path d="M350 120 h40 a44 44 0 0 1 0 44 v18 h-26 v-22 a16 16 0 0 0-16-16 h-22 v-24z" fill="url(#goldGrad)" opacity="0.95"/>
+    <path d="M132 396 v0 a44 44 0 0 0 44 44 h18 v-26 h-22 a16 16 0 0 1-16-16 v-22 h-24z" fill="url(#goldGrad)" opacity="0.92"/>
+
+    <!-- Strap -->
+    <rect x="312" y="236" width="118" height="88" rx="28" fill="url(#goldGrad)" opacity="0.95"/>
+    <rect x="324" y="248" width="94" height="64" rx="22" fill="#2b1240" opacity="0.16"/>
+    <circle cx="360" cy="280" r="12" fill="#4a1a5d" opacity="0.35"/>
+    <path d="M360 274 a6 6 0 0 1 6 6 v6 h-12 v-6 a6 6 0 0 1 6-6z" fill="#2c0f3a" opacity="0.45"/>
+
+    <!-- Speech bubble with heart -->
+    <g transform="translate(0 2)">
+      <rect x="194" y="184" width="170" height="120" rx="28" fill="url(#bubbleGrad)"/>
+      <path d="M230 304 l-18 20 c-3 3 0 8 4 6 l32-14" fill="#ffe6f2"/>
+      <path d="M278 230
+               c14-20 48-10 48 14
+               c0 30-48 54-48 54
+               c0 0-48-24-48-54
+               c0-24 34-34 48-14z"
+            fill="#ff4aa7"/>
+      <path d="M276 236
+               c10-14 34-8 34 10
+               c0 20-34 40-34 40
+               c0 0-34-20-34-40
+               c0-18 24-24 34-10z"
+            fill="#ff82c5" opacity="0.85"/>
+    </g>
+
+    <!-- Pen -->
+    <g transform="translate(14 0)">
+      <rect x="396" y="156" width="44" height="250" rx="18" fill="url(#penGrad)"/>
+      <rect x="402" y="168" width="32" height="82" rx="14" fill="#ffffff" opacity="0.22"/>
+      <path d="M418 406 l-18 44 h36z" fill="#ffd36a"/>
+      <path d="M418 406 l-10 24 h20z" fill="#8b4b1a" opacity="0.55"/>
+      <rect x="404" y="240" width="28" height="22" rx="10" fill="#2d1d53" opacity="0.22"/>
+    </g>
+  </g>
+
+  <!-- Sparkles -->
+  <g filter="url(#sparkle)">
+    <circle cx="120" cy="170" r="6" fill="#ffd36a" opacity="0.9"/>
+    <circle cx="396" cy="116" r="5" fill="#ff82c5" opacity="0.9"/>
+    <circle cx="420" cy="200" r="4" fill="#ffffff" opacity="0.85"/>
+    <circle cx="98" cy="300" r="4" fill="#ffffff" opacity="0.75"/>
+    <circle cx="420" cy="340" r="5" fill="#ffd36a" opacity="0.85"/>
+    <path d="M68 210 l8 10 12 4-12 4-8 10-8-10-12-4 12-4z" fill="#ffffff" opacity="0.7"/>
+    <path d="M456 262 l6 8 10 3-10 3-6 8-6-8-10-3 10-3z" fill="#ff82c5" opacity="0.7"/>
+  </g>
+</svg>
+

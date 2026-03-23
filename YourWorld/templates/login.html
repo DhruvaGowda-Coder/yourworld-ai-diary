@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="auth-panel">
+  <h2>Welcome back</h2>
+  <p class="auth-sub">Your private pages are waiting.</p>
+  {% if info %}
+    <div class="auth-info">{{ info }}</div>
+  {% endif %}
+  {% if error %}
+    <div class="auth-error">{{ error }}</div>
+  {% endif %}
+  <form class="auth-form" method="post">
+    {% if next_path %}
+      <input type="hidden" name="next" value="{{ next_path }}" />
+    {% endif %}
+    <label>Email</label>
+    <input type="email" name="email" required />
+    <label>Password</label>
+    <div class="password-field">
+      <input id="loginPassword" type="password" name="password" required />
+      <button
+        class="password-toggle"
+        type="button"
+        data-password-toggle
+        data-target="loginPassword"
+        aria-label="Show password"
+        aria-pressed="false"
+      >
+        Show
+      </button>
+    </div>
+    <button class="btn primary" type="submit">Login</button>
+  </form>
+  <p class="auth-footer auth-links">
+    <a href="/forgot-password">Forgot password?</a>
+    <span aria-hidden="true">|</span>
+    <span>No account? <a href="/signup">Create one</a>.</span>
+  </p>
+</section>
+{% endblock %}
