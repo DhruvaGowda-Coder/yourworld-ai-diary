@@ -1,4 +1,5 @@
 import os
+import json
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
 from datetime import datetime, timezone
@@ -8,7 +9,12 @@ CRED_PATH = os.path.join(APP_DIR, "firebase-adminsdk.json")
 
 if not firebase_admin._apps:
     try:
-        cred = credentials.Certificate(CRED_PATH)
+        json_cred = os.environ.get("FIREBASE_ADMIN_CREDENTIALS_JSON")
+        if json_cred:
+            cred_dict = json.loads(json_cred)
+            cred = credentials.Certificate(cred_dict)
+        else:
+            cred = credentials.Certificate(CRED_PATH)
         firebase_admin.initialize_app(cred)
     except Exception as e:
         print(f"Error initializing Firebase Admin: {e}")
