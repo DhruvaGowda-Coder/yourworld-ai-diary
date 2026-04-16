@@ -1,10 +1,28 @@
-﻿﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="description" content="YourWorld — a private diary and storybook that feels like a real book. Write across pages with real-time autosave, immersive elemental themes, and Aura, your friendly AI companion.">
   <title>YourWorld Diary</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v='20260219b') }}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v='20260416a') }}" />
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
+  <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}")
+                .then(registration => {
+                    console.log('SW registered: ', registration);
+                })
+                .catch(registrationError => {
+                    console.log('SW registration failed: ', registrationError);
+                });
+        });
+    }
+  </script>
 </head>
 <body data-theme="{{ current_theme or 'campfire' }}" data-cycle="day">
   <div class="ambient-bg"></div>
@@ -23,25 +41,89 @@
   <canvas id="cherryCanvas" class="cherry-canvas" aria-hidden="true"></canvas>
   <canvas id="gardenCanvas" class="garden-canvas" aria-hidden="true"></canvas>
   <header class="site-header">
-    <div class="logo">YourWorld</div>
-    <nav class="nav-links">
-      {% if current_user %}
+    <a href="/" class="logo" aria-label="YourWorld Home">YourWorld</a>
+    <nav class="nav-links" id="navLinks">
         <form class="share-header" action="/view" method="get">
           <input type="text" name="code" placeholder="Enter code" aria-label="Share code" />
           <button class="btn ghost" type="submit">View</button>
         </form>
+      
+      <a href="/" class="nav-link" data-page="home">Home</a>
+      <a href="/diary" class="nav-link" data-page="diary">Diary</a>
+      <a href="/story" class="nav-link" data-page="story">Story Mode</a>
+      <a href="/profile" class="nav-link" data-page="profile">Profile</a>
+      <a href="/settings" class="nav-link" data-page="settings">Settings</a>
+      
+      {% if current_user %}
+        <a href="/logout" class="nav-link nav-link-logout" data-page="logout">Logout</a>
+      {% else %}
+        <a href="/login/google" class="btn primary nav-google-btn" style="text-decoration: none;">
+          <svg viewBox="0 0 48 48" width="18" height="18"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+          <span>Sign In</span>
+        </a>
       {% endif %}
-      <a href="/" class="nav-link">Home</a>
-      <a href="/diary" class="nav-link">Diary</a>
-      <a href="/story" class="nav-link">Story Mode</a>
-      <a href="/profile" class="nav-link">Profile</a>
-      <a href="/settings" class="nav-link">Settings</a>
     </nav>
+    <!-- Mobile hamburger -->
+    <button class="hamburger" id="hamburgerBtn" type="button" aria-label="Open navigation menu" aria-expanded="false">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
   </header>
 
-  <main class="page">
+  <!-- Mobile drawer overlay -->
+  <div class="mobile-drawer-overlay" id="mobileDrawerOverlay" aria-hidden="true"></div>
+  <nav class="mobile-drawer" id="mobileDrawer" aria-hidden="true">
+    <div class="mobile-drawer-header">
+      <span class="mobile-drawer-logo">YourWorld</span>
+      <button class="mobile-drawer-close" id="mobileDrawerClose" type="button" aria-label="Close navigation">&times;</button>
+    </div>
+    <div class="mobile-drawer-links">
+      <a href="/" class="mobile-nav-link">🏠 Home</a>
+      <a href="/profile" class="mobile-nav-link">👤 Profile</a>
+      <a href="/settings" class="mobile-nav-link">⚙️ Settings</a>
+      <div class="mobile-drawer-divider"></div>
+      
+        <form class="mobile-share-form" action="/view" method="get">
+          <input type="text" name="code" placeholder="Enter share code" aria-label="Share code" />
+          <button class="btn primary" type="submit">View</button>
+        </form>
+        <div class="mobile-drawer-divider"></div>
+        
+      {% if current_user %}
+        <a href="/logout" class="mobile-nav-link mobile-nav-logout">🚪 Logout</a>
+      {% else %}
+        <a href="/login/google" class="btn primary mobile-drawer-google" style="text-decoration: none;">
+          <svg viewBox="0 0 48 48" width="20" height="20"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+          <span>Sign in with Google</span>
+        </a>
+      {% endif %}
+    </div>
+    <div class="mobile-drawer-footer">
+      <span class="mobile-theme-badge">Theme: {{ current_theme or 'campfire' | title }}</span>
+    </div>
+  </nav>
+
+  <main class="page page-enter">
     {% block content %}{% endblock %}
   </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="footer-logo">YourWorld</span>
+        <span class="footer-tagline">Your private diary & storybook</span>
+      </div>
+      <!-- Footer links removed as requested -->
+      <div class="footer-meta">
+        <span class="footer-theme-indicator">
+          <span class="footer-theme-dot"></span>
+          {{ current_theme or 'campfire' | title }}
+        </span>
+      </div>
+    </div>
+  </footer>
 
   <div class="chat-launch" id="chatLaunch" aria-label="Open Aura">
     <span>Aura</span>
@@ -65,6 +147,38 @@
     <button class="chat-resize-handle" id="chatResizeHandle" type="button" aria-label="Resize chat panel"></button>
   </div>
 
-  <script src="{{ url_for('static', filename='js/app.js', v='20260219b') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/app.js', v='20260416a') }}" defer></script>
+  <script>
+    /* Mobile drawer toggle */
+    (function() {
+      const btn = document.getElementById('hamburgerBtn');
+      const overlay = document.getElementById('mobileDrawerOverlay');
+      const drawer = document.getElementById('mobileDrawer');
+      const close = document.getElementById('mobileDrawerClose');
+      if (!btn) return;
+      function open() {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+        btn.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+        drawer.setAttribute('aria-hidden', 'false');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      }
+      function shut() {
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+        btn.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+        drawer.setAttribute('aria-hidden', 'true');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+      btn.addEventListener('click', open);
+      close.addEventListener('click', shut);
+      overlay.addEventListener('click', shut);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });
+    })();
+  </script>
 </body>
 </html>

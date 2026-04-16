@@ -1,21 +1,34 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
 <section class="settings">
-  <h2>Settings</h2>
+  <h2>⚙️ Settings</h2>
   <div class="settings-card">
     <p>Your diary is private and linked to your account.</p>
     {% if info %}
       <div class="auth-info">{{ info }}</div>
     {% endif %}
-    <h3 class="settings-subtitle">Theme Temple</h3>
+    <h3 class="settings-subtitle">🎨 Theme Temple</h3>
+    <p class="settings-theme-hint">Hover a tile to preview the atmosphere. Click to select, then apply.</p>
     <form method="post" action="/settings/theme" class="theme-form" id="themeForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div class="theme-grid">
         {% for theme in themes %}
           <label class="theme-tile theme-{{ theme.id }}" data-theme-preview="{{ theme.id }}">
             <input type="radio" name="theme" value="{{ theme.id }}" {% if theme.id == current_theme %}checked{% endif %} />
+            <span class="theme-tile-emoji">
+              {% if theme.id == 'campfire' %}🔥{% elif theme.id == 'water' %}🌊{% elif theme.id == 'wind' %}💨{% elif theme.id == 'earth' %}🌿{% elif theme.id == 'ice' %}❄️{% elif theme.id == 'storm' %}⚡{% elif theme.id == 'space' %}🌌{% elif theme.id == 'garden' %}🌸{% elif theme.id == 'cherry' %}🌺{% endif %}
+            </span>
             <span class="theme-icon">{{ theme.icon }}</span>
             <span class="theme-name">{{ theme.name }}</span>
             <span class="theme-desc">{{ theme.desc }}</span>
+            <span class="theme-color-dots">
+              <span class="theme-cdot theme-cdot-1"></span>
+              <span class="theme-cdot theme-cdot-2"></span>
+              <span class="theme-cdot theme-cdot-3"></span>
+            </span>
+            {% if theme.id == current_theme %}
+              <span class="theme-active-badge">✓ Active</span>
+            {% endif %}
           </label>
         {% endfor %}
       </div>

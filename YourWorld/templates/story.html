@@ -57,11 +57,14 @@
         <span id="pageCount"></span>
         <span id="saveTime"></span>
       </div>
-      <label class="autosave-toggle">
-        <input type="checkbox" id="autosaveToggle" />
-        <span class="autosave-track"></span>
-        <span class="autosave-label">Autosave</span>
-      </label>
+      <div class="status-actions" style="display: flex; align-items: center; gap: 12px;">
+        <button class="btn ghost" id="manualSaveBtn" type="button" style="padding: 4px 10px; font-size: 0.8rem;">Save</button>
+        <label class="autosave-toggle">
+          <input type="checkbox" id="autosaveToggle" />
+          <span class="autosave-track"></span>
+          <span class="autosave-label">Autosave</span>
+        </label>
+      </div>
     </div>
     <div class="editor-toolbar" id="editorToolbar" aria-label="Text formatting">
       <button class="tool-btn" id="formatBoldBtn" type="button" title="Bold">B</button>
@@ -84,6 +87,7 @@
         </div>
         <div class="page-illustration" id="pageIllustration">
           <img id="pageIllustrationImg" alt="Story illustration" />
+          <div class="resize-handle" id="resizeHandle"></div>
         </div>
       </div>
       <div class="page-turn" id="pageTurn"></div>

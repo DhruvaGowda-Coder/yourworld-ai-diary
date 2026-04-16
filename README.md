@@ -73,10 +73,10 @@ Set these in `YourWorld/.env`.
 | Variable | Default | Required | Purpose |
 |---|---|---|---|
 | `DIARY_SECRET_KEY` | `dev-secret-change-me` | Yes (production) | Flask session signing key |
-| `GEMINI_API_KEY` | empty | Optional | Enables Aura AI responses |
-| `GEMINI_CHAT_MODEL` | `gemini-2.5-flash` | Optional | Gemini chat model |
-| `OPENAI_API_KEY` | empty | Optional | Enables story image generation |
-| `OPENAI_IMAGE_MODEL` | `gpt-image-1` | Optional | OpenAI image model |
+| `GROQ_API_KEY` | empty | Optional | Enables Aura AI responses via Groq |
+| `GROQ_CHAT_MODEL` | `llama-3.1-8b-instant` | Optional | Groq chat model |
+| `HUGGINGFACE_API_KEY` | empty | Optional | Enables story image generation via Hugging Face |
+| `HUGGINGFACE_IMAGE_MODEL` | `stabilityai/stable-diffusion-xl-base-1.0` | Optional | Hugging Face image model |
 | `SHOW_AI_ERRORS` | `0` | Optional | Include AI error detail in responses |
 | `SHOW_DB_ERRORS` | `0` | Optional | Include DB error detail in UI/API during debug |
 | `ENABLE_DEV_RESET` | empty | Optional | Allows `/reset?confirm=1` in local debug mode |

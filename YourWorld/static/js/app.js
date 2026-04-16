@@ -1,3 +1,23 @@
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+/* ── Global CSRF injection for all HTML POST forms ──────────────────────
+   The meta tag in base.html always renders the token correctly.
+   This listener ensures every <form method="post"> includes it
+   as a hidden input before submission, preventing 400 Bad Request. */
+document.addEventListener('submit', (e) => {
+  const form = e.target;
+  if (!(form instanceof HTMLFormElement)) return;
+  if (form.method.toLowerCase() !== 'post') return;
+  if (!csrfToken) return;
+  // Skip if the form already has a csrf_token input
+  if (form.querySelector('input[name="csrf_token"]')) return;
+  const hidden = document.createElement('input');
+  hidden.type = 'hidden';
+  hidden.name = 'csrf_token';
+  hidden.value = csrfToken;
+  form.appendChild(hidden);
+});
+
 const chatLaunch = document.getElementById('chatLaunch');
 const chatPanel = document.getElementById('chatPanel');
 const chatClose = document.getElementById('chatClose');
@@ -2678,7 +2698,7 @@ if (chatForm && chatText) {
     const pageContext = getChatContext();
     fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
       body: JSON.stringify({ message: text, history: historyPayload, context: pageContext }),
     })
       .then((response) => response.json())
@@ -2792,7 +2812,7 @@ if (workspace) {
       try {
         const response = await fetch(`/api/entry/${targetId}/share`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
           body: JSON.stringify({ rotate: false, mode: modeValue }),
         });
         if (!response.ok) throw new Error('Share update failed');
@@ -2837,6 +2857,16 @@ if (workspace) {
   let currentEntryId = null;
   let currentImageUrl = null;
   let imageAttached = false;
+  let imageStyleState = { x: 0, y: 0, width: null, height: null };
+  const resizeHandle = document.getElementById('resizeHandle');
+  document.addEventListener('imageStyleUpdate', (e) => {
+    if (e.detail.x !== undefined) imageStyleState.x = e.detail.x;
+    if (e.detail.y !== undefined) imageStyleState.y = e.detail.y;
+    if (e.detail.width !== undefined) imageStyleState.width = e.detail.width;
+    if (e.detail.height !== undefined) imageStyleState.height = e.detail.height;
+    dirty = true;
+    scheduleAutosave();
+  });
   let imageError = null;
   let shareCode = null;
   let lastActiveIndex = -1;
@@ -2971,11 +3001,27 @@ if (workspace) {
     }
   };
 
+  const applyImageStyle = () => {
+    if (!pageIllustration) return;
+    if (imageStyleState.width) {
+      pageIllustration.style.width = `${imageStyleState.width}px`;
+    } else {
+      pageIllustration.style.width = '250px';
+    }
+    if (imageStyleState.height) {
+      pageIllustration.style.height = `${imageStyleState.height}px`;
+    } else {
+      pageIllustration.style.height = 'auto';
+    }
+    pageIllustration.style.transform = `translate(${imageStyleState.x}px, ${imageStyleState.y}px)`;
+  };
+
   const updatePageIllustration = () => {
     if (!pageIllustration || !pageIllustrationImg) return;
     if (currentImageUrl && imageAttached) {
       pageIllustrationImg.src = currentImageUrl;
       pageIllustration.style.display = 'block';
+      applyImageStyle();
     } else {
       pageIllustrationImg.removeAttribute('src');
       pageIllustration.style.display = 'none';
@@ -3094,6 +3140,16 @@ if (workspace) {
     imageError = null;
     currentImageUrl = data.image_url || null;
     imageAttached = Boolean(data.image_attached);
+    if (data.image_style) {
+      try {
+        const parsed = JSON.parse(data.image_style);
+        imageStyleState = { x: parsed.x || 0, y: parsed.y || 0, width: parsed.width || null, height: parsed.height || null };
+      } catch(e) {
+        imageStyleState = { x: 0, y: 0, width: null, height: null };
+      }
+    } else {
+      imageStyleState = { x: 0, y: 0, width: null, height: null };
+    }
     shareCode = data.share_code || null;
     if (shareModeSelect) {
       const nextMode = data.share_type || 'story';
@@ -3139,6 +3195,7 @@ if (workspace) {
     imageError = null;
     currentImageUrl = null;
     imageAttached = false;
+    imageStyleState = { x: 0, y: 0, width: null, height: null };
     shareCode = null;
     renderImagePreview();
     updateImageActions();
@@ -3183,10 +3240,11 @@ if (workspace) {
           payload.image_prompt = imagePrompt ? imagePrompt.value : null;
           payload.image_url = currentImageUrl;
           payload.image_attached = imageAttached;
+          payload.image_style = JSON.stringify(imageStyleState);
         }
         const response = await fetch('/api/entry/save', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
           body: JSON.stringify(payload),
         });
         if (!response.ok) throw new Error('Save failed');
@@ -3261,7 +3319,7 @@ if (workspace) {
       const confirmed = window.confirm('Delete this page?');
       if (!confirmed) return;
       try {
-        const response = await fetch(`/api/entry/${targetId}`, { method: 'DELETE' });
+        const response = await fetch(`/api/entry/${targetId}`, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } });
         if (!response.ok) throw new Error('Delete failed');
         const removeIndex = entries.findIndex((entry) => entry.id === targetId);
         if (removeIndex >= 0) entries.splice(removeIndex, 1);
@@ -3416,7 +3474,7 @@ if (workspace) {
       try {
         const response = await fetch('/api/story/image', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
           body: JSON.stringify({ prompt }),
         });
         const data = await response.json().catch(() => ({}));
@@ -3543,7 +3601,7 @@ if (workspace) {
       try {
         const response = await fetch(`/api/entry/${targetId}/share`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
           body: JSON.stringify({ rotate: Boolean(shareCode), mode }),
         });
         if (!response.ok) throw new Error('Share failed');
@@ -3566,6 +3624,7 @@ if (workspace) {
       try {
         const response = await fetch(`/api/entry/${targetId}/share`, {
           method: 'DELETE',
+          headers: { 'X-CSRFToken': csrfToken },
         });
         if (!response.ok) throw new Error('Remove failed');
         shareCode = null;
@@ -3607,6 +3666,20 @@ if (workspace) {
       autosaveEnabled = autosaveToggle.checked;
       localStorage.setItem('yw_autosave', autosaveEnabled);
       if (autosaveEnabled && dirty) scheduleAutosave();
+    });
+  }
+
+  const manualSaveBtn = document.getElementById('manualSaveBtn');
+  if (manualSaveBtn) {
+    manualSaveBtn.addEventListener('click', async () => {
+      manualSaveBtn.disabled = true;
+      manualSaveBtn.textContent = 'Saving...';
+      try {
+        await saveEntry({ allowEmpty: true });
+      } finally {
+        manualSaveBtn.disabled = false;
+        manualSaveBtn.textContent = 'Save';
+      }
     });
   }
 
@@ -3747,7 +3820,24 @@ if (activityHeatmap) {
 
   fetch('/api/activity?days=365')
     .then((response) => response.json())
-    .then((data) => buildHeatmap(data.counts || {}, data.days || 365))
+    .then((data) => {
+      buildHeatmap(data.counts || {}, data.days || 365);
+      
+      const pageCountEl = document.getElementById('profilePageCount');
+      if (pageCountEl && data.total_pages !== undefined) {
+        pageCountEl.textContent = data.total_pages;
+      }
+      
+      const streakEl = document.getElementById('profileStreak');
+      if (streakEl && data.streak !== undefined) {
+        streakEl.textContent = data.streak;
+      }
+      
+      const activeDaysEl = document.getElementById('profileDaysActive');
+      if (activeDaysEl && data.active_days !== undefined) {
+        activeDaysEl.textContent = data.active_days;
+      }
+    })
     .catch(() => {
       activityHeatmap.textContent = 'Activity data unavailable.';
     });
@@ -3902,6 +3992,18 @@ if (publicPagesData) {
       if (page.image_attached && page.image_url) {
         illustrationImg.src = page.image_url;
         illustrationWrap.style.display = 'block';
+        if (page.image_style) {
+           try {
+              const style = JSON.parse(page.image_style);
+              illustrationWrap.style.width = style.width ? `${style.width}px` : '250px';
+              illustrationWrap.style.height = style.height ? `${style.height}px` : 'auto';
+              illustrationWrap.style.transform = `translate(${style.x || 0}px, ${style.y || 0}px)`;
+           } catch(e) {}
+        } else {
+           illustrationWrap.style.width = '250px';
+           illustrationWrap.style.height = 'auto';
+           illustrationWrap.style.transform = 'translate(0px, 0px)';
+        }
       } else {
         illustrationImg.removeAttribute('src');
         illustrationWrap.style.display = 'none';
@@ -3937,3 +4039,103 @@ if (publicPagesData) {
 
   renderPage();
 }
+
+// Global pointer events for dragging pageIllustration inside the book layout
+document.addEventListener('DOMContentLoaded', () => {
+  const pageIllustration = document.getElementById('pageIllustration');
+  const resizeHandle = document.getElementById('resizeHandle');
+  if (pageIllustration && resizeHandle) {
+    let isDragging = false;
+    let isResizing = false;
+    let startX = 0, startY = 0;
+    let initialX = 0, initialY = 0;
+    let initialWidth = 0, initialHeight = 0;
+
+    pageIllustration.addEventListener('pointerdown', (e) => {
+      if (e.target === resizeHandle || pageIllustration.style.display === 'none') return;
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const transform = pageIllustration.style.transform || '';
+      const match = transform.match(/translate\(([-0-9.]+)px,\s*([-0-9.]+)px\)/);
+      if (match) {
+        initialX = parseFloat(match[1]);
+        initialY = parseFloat(match[2]);
+      } else {
+        initialX = 0;
+        initialY = 0;
+      }
+      pageIllustration.setPointerCapture(e.pointerId);
+    });
+
+    resizeHandle.addEventListener('pointerdown', (e) => {
+      isResizing = true;
+      e.stopPropagation();
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = pageIllustration.getBoundingClientRect();
+      initialWidth = rect.width;
+      initialHeight = rect.height;
+      resizeHandle.setPointerCapture(e.pointerId);
+    });
+
+    const onPointerMove = (e) => {
+      if (isDragging) {
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        const pageEl = document.getElementById('page');
+        const maxScrollW = pageEl ? Math.max(10, pageEl.clientWidth - 100) : 800;
+        let newX = Math.max(-20, Math.min(initialX + dx, maxScrollW));
+        let newY = Math.max(-60, initialY + dy);
+        
+        // This is a bit hacky to update the state from outside the main app scope,
+        // but it will be persisted when saveEntry is triggered inside the main scope
+        // since saveEntry reads imageStyleState. We need to dispatch a custom event
+        // or ensure imageStyleState is global. Since it's trapped in DOMContentLoaded,
+        // we'll dispatch an event to the document.
+        pageIllustration.style.transform = `translate(${newX}px, ${newY}px)`;
+        document.dispatchEvent(new CustomEvent('imageStyleUpdate', {
+            detail: { x: newX, y: newY }
+        }));
+      } else if (isResizing) {
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        let newW = Math.max(100, initialWidth + dx);
+        let newH = Math.max(100, initialHeight + dy);
+        pageIllustration.style.width = `${newW}px`;
+        pageIllustration.style.height = `${newH}px`;
+        document.dispatchEvent(new CustomEvent('imageStyleUpdate', {
+            detail: { width: newW, height: newH }
+        }));
+      }
+    };
+
+    const onPointerUp = (e) => {
+      if (isDragging) {
+        isDragging = false;
+        pageIllustration.releasePointerCapture(e.pointerId);
+      }
+      if (isResizing) {
+        isResizing = false;
+        resizeHandle.releasePointerCapture(e.pointerId);
+      }
+    };
+
+    pageIllustration.addEventListener('pointermove', onPointerMove);
+    pageIllustration.addEventListener('pointerup', onPointerUp);
+    resizeHandle.addEventListener('pointermove', onPointerMove);
+    resizeHandle.addEventListener('pointerup', onPointerUp);
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  let path = window.location.pathname;
+  if (path === '/') path = '/home';
+  document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
+    let href = link.getAttribute('href');
+    if (href === path || link.dataset.page === path.substring(1) || (path === '/home' && link.dataset.page === 'home')) {
+      link.classList.add('active');
+    }
+  });
+});
+

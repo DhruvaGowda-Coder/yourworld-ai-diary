@@ -1,13 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="settings">
-  <h2>Profile</h2>
-  <div class="settings-card">
-    <p><strong>Email:</strong> {{ current_user.email }}</p>
-    <p>Your activity calendar is shown below.</p>
+<section class="settings profile-page">
+  <div class="profile-header-card">
+    <div class="profile-avatar">
+      <span class="profile-avatar-letter">{% if current_user %}{{ current_user.email[0] | upper }}{% else %}G{% endif %}</span>
+    </div>
+    <div class="profile-header-info">
+      <h2>{% if current_user %}{{ current_user.email.split('@')[0] }}{% else %}Guest Writer{% endif %}</h2>
+      <p class="profile-email">{% if current_user %}{{ current_user.email }}{% else %}Not signed in{% endif %}</p>
+      <span class="profile-theme-badge">
+        <span class="profile-theme-dot"></span>
+        Theme: {{ current_theme or 'campfire' | title }}
+      </span>
+    </div>
   </div>
+
+  <div class="profile-stats-row">
+    <div class="profile-stat">
+      <span class="profile-stat-icon">📖</span>
+      <span class="profile-stat-value" id="profilePageCount">—</span>
+      <span class="profile-stat-label">Pages</span>
+    </div>
+    <div class="profile-stat">
+      <span class="profile-stat-icon">🔥</span>
+      <span class="profile-stat-value" id="profileStreak">—</span>
+      <span class="profile-stat-label">Day Streak</span>
+    </div>
+    <div class="profile-stat">
+      <span class="profile-stat-icon">📊</span>
+      <span class="profile-stat-value" id="profileDaysActive">—</span>
+      <span class="profile-stat-label">Days Active</span>
+    </div>
+  </div>
+
   <div class="activity-card">
-    <h3>Writing Activity</h3>
+    <h3>📈 Writing Activity</h3>
     <p class="activity-sub">Colors show how often you updated your pages.</p>
     <div class="heatmap-scroll">
       <div class="heatmap" id="activityHeatmap" aria-label="Writing activity heatmap"></div>

@@ -12,8 +12,6 @@
       that can help you shape your words without taking over your voice.
     </p>
     <div class="hero-actions">
-      <a class="btn primary" href="/diary">Open Diary</a>
-      <a class="btn ghost" href="/story">Story Mode</a>
       <a class="btn ghost" href="#features">See Features</a>
     </div>
     <div class="hero-meta">
@@ -43,28 +41,61 @@
 
 <section class="feature-grid" id="features">
   <div class="feature-card">
+    <div class="feature-icon">📝</div>
     <h3>Autosave you can trust</h3>
     <p>Write freely. Autosave runs in the background and shows you when your work was saved.</p>
   </div>
   <div class="feature-card">
+    <div class="feature-icon">📖</div>
     <h3>Book-first writing</h3>
     <p>A textured page, page list, and subtle page turns, so writing feels like opening a real book.</p>
   </div>
   <div class="feature-card">
+    <div class="feature-icon">✍️</div>
     <h3>Diary + Story modes</h3>
     <p>Keep private diary pages, or switch into Story Mode to build longer narratives page by page.</p>
   </div>
   <div class="feature-card">
+    <div class="feature-icon">💬</div>
     <h3>Aura, your companion</h3>
     <p>A friendly chat that can use your current page as context to help with ideas, structure, and tone.</p>
   </div>
   <div class="feature-card">
+    <div class="feature-icon">🔗</div>
     <h3>Read-only sharing</h3>
     <p>Share a single page or your full story by code. Viewers get a clean book view without editing.</p>
   </div>
   <div class="feature-card">
+    <div class="feature-icon">📊</div>
     <h3>Writing activity</h3>
     <p>A GitHub-style calendar that shows your writing streaks. Hover a day to see the date.</p>
+  </div>
+</section>
+
+<!-- How it works section -->
+<section class="home-section home-steps">
+  <h2>How it works</h2>
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-number">1</div>
+      <h3>Sign in</h3>
+      <p>Create a free account with Google. Your diary is private and tied to you.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-number">2</div>
+      <h3>Write your pages</h3>
+      <p>Open Diary or Story Mode and start writing. Autosave keeps everything safe.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-number">3</div>
+      <h3>Choose your element</h3>
+      <p>Switch between 9 immersive themes to match your mood and writing style.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-number">4</div>
+      <h3>Share (if you want)</h3>
+      <p>Generate a share code and let others read your story in a beautiful book view.</p>
+    </div>
   </div>
 </section>
 
@@ -72,18 +103,22 @@
   <h2>What makes it different</h2>
   <div class="home-grid">
     <div class="home-card">
+      <div class="feature-icon">🔒</div>
       <h3>Private by default</h3>
       <p>Everything is tied to your account. Sharing is always opt-in, and shared stories are read-only.</p>
     </div>
     <div class="home-card">
+      <div class="feature-icon">🎨</div>
       <h3>Atmospheres, not just colors</h3>
       <p>Nine elemental themes change the mood of the UI and Aura's tone, so you can write in the vibe you need.</p>
     </div>
     <div class="home-card">
+      <div class="feature-icon">📚</div>
       <h3>Made for long writing</h3>
       <p>Work across pages, keep your titles organized, and let autosave handle the boring parts.</p>
     </div>
     <div class="home-card">
+      <div class="feature-icon">🖼️</div>
       <h3>Optional scene illustration</h3>
       <p>In Story Mode, you can generate a scene illustration and insert it into your page when you want visuals.</p>
     </div>
@@ -95,25 +130,61 @@
   <p class="home-sub">
     Switch themes anytime in Settings. Each theme brings a distinct atmosphere while keeping the same writing flow.
   </p>
-  <div class="theme-grid">
-    <div class="theme-pill"><span class="theme-name">Ember Hearth</span><span class="theme-desc">Warm, reflective</span></div>
-    <div class="theme-pill"><span class="theme-name">Tide Whisper</span><span class="theme-desc">Calm, flowing</span></div>
-    <div class="theme-pill"><span class="theme-name">Sky Drift</span><span class="theme-desc">Light, quick</span></div>
-    <div class="theme-pill"><span class="theme-name">Rootstone</span><span class="theme-desc">Grounded, steady</span></div>
-    <div class="theme-pill"><span class="theme-name">Crystal Frost</span><span class="theme-desc">Clear, precise</span></div>
-    <div class="theme-pill"><span class="theme-name">Volt Tempest</span><span class="theme-desc">Bold, energetic</span></div>
-    <div class="theme-pill"><span class="theme-name">Nebula Orbit</span><span class="theme-desc">Cosmic, expansive</span></div>
-    <div class="theme-pill"><span class="theme-name">Bloom Haven</span><span class="theme-desc">Gentle, nurturing</span></div>
-    <div class="theme-pill"><span class="theme-name">Sakura Drift</span><span class="theme-desc">Poetic, delicate</span></div>
+  <div class="theme-showcase-grid">
+    <div class="theme-pill" data-color="#ffb783">
+      <span class="theme-dot" style="--dot-color: #ffb783;"></span>
+      <span class="theme-name">Ember Hearth</span>
+      <span class="theme-desc">Warm, reflective</span>
+    </div>
+    <div class="theme-pill" data-color="#59bcee">
+      <span class="theme-dot" style="--dot-color: #59bcee;"></span>
+      <span class="theme-name">Tide Whisper</span>
+      <span class="theme-desc">Calm, flowing</span>
+    </div>
+    <div class="theme-pill" data-color="#add9f2">
+      <span class="theme-dot" style="--dot-color: #add9f2;"></span>
+      <span class="theme-name">Sky Drift</span>
+      <span class="theme-desc">Light, quick</span>
+    </div>
+    <div class="theme-pill" data-color="#8bc476">
+      <span class="theme-dot" style="--dot-color: #8bc476;"></span>
+      <span class="theme-name">Rootstone</span>
+      <span class="theme-desc">Grounded, steady</span>
+    </div>
+    <div class="theme-pill" data-color="#b8e3f7">
+      <span class="theme-dot" style="--dot-color: #b8e3f7;"></span>
+      <span class="theme-name">Crystal Frost</span>
+      <span class="theme-desc">Clear, precise</span>
+    </div>
+    <div class="theme-pill" data-color="#7c9aff">
+      <span class="theme-dot" style="--dot-color: #7c9aff;"></span>
+      <span class="theme-name">Volt Tempest</span>
+      <span class="theme-desc">Bold, energetic</span>
+    </div>
+    <div class="theme-pill" data-color="#a08df5">
+      <span class="theme-dot" style="--dot-color: #a08df5;"></span>
+      <span class="theme-name">Nebula Orbit</span>
+      <span class="theme-desc">Cosmic, expansive</span>
+    </div>
+    <div class="theme-pill" data-color="#8cda97">
+      <span class="theme-dot" style="--dot-color: #8cda97;"></span>
+      <span class="theme-name">Bloom Haven</span>
+      <span class="theme-desc">Gentle, nurturing</span>
+    </div>
+    <div class="theme-pill" data-color="#ffb7c5">
+      <span class="theme-dot" style="--dot-color: #ffb7c5;"></span>
+      <span class="theme-name">Sakura Drift</span>
+      <span class="theme-desc">Poetic, delicate</span>
+    </div>
   </div>
 </section>
 
 <section class="home-section home-security">
   <div class="security-card">
-    <h2>Account safety</h2>
+    <h2>🛡️ Account safety</h2>
     <p>
-      Email verification, password reset, and private pages by default.
-      You keep control over what gets shared.
+      Secure, one-click sign-in with Google, and private pages by default.
+      You keep complete control over what gets shared.
     </p>
   </div>
 </section>

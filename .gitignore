@@ -4,3 +4,4 @@ __pycache__/
 .env
 data/app.db
 .tmp_frames/
+YourWorld/firebase-adminsdk.json

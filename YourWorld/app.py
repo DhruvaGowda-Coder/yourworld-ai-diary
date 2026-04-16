@@ -1,43 +1,42 @@
+import base64
 import os
 import re
 import secrets
-import sqlite3
 import string
 from datetime import datetime, timedelta, timezone
-from email.message import EmailMessage
 from functools import wraps
 from html import unescape
 import hashlib
-import smtplib
-import ssl
 
 import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for, g
-from werkzeug.security import generate_password_hash
+from flask_wtf.csrf import CSRFProtect
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(APP_DIR, ".env"))
-DB_PATH = os.path.join(APP_DIR, "data", "app.db")
+DB_PATH = os.environ.get("DB_PATH_OVERRIDE") or os.path.join(APP_DIR, "data", "app.db")
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
-GEMINI_CHAT_MODEL = os.environ.get("GEMINI_CHAT_MODEL", "gemini-2.5-flash").strip()
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
-OPENAI_IMAGE_MODEL = os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-1").strip()
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
+GROQ_CHAT_MODEL = os.environ.get("GROQ_CHAT_MODEL", "llama-3.1-8b-instant").strip()
+HUGGINGFACE_API_KEY = os.environ.get("HUGGINGFACE_API_KEY", "").strip()
+HUGGINGFACE_IMAGE_MODEL = os.environ.get("HUGGINGFACE_IMAGE_MODEL", "black-forest-labs/FLUX.1-schnell").strip()
 SHOW_AI_ERRORS = os.environ.get("SHOW_AI_ERRORS", "0").strip() == "1"
 
-SMTP_HOST = os.environ.get("SMTP_HOST", "").strip()
-SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-SMTP_USER = os.environ.get("SMTP_USER", "").strip()
-SMTP_PASS = os.environ.get("SMTP_PASS", "").strip()
-SMTP_FROM = os.environ.get("SMTP_FROM", "").strip()
-SMTP_TLS = os.environ.get("SMTP_TLS", "1").strip() == "1"
-SMTP_SSL = os.environ.get("SMTP_SSL", "0").strip() == "1"
-SHOW_SMTP_ERRORS = os.environ.get("SHOW_SMTP_ERRORS", "0").strip() == "1"
-SHOW_DB_ERRORS = os.environ.get("SHOW_DB_ERRORS", "0").strip() == "1"
+# Firebase Web Config (injected into frontend templates)
+FIREBASE_WEB_CONFIG = {
+    "apiKey": os.environ.get("FIREBASE_API_KEY", ""),
+    "authDomain": os.environ.get("FIREBASE_AUTH_DOMAIN", ""),
+    "projectId": os.environ.get("FIREBASE_PROJECT_ID", ""),
+    "storageBucket": os.environ.get("FIREBASE_STORAGE_BUCKET", ""),
+    "messagingSenderId": os.environ.get("FIREBASE_MESSAGING_SENDER_ID", ""),
+    "appId": os.environ.get("FIREBASE_APP_ID", ""),
+    "measurementId": os.environ.get("FIREBASE_MEASUREMENT_ID", ""),
+}
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("DIARY_SECRET_KEY", "dev-secret-change-me")
+app.secret_key = os.environ.get("DIARY_SECRET_KEY") or secrets.token_hex(32)
+csrf = CSRFProtect(app)
 
 THEME_ORDER = [
     "campfire",
@@ -157,115 +156,6 @@ def utc_now_iso():
     return datetime.now(timezone.utc).isoformat()
 
 
-def get_db():
-    if "db" not in g:
-        g.db = sqlite3.connect(DB_PATH)
-        g.db.row_factory = sqlite3.Row
-    return g.db
-
-
-@app.teardown_appcontext
-def close_db(e=None):
-    db = g.pop("db", None)
-    if db is not None:
-        db.close()
-
-
-def init_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    try:
-        with conn:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    email TEXT UNIQUE NOT NULL,
-                    password_hash TEXT NOT NULL,
-                    theme TEXT NOT NULL DEFAULT 'campfire',
-                    created_at TEXT NOT NULL
-                );
-                """
-            )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS entries (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER NOT NULL,
-                    type TEXT NOT NULL DEFAULT 'diary',
-                    title TEXT NOT NULL,
-                    content TEXT NOT NULL,
-                    image_prompt TEXT,
-                    image_url TEXT,
-                    image_attached INTEGER DEFAULT 0,
-                    share_code TEXT,
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL,
-                    FOREIGN KEY(user_id) REFERENCES users(id)
-                );
-                """
-            )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS email_verifications (
-                    email TEXT PRIMARY KEY,
-                    password_hash TEXT NOT NULL,
-                    otp_hash TEXT NOT NULL,
-                    otp_salt TEXT NOT NULL,
-                    expires_at TEXT NOT NULL,
-                    created_at TEXT NOT NULL
-                );
-                """
-            )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS password_resets (
-                    email TEXT PRIMARY KEY,
-                    otp_hash TEXT NOT NULL,
-                    otp_salt TEXT NOT NULL,
-                    expires_at TEXT NOT NULL,
-                    created_at TEXT NOT NULL
-                );
-                """
-            )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS activity (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER NOT NULL,
-                    day TEXT NOT NULL,
-                    count INTEGER NOT NULL,
-                    updated_at TEXT NOT NULL,
-                    UNIQUE(user_id, day)
-                );
-                """
-            )
-        with conn:
-            columns = [row["name"] for row in conn.execute("PRAGMA table_info(entries)")]
-            if "image_attached" not in columns:
-                conn.execute("ALTER TABLE entries ADD COLUMN image_attached INTEGER DEFAULT 0")
-            if "share_code" not in columns:
-                conn.execute("ALTER TABLE entries ADD COLUMN share_code TEXT")
-            if "share_type" not in columns:
-                conn.execute("ALTER TABLE entries ADD COLUMN share_type TEXT DEFAULT 'story'")
-            if "title_style" not in columns:
-                conn.execute("ALTER TABLE entries ADD COLUMN title_style TEXT")
-            if "content_style" not in columns:
-                conn.execute("ALTER TABLE entries ADD COLUMN content_style TEXT")
-            if "image_prompt" not in columns:
-                conn.execute("ALTER TABLE entries ADD COLUMN image_prompt TEXT")
-            if "image_url" not in columns:
-                conn.execute("ALTER TABLE entries ADD COLUMN image_url TEXT")
-
-            user_columns = [row["name"] for row in conn.execute("PRAGMA table_info(users)")]
-            if "theme" not in user_columns:
-                conn.execute("ALTER TABLE users ADD COLUMN theme TEXT NOT NULL DEFAULT 'campfire'")
-            conn.execute("UPDATE users SET theme = 'campfire' WHERE LOWER(theme) = 'fire'")
-    finally:
-        conn.close()
-
-
 def build_theme_list():
     items = []
     for theme_id in THEME_ORDER:
@@ -284,17 +174,20 @@ def build_theme_list():
     return items
 
 
-def get_user_theme(user_id: int | None) -> str:
+def get_user_theme(user_id: str | None) -> str:
+    # Try session first for speed and guest support
+    sess_theme = session.get("theme")
+    if sess_theme:
+        return normalize_theme(sess_theme)
+
     if not user_id:
         return "campfire"
-    with get_db() as conn:
-        row = conn.execute("SELECT theme FROM users WHERE id = ?", (user_id,)).fetchone()
-    if not row:
+    
+    # Fallback to Firestore
+    try:
+        return normalize_theme(firebase_db.get_user_theme(user_id))
+    except Exception:
         return "campfire"
-    return normalize_theme(row["theme"])
-
-
-init_db()
 
 
 def _is_guest_email(email: str | None) -> bool:
@@ -304,12 +197,9 @@ def _is_guest_email(email: str | None) -> bool:
 
 def get_current_user():
     user_id = session.get("user_id")
-    if not user_id:
+    if not user_id or session.get("is_guest"):
         return None
-    with get_db() as conn:
-        user = conn.execute("SELECT id, email, theme FROM users WHERE id = ?", (user_id,)).fetchone()
-        return user
-
+    return firebase_db.get_current_user_data(user_id)
 
 def normalize_theme(theme: str | None) -> str:
     value = (theme or "").strip().lower()
@@ -317,31 +207,12 @@ def normalize_theme(theme: str | None) -> str:
         return value
     return "campfire"
 
-
-def ensure_guest_user_id() -> int:
-    user_id = session.get("user_id")
-    if user_id:
-        return int(user_id)
-
-    guest_email = f"{GUEST_EMAIL_PREFIX}{secrets.token_hex(8)}@{GUEST_EMAIL_DOMAIN}"
-    guest_password = secrets.token_urlsafe(24)
-    now = utc_now_iso()
-    with get_db() as conn:
-        conn.execute(
-            "INSERT INTO users (email, password_hash, theme, created_at) VALUES (?, ?, 'campfire', ?)",
-            (guest_email, generate_password_hash(guest_password), now),
-        )
-        guest_id = conn.execute("SELECT last_insert_rowid() AS id").fetchone()["id"]
-    session["user_id"] = guest_id
-    session["is_guest"] = True
-    return int(guest_id)
-
-
 def login_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         if not session.get("user_id"):
-            ensure_guest_user_id()
+            session["user_id"] = "guest_" + secrets.token_hex(12)
+            session["is_guest"] = True
         return fn(*args, **kwargs)
 
     return wrapper
@@ -349,18 +220,27 @@ def login_required(fn):
 
 @app.context_processor
 def inject_user():
+    user_id = session.get("user_id")
+    is_guest_user = session.get("is_guest", False)
     current_user = get_current_user()
-    theme = "campfire"
-    is_guest_user = False
-    if current_user:
-        theme = normalize_theme(current_user["theme"])
-        is_guest_user = _is_guest_email(current_user["email"])
+    
+    # Priority: Session -> Firestore User Data -> Firestore Theme Data -> Default
+    theme = session.get("theme")
+    if not theme:
+        if current_user:
+            theme = current_user.get("theme")
+        else:
+            theme = normalize_theme(firebase_db.get_user_theme(user_id))
+    
+    theme = normalize_theme(theme)
     theme_meta = THEME_DETAILS.get(theme, THEME_DETAILS["campfire"])
+    
     return {
         "current_user": current_user,
         "is_guest_user": is_guest_user,
         "current_theme": theme,
         "current_theme_meta": theme_meta,
+        "firebase_config": FIREBASE_WEB_CONFIG,
     }
 
 
@@ -369,39 +249,82 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/signup", methods=["GET", "POST"])
-def signup():
-    return redirect(url_for("index"))
 
+import firebase_db
+
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    return redirect(url_for("index"))
+    return render_template("login.html")
 
+@app.route("/login/google")
+def login_google():
+    state = secrets.token_urlsafe(16)
+    session["oauth_state"] = state
+    
+    redirect_uri = url_for("auth_google_callback", _external=True)
+    
+    auth_url = (
+        "https://accounts.google.com/o/oauth2/v2/auth"
+        "?response_type=code"
+        f"&client_id={GOOGLE_CLIENT_ID}"
+        f"&redirect_uri={redirect_uri}"
+        "&scope=openid%20email%20profile"
+        f"&state={state}"
+    )
+    return redirect(auth_url)
 
-@app.route("/forgot-password", methods=["GET", "POST"])
-def forgot_password():
-    return redirect(url_for("index"))
+@app.route("/auth/google/callback")
+def auth_google_callback():
+    code = request.args.get("code")
+    state = request.args.get("state")
+    
+    if state != session.pop("oauth_state", None):
+        return "Invalid state parameter.", 400
 
+    redirect_uri = url_for("auth_google_callback", _external=True)
+    
+    token_url = "https://oauth2.googleapis.com/token"
+    data = {
+        "code": code,
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code",
+    }
+    r = requests.post(token_url, data=data)
+    if not r.ok:
+        return f"Failed to fetch token: {r.text}", 400
+        
+    token_data = r.json()
+    access_token = token_data.get("access_token")
+    if not access_token:
+        return "No access token in response.", 400
+    
+    userinfo_url = "https://www.googleapis.com/oauth2/v2/userinfo"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    r2 = requests.get(userinfo_url, headers=headers)
+    
+    if not r2.ok:
+        return "Failed to get user info.", 400
+        
+    user_info = r2.json()
+    uid = user_info.get("id")
+    email = user_info.get("email", "")
+    name = user_info.get("name", "") or (email.split("@")[0] if email else "User")
+    picture = user_info.get("picture", "")
+    
+    firebase_db.create_or_update_user(uid, email, name, picture)
+    
+    session["user_id"] = uid
+    session["is_guest"] = False
+    session.pop("theme", None)  # Clear cached theme so it loads from Firestore
+    
+    # Redirect to the diary page after successful login
+    return redirect(url_for("diary"))
 
-@app.route("/reset-password", methods=["GET", "POST"])
-def reset_password():
-    return redirect(url_for("index"))
-
-
-@app.route("/reset-password/resend", methods=["POST"])
-def resend_password_reset():
-    return redirect(url_for("index"))
-
-
-@app.route("/verify", methods=["GET", "POST"])
-def verify_email():
-    return redirect(url_for("index"))
-
-
-@app.route("/verify/resend", methods=["POST"])
-def resend_verification():
-    return redirect(url_for("index"))
 
 @app.route("/logout")
 def logout():
@@ -424,8 +347,8 @@ def story():
 @app.route("/settings")
 @login_required
 def settings():
-    user = get_current_user()
-    current_theme = normalize_theme(user["theme"] if user else None)
+    user_id = session.get("user_id")
+    current_theme = get_user_theme(user_id)
     themes = build_theme_list()
     info = request.args.get("info")
     return render_template("settings.html", themes=themes, current_theme=current_theme, info=info)
@@ -435,8 +358,8 @@ def settings():
 @login_required
 def settings_theme():
     selected = normalize_theme(request.form.get("theme"))
-    with get_db() as conn:
-        conn.execute("UPDATE users SET theme = ? WHERE id = ?", (selected, session["user_id"]))
+    session["theme"] = selected
+    firebase_db.set_user_theme(session["user_id"], selected)
     return redirect(url_for("settings", info="Theme updated."))
 
 
@@ -450,74 +373,48 @@ def profile():
 @login_required
 def api_entries():
     entry_type = request.args.get("type", "diary")
-    with get_db() as conn:
-        rows = conn.execute(
-            """
-            SELECT id, title, updated_at, created_at
-            FROM entries
-            WHERE user_id = ? AND type = ?
-            ORDER BY datetime(created_at) ASC
-            """,
-            (session["user_id"], entry_type),
-        ).fetchall()
-    return jsonify(
-        [
-            {
-                "id": r["id"],
-                "title": r["title"],
-                "updated_at": r["updated_at"],
-                "created_at": r["created_at"],
-            }
-            for r in rows
-        ]
-    )
+    rows = firebase_db.get_entries(session["user_id"], entry_type)
+    return jsonify([
+        {
+            "id": r["id"],
+            "title": r.get("title", "Untitled"),
+            "updated_at": r.get("updated_at"),
+            "created_at": r.get("created_at")
+        }
+        for r in rows
+    ])
 
 
-@app.route("/api/entry/<int:entry_id>")
+@app.route("/api/entry/<entry_id>")
 @login_required
 def api_entry(entry_id):
-    with get_db() as conn:
-        row = conn.execute(
-            """
-            SELECT id, title, content, type, image_prompt, image_url, image_attached, share_code, share_type, title_style, content_style, created_at, updated_at
-            FROM entries
-            WHERE id = ? AND user_id = ?
-            """,
-            (entry_id, session["user_id"]),
-        ).fetchone()
+    row = firebase_db.get_entry(session["user_id"], entry_id)
     if not row:
         return jsonify({"error": "Not found"}), 404
     return jsonify({
         "id": row["id"],
-        "title": row["title"],
-        "content": row["content"],
-        "type": row["type"],
-        "image_prompt": row["image_prompt"],
-        "image_url": row["image_url"],
-        "image_attached": row["image_attached"],
-        "share_code": row["share_code"],
-        "share_type": row["share_type"],
-        "title_style": row["title_style"],
-        "content_style": row["content_style"],
-        "created_at": row["created_at"],
-        "updated_at": row["updated_at"],
+        "title": row.get("title", ""),
+        "content": row.get("content", ""),
+        "type": row.get("type", "diary"),
+        "image_prompt": row.get("image_prompt"),
+        "image_url": row.get("image_url"),
+        "image_attached": row.get("image_attached"),
+        "image_style": row.get("image_style"),
+        "share_code": row.get("share_code"),
+        "share_type": row.get("share_type"),
+        "title_style": row.get("title_style"),
+        "content_style": row.get("content_style"),
+        "created_at": row.get("created_at"),
+        "updated_at": row.get("updated_at"),
     })
 
 
-@app.route("/api/entry/<int:entry_id>", methods=["DELETE"])
+@app.route("/api/entry/<entry_id>", methods=["DELETE"])
 @login_required
 def api_entry_delete(entry_id):
-    with get_db() as conn:
-        existing = conn.execute(
-            "SELECT id FROM entries WHERE id = ? AND user_id = ?",
-            (entry_id, session["user_id"]),
-        ).fetchone()
-        if not existing:
-            return jsonify({"error": "Not found"}), 404
-        conn.execute(
-            "DELETE FROM entries WHERE id = ? AND user_id = ?",
-            (entry_id, session["user_id"]),
-        )
+    success = firebase_db.delete_entry(session["user_id"], entry_id)
+    if not success:
+        return jsonify({"error": "Not found"}), 404
     return jsonify({"deleted": True})
 
 
@@ -526,7 +423,7 @@ def _generate_share_code(length=8):
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
-@app.route("/api/entry/<int:entry_id>/share", methods=["POST"])
+@app.route("/api/entry/<entry_id>/share", methods=["POST"])
 @login_required
 def api_entry_share(entry_id):
     data = request.get_json(silent=True) or {}
@@ -535,45 +432,36 @@ def api_entry_share(entry_id):
     if mode not in ("story", "single"):
         mode = "story"
 
-    with get_db() as conn:
-        row = conn.execute(
-            "SELECT id, type, share_code, share_type FROM entries WHERE id = ? AND user_id = ?",
-            (entry_id, session["user_id"]),
-        ).fetchone()
-        if not row:
-            return jsonify({"error": "Not found"}), 404
-        if row["type"] != "story":
-            return jsonify({"error": "Only story pages can be shared"}), 400
-        if row["share_code"] and not rotate:
-            if (row["share_type"] or "story") != mode:
-                conn.execute("UPDATE entries SET share_type = ? WHERE id = ?", (mode, entry_id))
-            return jsonify({"share_code": row["share_code"], "share_type": mode})
-        code = _generate_share_code()
-        while conn.execute("SELECT 1 FROM entries WHERE share_code = ?", (code,)).fetchone():
-            code = _generate_share_code()
-        conn.execute(
-            "UPDATE entries SET share_code = ?, share_type = ? WHERE id = ? AND user_id = ?",
-            (code, mode, entry_id, session["user_id"]),
-        )
+    row = firebase_db.get_entry(session["user_id"], entry_id)
+    if not row:
+        return jsonify({"error": "Not found"}), 404
+    if row.get("type") != "story":
+        return jsonify({"error": "Only story pages can be shared"}), 400
+        
+    share_code = row.get("share_code")
+    share_type = row.get("share_type", "story")
+    
+    if share_code and not rotate:
+        if share_type != mode:
+            firebase_db.update_share_code(session["user_id"], entry_id, share_code, mode)
+        return jsonify({"share_code": share_code, "share_type": mode})
+        
+    code = _generate_share_code()
+    # Assume _generate_share_code is unique enough for now
+    firebase_db.update_share_code(session["user_id"], entry_id, code, mode)
     return jsonify({"share_code": code, "share_type": mode})
 
 
-@app.route("/api/entry/<int:entry_id>/share", methods=["DELETE"])
+@app.route("/api/entry/<entry_id>/share", methods=["DELETE"])
 @login_required
 def api_entry_share_delete(entry_id):
-    with get_db() as conn:
-        row = conn.execute(
-            "SELECT id, type FROM entries WHERE id = ? AND user_id = ?",
-            (entry_id, session["user_id"]),
-        ).fetchone()
-        if not row:
-            return jsonify({"error": "Not found"}), 404
-        if row["type"] != "story":
-            return jsonify({"error": "Only story pages can be shared"}), 400
-        conn.execute(
-            "UPDATE entries SET share_code = NULL WHERE id = ? AND user_id = ?",
-            (entry_id, session["user_id"]),
-        )
+    row = firebase_db.get_entry(session["user_id"], entry_id)
+    if not row:
+        return jsonify({"error": "Not found"}), 404
+    if row.get("type") != "story":
+        return jsonify({"error": "Only story pages can be shared"}), 400
+    
+    firebase_db.update_share_code(session["user_id"], entry_id, None, None)
     return jsonify({"share_code": None})
 
 
@@ -590,36 +478,18 @@ def view_story(code):
     safe_code = (code or "").strip().upper()
     if not safe_code:
         return redirect(url_for("index"))
-    with get_db() as conn:
-        owner_row = conn.execute(
-            "SELECT id, user_id, share_type FROM entries WHERE share_code = ? AND type = 'story'",
-            (safe_code,),
-        ).fetchone()
         
-        if not owner_row:
-            return render_template("view_story.html", not_found=True, code=safe_code)
+    owner_row = firebase_db.get_entry_by_share_code(safe_code)
+    
+    if not owner_row:
+        return render_template("view_story.html", not_found=True, code=safe_code)
 
-        share_type = owner_row["share_type"] or "story"
+    share_type = owner_row.get("share_type", "story")
 
-        if share_type == "single":
-            rows = conn.execute(
-                """
-                SELECT title, content, image_url, image_attached, updated_at, created_at
-                FROM entries
-                WHERE id = ?
-                """,
-                (owner_row["id"],),
-            ).fetchall()
-        else:
-            rows = conn.execute(
-                """
-                SELECT title, content, image_url, image_attached, updated_at, created_at
-                FROM entries
-                WHERE user_id = ? AND type = 'story'
-                ORDER BY created_at ASC
-                """,
-                (owner_row["user_id"],),
-            ).fetchall()
+    if share_type == "single":
+        rows = [owner_row]
+    else:
+        rows = firebase_db.get_story_entries_for_user(owner_row.get("user_id"))
 
     if not rows:
         return render_template("view_story.html", not_found=True, code=safe_code)
@@ -628,12 +498,13 @@ def view_story(code):
         "view_story.html",
         pages=[
             {
-                "title": r["title"] or "",
-                "content": r["content"] or "",
-                "image_url": r["image_url"],
-                "image_attached": bool(r["image_attached"]),
-                "updated_at": r["updated_at"],
-                "created_at": r["created_at"],
+                "title": r.get("title", ""),
+                "content": r.get("content", ""),
+                "image_url": r.get("image_url"),
+                "image_attached": bool(r.get("image_attached")),
+                "image_style": r.get("image_style"),
+                "updated_at": r.get("updated_at"),
+                "created_at": r.get("created_at"),
             }
             for r in rows
         ],
@@ -655,85 +526,25 @@ def api_entry_save():
     if entry_id in ("", "null", "undefined"):
         entry_id = None
     if entry_id is not None:
-        try:
-            entry_id = int(entry_id)
-        except (ValueError, TypeError):
-            return jsonify({"error": "Invalid ID"}), 400
+        entry_id = str(entry_id)
 
-    entry_type = data.get("type", "diary")
-    content = data.get("content", "")
     title = (data.get("title") or "").strip()
-    image_prompt = data.get("image_prompt")
-    image_url = data.get("image_url")
-    image_attached_raw = data.get("image_attached")
-    title_style = data.get("title_style")
-    content_style = data.get("content_style")
-    if title_style is not None and not isinstance(title_style, str):
-        title_style = None
-    if content_style is not None and not isinstance(content_style, str):
-        content_style = None
-
     if not title:
-        plain = _strip_html(content)
+        plain = _strip_html(data.get("content", ""))
         first_line = plain.strip().splitlines()[0] if plain.strip() else "Untitled"
         title = (first_line[:40] + "...") if len(first_line) > 40 else first_line
 
-    now = utc_now_iso()
-    if image_attached_raw is None:
-        image_attached = 1 if image_url else 0
-    else:
-        image_attached = 1 if bool(image_attached_raw) else 0
+    data['title'] = title
+    
     activity_day = datetime.now(timezone.utc).date().isoformat()
+    
+    saved = firebase_db.save_entry(session["user_id"], entry_id, data)
+    if not saved:
+        return jsonify({"error": "Not found or permission denied"}), 404
+        
+    firebase_db.increment_activity(session["user_id"], activity_day)
 
-    with get_db() as conn:
-        if entry_id:
-            existing = conn.execute(
-                "SELECT id FROM entries WHERE id = ? AND user_id = ?",
-                (entry_id, session["user_id"]),
-            ).fetchone()
-            if not existing:
-                return jsonify({"error": "Not found"}), 404
-    try:
-        with get_db() as conn:
-            if entry_id:
-                existing = conn.execute(
-                    "SELECT id FROM entries WHERE id = ? AND user_id = ?",
-                    (entry_id, session["user_id"]),
-                ).fetchone()
-                if not existing:
-                    return jsonify({"error": "Not found"}), 404
-                conn.execute(
-                    """
-                    UPDATE entries
-                    SET title = ?, content = ?, image_prompt = ?, image_url = ?, image_attached = ?, title_style = ?, content_style = ?, updated_at = ?
-                    WHERE id = ? AND user_id = ?
-                    """,
-                    (title, content, image_prompt, image_url, image_attached, title_style, content_style, now, entry_id, session["user_id"]),
-                )
-            else:
-                conn.execute(
-                    """
-                    INSERT INTO entries (user_id, type, title, content, image_prompt, image_url, image_attached, title_style, content_style, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (session["user_id"], entry_type, title, content, image_prompt, image_url, image_attached, title_style, content_style, now, now),
-                )
-                entry_id = conn.execute("SELECT last_insert_rowid() as id").fetchone()["id"]
-            conn.execute(
-                """
-                INSERT INTO activity (user_id, day, count, updated_at)
-                VALUES (?, ?, 1, ?)
-                ON CONFLICT(user_id, day)
-                DO UPDATE SET count = count + 1, updated_at = excluded.updated_at
-                """,
-                (session["user_id"], activity_day, now),
-            )
-    except sqlite3.Error as e:
-        if app.debug:
-            return jsonify({"error": f"Database error: {e}"}), 500
-        return jsonify({"error": "Database error"}), 500
-
-    return jsonify({"id": entry_id, "title": title, "updated_at": now})
+    return jsonify({"id": saved["id"], "title": title, "updated_at": saved["updated_at"]})
 
 
 def _escape_svg(text: str) -> str:
@@ -756,90 +567,23 @@ def _strip_html(text: str) -> str:
     return cleaned
 
 
-def _hash_otp(code: str, salt: str) -> str:
-    return hashlib.sha256(f"{salt}{code}".encode("utf-8")).hexdigest()
 
-
-def _generate_otp() -> str:
-    return f"{secrets.randbelow(1000000):06d}"
-
-
-def _send_code_email(recipient: str, code: str, subject: str, intro: str) -> tuple[bool, str | None]:
-    sender = SMTP_FROM or SMTP_USER
-    
-    # Developer Convenience: If debugging and no SMTP, print code to console
-    if app.debug and (not SMTP_HOST or not sender):
-        print(f"\n[DEBUG] Mock Email to {recipient}\nSubject: {subject}\nCode: {code}\n")
-        return True, None
-
-    if not SMTP_HOST or not sender:
-        return False, "smtp_not_configured"
-
-    message = EmailMessage()
-    message["Subject"] = subject
-    message["From"] = sender
-    message["To"] = recipient
-    message.set_content(
-        f"{intro}\n\n"
-        f"{code}\n\n"
-        "This code expires in 10 minutes."
-    )
-
-    context = ssl.create_default_context()
-    try:
-        if SMTP_SSL:
-            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context, timeout=20) as server:
-                if SMTP_USER and SMTP_PASS:
-                    server.login(SMTP_USER, SMTP_PASS)
-                server.send_message(message)
-        else:
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
-                if SMTP_TLS:
-                    server.starttls(context=context)
-                if SMTP_USER and SMTP_PASS:
-                    server.login(SMTP_USER, SMTP_PASS)
-                server.send_message(message)
-    except Exception as exc:
-        return False, str(exc)
-    return True, None
-
-
-def send_otp_email(recipient: str, code: str) -> tuple[bool, str | None]:
-    return _send_code_email(
-        recipient,
-        code,
-        "YourWorld verification code",
-        "Your verification code is:",
-    )
-
-
-def send_password_reset_email(recipient: str, code: str) -> tuple[bool, str | None]:
-    return _send_code_email(
-        recipient,
-        code,
-        "YourWorld password reset code",
-        "Use this code to reset your password:",
-    )
-
-
-def _gemini_headers():
-    return {
-        "Authorization": f"Bearer {GEMINI_API_KEY}",
-        "Content-Type": "application/json",
-    }
-
-
-def call_gemini_chat(messages):
-    if not GEMINI_API_KEY:
+def call_chat_api(messages):
+    if GROQ_API_KEY:
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": GROQ_CHAT_MODEL,
+            "messages": messages,
+            "temperature": 0.7,
+        }
+    else:
         return None, "missing_key"
-    url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-    payload = {
-        "model": GEMINI_CHAT_MODEL,
-        "messages": messages,
-        "temperature": 0.7,
-    }
     try:
-        response = requests.post(url, json=payload, headers=_gemini_headers(), timeout=20)
+        response = requests.post(url, json=payload, headers=headers, timeout=20)
     except requests.RequestException:
         return None, "request_failed"
     if not response.ok:
@@ -860,41 +604,29 @@ def call_gemini_chat(messages):
     return (message.get("content") or "").strip(), None
 
 
-def call_openai_image(prompt):
-    if not OPENAI_API_KEY:
+def call_hf_image(prompt):
+    if not HUGGINGFACE_API_KEY:
         return None, "missing_key"
-    url = "https://api.openai.com/v1/images/generations"
-    payload = {
-        "model": OPENAI_IMAGE_MODEL,
-        "prompt": prompt,
-        "size": "1024x1024",
-    }
+    url = f"https://router.huggingface.co/hf-inference/models/{HUGGINGFACE_IMAGE_MODEL}"
+    payload = {"inputs": prompt}
     headers = {
-        "Authorization": f"Bearer {OPENAI_API_KEY}",
+        "Authorization": f"Bearer {HUGGINGFACE_API_KEY}",
         "Content-Type": "application/json",
     }
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        response = requests.post(url, json=payload, headers=headers, timeout=60)
     except requests.RequestException:
         return None, "request_failed"
     if not response.ok:
         try:
-            error_info = response.json().get("error")
+            error_data = response.json()
+            message = error_data.get("error") or "error"
         except Exception:
-            error_info = None
-        if isinstance(error_info, dict):
-            message = error_info.get("message") or error_info.get("type") or "error"
-        else:
             message = "error"
         return None, f"error_{response.status_code}:{message}"
-    data = response.json()
-    images = data.get("data", [])
-    if not images:
-        return None, "no_images"
-    b64 = images[0].get("b64_json")
-    if not b64:
-        return None, "no_b64"
-    return f"data:image/png;base64,{b64}", None
+    
+    b64 = base64.b64encode(response.content).decode("utf-8")
+    return f"data:image/jpeg;base64,{b64}", None
 
 
 @app.route("/api/chat", methods=["POST"])
@@ -907,7 +639,7 @@ def api_chat():
         return jsonify({"error": "Message required"}), 400
 
     safe_history = []
-    for item in history[-12:]:
+    for item in history[-12:]:  # type: ignore # pyre-ignore
         role = item.get("role")
         content = item.get("content")
         if role in {"user", "assistant"} and isinstance(content, str):
@@ -935,29 +667,23 @@ def api_chat():
         raw_content = context_data.get("content")
         raw_label = context_data.get("page_label")
         if isinstance(raw_title, str):
-            page_title = raw_title.strip()[:220]
+            page_title = raw_title.strip()[:220]  # type: ignore # pyre-ignore
         if isinstance(raw_content, str):
-            page_content = raw_content.strip()[:5000]
+            page_content = raw_content.strip()[:5000]  # type: ignore # pyre-ignore
         if isinstance(raw_label, str):
-            page_label = raw_label.strip()[:80]
+            page_label = raw_label.strip()[:80]  # type: ignore # pyre-ignore
 
     if user_id and entry_type:
-        with get_db() as conn:
-            rows = conn.execute(
-                """
-                SELECT id, title, content
-                FROM entries
-                WHERE user_id = ? AND type = ?
-                ORDER BY datetime(updated_at) DESC
-                LIMIT 4
-                """,
-                (user_id, entry_type),
-            ).fetchall()
+        rows = firebase_db.get_entries(user_id, entry_type)
+        # Sort by updated_at descending and get top 4
+        rows.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
+        rows = rows[:4]
+        
         for row in rows:
-            if entry_id and row["id"] == entry_id:
+            if entry_id and row.get("id") == str(entry_id):
                 continue
-            title = (row["title"] or "").strip() or "Untitled"
-            snippet = _strip_html(row["content"] or "").replace("\n", " ").strip()
+            title = (row.get("title") or "").strip() or "Untitled"
+            snippet = _strip_html(row.get("content") or "").replace("\n", " ").strip()
             if len(snippet) > 170:
                 snippet = snippet[:167] + "..."
             related_pages.append(f"- {title}: {snippet}")
@@ -993,7 +719,7 @@ def api_chat():
     messages.extend(safe_history)
     messages.append({"role": "user", "content": message})
 
-    reply, error = call_gemini_chat(messages)
+    reply, error = call_chat_api(messages)
 
     if error:
         if SHOW_AI_ERRORS or app.debug:
@@ -1019,25 +745,16 @@ def api_activity():
         days = 365
     days = max(7, min(days, 730))
     cutoff = datetime.now(timezone.utc).date() - timedelta(days=days - 1)
-    counts = {}
-
-    with get_db() as conn:
-        activity_rows = conn.execute(
-            "SELECT day, count FROM activity WHERE user_id = ? AND day >= ?",
-            (session["user_id"], cutoff.isoformat()),
-        ).fetchall()
-
-        for row in activity_rows:
-            counts[row["day"]] = row["count"]
-
-        entry_rows = conn.execute(
-            "SELECT updated_at FROM entries WHERE user_id = ? AND updated_at >= ?",
-            (session["user_id"], cutoff.isoformat()),
-        ).fetchall()
-
+    
+    counts = firebase_db.get_activity_counts(session["user_id"], days)
+    
+    # Also fetch individual entries just in case they don't have explicit activity rows
+    entry_rows = firebase_db.get_entries(session["user_id"], "diary")
+    entry_rows += firebase_db.get_entries(session["user_id"], "story")
+    
     entry_counts = {}
     for row in entry_rows:
-        updated_at = row["updated_at"]
+        updated_at = row.get("updated_at")
         if not updated_at:
             continue
         try:
@@ -1045,13 +762,41 @@ def api_activity():
         except ValueError:
             continue
         day = dt.date()
+        if day < cutoff:
+            continue
         key = day.isoformat()
         if key not in counts:
             entry_counts[key] = entry_counts.get(key, 0) + 1
 
     counts.update(entry_counts)
+    
+    total_pages = len(entry_rows)
+    active_days = len(counts)
+    
+    # Calculate streak
+    streak = 0
+    current_date = datetime.now(timezone.utc).date()
+    # Check if they have activity today or yesterday. If yes, streak is alive.
+    if current_date.isoformat() in counts or (current_date - timedelta(days=1)).isoformat() in counts:
+        check_date = current_date
+        # Count backwards
+        while True:
+            if check_date.isoformat() in counts:
+                streak += 1
+                check_date -= timedelta(days=1)
+            elif check_date == current_date:
+                # If no activity today, try yesterday
+                check_date -= timedelta(days=1)
+            else:
+                break
 
-    return jsonify({"days": days, "counts": counts})
+    return jsonify({
+        "days": days,
+        "counts": counts,
+        "total_pages": total_pages,
+        "streak": streak,
+        "active_days": active_days
+    })
 
 
 @app.route("/api/story/image", methods=["POST"])
@@ -1059,36 +804,19 @@ def api_activity():
 def api_story_image():
     data = request.get_json(force=True)
     prompt = (data.get("prompt") or "").strip() or "A quiet story moment"
-    image_url, error = call_openai_image(prompt)
+    image_url, error = call_hf_image(prompt)
     if image_url:
-        return jsonify({"image_url": image_url, "ai": True, "provider": "openai"})
+        return jsonify({"image_url": image_url, "ai": True, "provider": "huggingface"})
     message = "Image generation failed."
     if error:
         message = error
-    return jsonify({"error": error or "image_failed", "message": message, "provider": "openai"}), 502
-
-
-@app.route("/reset")
-def reset_database():
-    # Dev-only reset. Guarded to avoid accidental wipe in any deployed environment.
-    allow_reset = (
-        app.debug
-        and os.environ.get("ENABLE_DEV_RESET", "").strip() == "1"
-        and request.remote_addr in {"127.0.0.1", "::1"}
-        and request.args.get("confirm") == "1"
-    )
-    if not allow_reset:
-        return "Reset not allowed.", 403
-    with get_db() as conn:
-        conn.execute("DELETE FROM entries")
-        conn.execute("DELETE FROM activity")
-        conn.execute("DELETE FROM email_verifications")
-        conn.execute("DELETE FROM password_resets")
-        conn.execute("DELETE FROM users")
-    session.clear()
-    return "All user data deleted. <a href='/'>Go Home</a>"
+    return jsonify({"error": error or "image_failed", "message": message, "provider": "huggingface"}), 502
 
 
 if __name__ == "__main__":
-    init_db()
-    app.run(debug=True)
+    debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=debug_mode, host="0.0.0.0", port=port)
+
+
+
