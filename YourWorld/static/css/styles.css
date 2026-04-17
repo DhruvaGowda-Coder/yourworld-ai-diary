@@ -5282,27 +5282,6 @@ body[data-theme="space"] .mobile-drawer { background: rgba(12, 10, 24, 0.94); }
 body[data-theme="garden"] .mobile-drawer { background: rgba(12, 24, 18, 0.94); }
 body[data-theme="cherry"] .mobile-drawer { background: rgba(24, 10, 14, 0.94); }
 
-/* ─── Custom Heatmap Tooltips ─── */
-.heatmap-cell {
-  position: relative;
-}
-
-.heatmap-cell[title]:hover::after {
-  content: attr(title);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 8px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.85);
-  color: #fff;
-  font-family: var(--ui-font);
-  font-size: 0.7rem;
-  white-space: nowrap;
-  z-index: 10;
-  pointer-events: none;
-}
 
 /* ─── Enhanced Save Status Dot ─── */
 @keyframes savePulse {
@@ -5353,3 +5332,50 @@ body[data-theme="cherry"] .mobile-drawer { background: rgba(24, 10, 14, 0.94); }
   padding-left: 17px;
 }
 
+/* ==========================================================================
+   UI & Animation Enhancements (Smoothness & Tactile UI updates)
+   ========================================================================== */
+
+/* 1. Global Interactive Elements Smoothing */
+.btn, .tool-btn, .nav-link, .home-card, .feature-card, .theme-tile, .chat-launch, .entry-item,
+button, a {
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1) !important;
+}
+
+/* 2. Tactile Hover states & Glassmorphism hints */
+.btn:hover, .home-card:hover, .feature-card:hover, .theme-tile:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.15) !important;
+}
+
+.btn:active, .home-card:active, .feature-card:active, .theme-tile:active, .tool-btn:active, .chat-launch:active {
+  transform: translateY(0) scale(0.98) !important;
+}
+
+/* 3. Inputs & Textareas Focus Glows */
+textarea:focus, input:focus, .page-title:focus, .page-content:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--theme-accent-soft), 0 0 12px var(--theme-accent-soft-2) !important;
+  transition: box-shadow 0.3s cubic-bezier(0.25, 1, 0.5, 1) !important;
+}
+.page-title:focus, .page-content:focus {
+  box-shadow: none !important; /* Keep editor clean */
+}
+
+/* 4. Glassmorphism for floating panels */
+.chat-panel, .auth-panel, .mobile-drawer {
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  background-color: var(--theme-panel-bg) !important;
+}
+
+/* 5. Snappier existing keyframes over-ride */
+@keyframes page-enter {
+  0% { opacity: 0; transform: translateY(15px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dropdown-enter {
+  0% { opacity: 0; transform: translateY(-10px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}

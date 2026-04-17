@@ -41,6 +41,9 @@ def get_user_theme(user_id):
 def set_user_theme(user_id, theme):
     get_db().collection('users').document(str(user_id)).set({'theme': theme}, merge=True)
 
+def set_user_custom_audio(user_id, theme, audio_url):
+    get_db().collection('users').document(str(user_id)).set({f'audio_{theme}': audio_url}, merge=True)
+
 def get_current_user_data(user_id):
     if not user_id: return None
     doc = get_db().collection('users').document(str(user_id)).get()

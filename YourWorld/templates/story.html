@@ -13,7 +13,11 @@
     <div class="story-image-panel">
       <h4>Scene Illustration</h4>
       <input id="imagePrompt" type="text" placeholder="Describe the scene..." />
-      <button class="btn primary" id="imageGenBtn" type="button">Generate Image</button>
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <button class="btn primary" id="imageGenBtn" type="button" style="flex: 1;">Generate AI Image</button>
+        <button class="btn ghost" id="imageUploadTriggerBtn" type="button" style="flex: 1;" title="Upload from PC">Upload</button>
+        <input type="file" id="imageUploadInput" accept="image/*" style="display: none;" />
+      </div>
       <div class="image-actions">
         <button class="btn ghost" id="imageViewBtn" type="button" disabled>View Full</button>
         <button class="btn ghost" id="imageDownloadBtn" type="button" disabled>Download PNG</button>

@@ -3511,7 +3511,56 @@ if (workspace) {
     });
   }
 
+  const imageUploadTriggerBtn = document.getElementById('imageUploadTriggerBtn');
+  const imageUploadInput = document.getElementById('imageUploadInput');
+  
+  if (imageUploadTriggerBtn && imageUploadInput) {
+    imageUploadTriggerBtn.addEventListener('click', () => {
+      imageUploadInput.click();
+    });
+    
+    imageUploadInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      imageUploadTriggerBtn.disabled = true;
+      const originalText = imageUploadTriggerBtn.textContent;
+      imageUploadTriggerBtn.textContent = '...';
+      
+      try {
+        const response = await fetch('/api/upload/image', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrfToken },
+          body: formData
+        });
+        const data = await response.json();
+        
+        if (!response.ok) {
+          setStatus(`Upload failed: ${data.error || 'Unknown error'}`);
+          return;
+        }
+        
+        currentImageUrl = data.url;
+        imageAttached = false;
+        renderImagePreview();
+        updateImageActions();
+        updatePageIllustration();
+        markDirty();
+      } catch (err) {
+        setStatus('Upload failed. Try again.');
+      } finally {
+        imageUploadTriggerBtn.disabled = false;
+        imageUploadTriggerBtn.textContent = originalText;
+        imageUploadInput.value = '';
+      }
+    });
+  }
+
   if (imageViewBtn && imageModal && imageModalImg) {
+
     imageViewBtn.addEventListener('click', () => {
       if (!currentImageUrl) return;
       imageModalImg.src = currentImageUrl;
@@ -4137,5 +4186,87 @@ document.addEventListener('DOMContentLoaded', () => {
       link.classList.add('active');
     }
   });
+});
+
+// --- Ambient Audio Management (continuous across pages via localStorage) ---
+document.addEventListener('DOMContentLoaded', () => {
+  const audioPlayer = document.getElementById('ambientAudioPlayer');
+  const audioSource = document.getElementById('ambientAudioSource');
+  const toggleBtn = document.getElementById('audioToggleBtn');
+  
+  if (!audioPlayer || !toggleBtn) return;
+  
+  // Read persisted state from localStorage
+  const savedEnabled = localStorage.getItem('yw_sound_enabled') === 'true';
+  const savedTime = parseFloat(localStorage.getItem('yw_sound_time') || '0');
+  let isPlaying = savedEnabled;
+  
+  toggleBtn.textContent = isPlaying ? '🔊 Sound' : '🔇 Sound';
+  
+  const loadAndPlay = (theme, seekTo) => {
+    let src = '';
+    if (window.UserAudio && window.UserAudio[theme]) {
+      src = window.UserAudio[theme];
+    } else {
+      src = `/static/audio/${theme}.wav`;
+    }
+    
+    audioSource.src = src;
+    audioPlayer.load();
+    
+    if (isPlaying) {
+      audioPlayer.addEventListener('canplay', function onCanPlay() {
+        audioPlayer.removeEventListener('canplay', onCanPlay);
+        if (seekTo > 0 && seekTo < audioPlayer.duration) {
+          audioPlayer.currentTime = seekTo;
+        }
+        audioPlayer.play().catch(e => {
+          console.warn('Autoplay prevented — click Sound to start', e);
+          toggleBtn.textContent = '🔇 Sound';
+        });
+      });
+    }
+  };
+  
+  // Save position continuously so we never lose more than ~250ms
+  setInterval(() => {
+    if (isPlaying && audioPlayer && !audioPlayer.paused) {
+      localStorage.setItem('yw_sound_time', String(audioPlayer.currentTime));
+    }
+  }, 250);
+  
+  // Also save right before leaving the page
+  window.addEventListener('beforeunload', () => {
+    if (isPlaying && audioPlayer) {
+      localStorage.setItem('yw_sound_time', String(audioPlayer.currentTime));
+    }
+  });
+  
+  toggleBtn.addEventListener('click', () => {
+    if (isPlaying) {
+      audioPlayer.pause();
+      isPlaying = false;
+      localStorage.setItem('yw_sound_enabled', 'false');
+      localStorage.setItem('yw_sound_time', '0');
+      toggleBtn.textContent = '🔇 Sound';
+    } else {
+      audioPlayer.play().then(() => {
+        isPlaying = true;
+        localStorage.setItem('yw_sound_enabled', 'true');
+        toggleBtn.textContent = '🔊 Sound';
+      }).catch(err => console.warn(err));
+    }
+  });
+
+  // Theme observer
+  window.addEventListener('yw:themechange', (event) => {
+    const nextTheme = event && event.detail ? event.detail.theme : (typeof activeTheme !== 'undefined' ? activeTheme : 'campfire');
+    // Theme changed — restart from beginning
+    localStorage.setItem('yw_sound_time', '0');
+    loadAndPlay(nextTheme, 0);
+  });
+  
+  // Initialize — load track and seek to saved position
+  loadAndPlay(typeof activeTheme !== 'undefined' ? activeTheme : 'campfire', savedTime);
 });
 

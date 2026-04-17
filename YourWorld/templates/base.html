@@ -117,6 +117,7 @@
       </div>
       <!-- Footer links removed as requested -->
       <div class="footer-meta">
+        <button id="audioToggleBtn" class="btn ghost" style="padding: 4px 8px; font-size: 0.85rem;" aria-label="Toggle ambient sound">🔊 Sound</button>
         <span class="footer-theme-indicator">
           <span class="footer-theme-dot"></span>
           {{ current_theme or 'campfire' | title }}
@@ -124,6 +125,10 @@
       </div>
     </div>
   </footer>
+
+  <audio id="ambientAudioPlayer" loop>
+      <source id="ambientAudioSource" src="" type="audio/mpeg">
+  </audio>
 
   <div class="chat-launch" id="chatLaunch" aria-label="Open Aura">
     <span>Aura</span>
@@ -147,6 +152,23 @@
     <button class="chat-resize-handle" id="chatResizeHandle" type="button" aria-label="Resize chat panel"></button>
   </div>
 
+  <script>
+    window.UserAudio = {
+      {% if current_user %}
+        campfire: "{{ current_user.get('audio_campfire', '') }}",
+        water: "{{ current_user.get('audio_water', '') }}",
+        wind: "{{ current_user.get('audio_wind', '') }}",
+        earth: "{{ current_user.get('audio_earth', '') }}",
+        ice: "{{ current_user.get('audio_ice', '') }}",
+        storm: "{{ current_user.get('audio_storm', '') }}",
+        space: "{{ current_user.get('audio_space', '') }}",
+        garden: "{{ current_user.get('audio_garden', '') }}",
+        cherry: "{{ current_user.get('audio_cherry', '') }}"
+      {% else %}
+        campfire: "", water: "", wind: "", earth: "", ice: "", storm: "", space: "", garden: "", cherry: ""
+      {% endif %}
+    };
+  </script>
   <script src="{{ url_for('static', filename='js/app.js', v='20260416a') }}" defer></script>
   <script>
     /* Mobile drawer toggle */

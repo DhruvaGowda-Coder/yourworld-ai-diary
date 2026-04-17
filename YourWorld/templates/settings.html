@@ -35,5 +35,85 @@
       <button class="btn primary" type="submit">Apply Theme</button>
     </form>
   </div>
+    <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 32px 0;">
+    <h3 class="settings-subtitle">🎵 Theme Audio</h3>
+    <p class="settings-theme-hint">Customize the ambient song for your currently selected theme. You must select a theme and Apply it first before changing its song.</p>
+    
+    <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <span>Current Theme: <strong>{{ current_theme or 'campfire' | title }}</strong></span>
+        <button class="btn ghost" id="audioUploadTriggerBtn" type="button">Upload Custom Song</button>
+        <input type="file" id="audioUploadInput" accept="audio/*" style="display: none;" />
+      </div>
+      <span id="audioUploadStatus" style="font-size: 0.85em; color: var(--text-2);">
+        {% if current_user and current_user.get('audio_' ~ (current_theme or 'campfire')) %}
+          ✅ Custom audio uploaded and active.
+        {% else %}
+          Using default ambient sound.
+        {% endif %}
+      </span>
+    </div>
+  </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const audioUploadTriggerBtn = document.getElementById('audioUploadTriggerBtn');
+  const audioUploadInput = document.getElementById('audioUploadInput');
+  const audioUploadStatus = document.getElementById('audioUploadStatus');
+  const currentTheme = "{{ current_theme or 'campfire' }}";
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+  
+  if (audioUploadTriggerBtn && audioUploadInput) {
+    audioUploadTriggerBtn.addEventListener('click', () => {
+      audioUploadInput.click();
+    });
+    
+    audioUploadInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      audioUploadTriggerBtn.disabled = true;
+      audioUploadStatus.textContent = 'Uploading...';
+      
+      try {
+        const uploadRes = await fetch('/api/upload/audio', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrfToken },
+          body: formData
+        });
+        const uploadData = await uploadRes.json();
+        
+        if (!uploadRes.ok) {
+          audioUploadStatus.textContent = `Upload failed: ${uploadData.error || 'Unknown error'}`;
+          audioUploadTriggerBtn.disabled = false;
+          return;
+        }
+        
+        // Save mapping to user data
+        const saveRes = await fetch('/api/settings/audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({ theme: currentTheme, url: uploadData.url })
+        });
+        
+        if (saveRes.ok) {
+          audioUploadStatus.textContent = '✅ Custom audio successfully applied! Refresh to hear it.';
+          if (window.UserAudio) window.UserAudio[currentTheme] = uploadData.url;
+        } else {
+          audioUploadStatus.textContent = 'Failed to save preference.';
+        }
+      } catch (err) {
+        audioUploadStatus.textContent = 'Upload failed due to connection error.';
+      } finally {
+        audioUploadTriggerBtn.disabled = false;
+        audioUploadInput.value = '';
+      }
+    });
+  }
+});
+</script>
 {% endblock %}

@@ -1,0 +1,29 @@
+# Secrets & credentials
+.env
+firebase-adminsdk.json
+
+# Legacy database
+database.sqlite
+data/
+
+# User uploads (served from static but not committed)
+static/uploads/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# Dev / utility scripts
+generate_audio.py
+test_audio.py
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

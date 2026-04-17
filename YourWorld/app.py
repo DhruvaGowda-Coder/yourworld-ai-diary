@@ -7,15 +7,16 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from html import unescape
 import hashlib
+from werkzeug.utils import secure_filename
 
 import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for, g
 from flask_wtf.csrf import CSRFProtect
+import firebase_db
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(APP_DIR, ".env"))
-DB_PATH = os.environ.get("DB_PATH_OVERRIDE") or os.path.join(APP_DIR, "data", "app.db")
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 GROQ_CHAT_MODEL = os.environ.get("GROQ_CHAT_MODEL", "llama-3.1-8b-instant").strip()
@@ -36,7 +37,11 @@ FIREBASE_WEB_CONFIG = {
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("DIARY_SECRET_KEY") or secrets.token_hex(32)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload
 csrf = CSRFProtect(app)
+
+ALLOWED_IMAGE_EXT = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'}
+ALLOWED_AUDIO_EXT = {'.mp3', '.wav', '.ogg', '.m4a', '.flac'}
 
 THEME_ORDER = [
     "campfire",
@@ -250,7 +255,6 @@ def index():
 
 
 
-import firebase_db
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
@@ -367,6 +371,56 @@ def settings_theme():
 @login_required
 def profile():
     return render_template("profile.html")
+
+
+@app.route("/api/upload/<file_type>", methods=["POST"])
+@login_required
+def api_upload(file_type):
+    if file_type not in ("image", "audio"):
+        return jsonify({"error": "Invalid file type"}), 400
+        
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+        
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+        
+    if file:
+        filename = secure_filename(file.filename)
+        ext = os.path.splitext(filename)[1].lower()
+        
+        # Validate file extension
+        allowed = ALLOWED_IMAGE_EXT if file_type == "image" else ALLOWED_AUDIO_EXT
+        if ext not in allowed:
+            return jsonify({"error": f"File type {ext} not allowed"}), 400
+        
+        unique_name = f"{secrets.token_hex(8)}_{filename}"
+        
+        upload_folder = os.path.join(APP_DIR, "static", "uploads", file_type)
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        file_path = os.path.join(upload_folder, unique_name)
+        file.save(file_path)
+        
+        file_url = url_for("static", filename=f"uploads/{file_type}/{unique_name}")
+        return jsonify({"url": file_url})
+    
+    return jsonify({"error": "File upload failed"}), 500
+
+
+@app.route("/api/settings/audio", methods=["POST"])
+@login_required
+def api_settings_audio():
+    data = request.get_json()
+    if not data or "theme" not in data or "url" not in data:
+        return jsonify({"error": "Bad request"}), 400
+        
+    theme = data["theme"]
+    audio_url = data["url"]
+    
+    firebase_db.set_user_custom_audio(session["user_id"], theme, audio_url)
+    return jsonify({"success": True})
 
 
 @app.route("/api/entries")
