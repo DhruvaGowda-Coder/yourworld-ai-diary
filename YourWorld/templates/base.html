@@ -101,7 +101,7 @@
       {% endif %}
     </div>
     <div class="mobile-drawer-footer">
-      <span class="mobile-theme-badge">Theme: {{ current_theme or 'campfire' | title }}</span>
+      <span class="mobile-theme-badge">Theme: {{ (current_theme or 'campfire') | title }}</span>
     </div>
   </nav>
 
@@ -121,7 +121,7 @@
         <button id="audioToggleBtn" class="btn ghost" style="padding: 4px 8px; font-size: 0.85rem;" aria-label="Toggle ambient sound">🔊 Sound</button>
         <span class="footer-theme-indicator">
           <span class="footer-theme-dot"></span>
-          {{ current_theme or 'campfire' | title }}
+          {{ (current_theme or 'campfire') | title }}
         </span>
       </div>
     </div>
@@ -155,7 +155,7 @@
     // Build UserAudio from server data, with localStorage fallback for guests
     (function() {
       var themes = ['campfire','water','wind','earth','ice','storm','space','garden','cherry'];
-      var user = {% if current_user %}{{ current_user | tojson }}{% else %}null{% endif %};
+      var user = {{ current_user | tojson | safe if current_user else 'null' }};
       
       var serverAudio = {};
       var serverLists = {};
