@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 CRED_PATH = os.path.join(APP_DIR, "firebase-adminsdk.json")
-STORAGE_BUCKET = os.environ.get("FIREBASE_STORAGE_BUCKET", "diary-13644.firebasestorage.app")
+STORAGE_BUCKET = os.environ.get("FIREBASE_STORAGE_BUCKET", "diary-13644.appspot.com")
 
 if not firebase_admin._apps:
     try:
