@@ -402,16 +402,16 @@ def api_upload(file_type):
         
         unique_name = f"{secrets.token_hex(8)}_{filename}"
         
-        # Use Firebase Storage instead of local filesystem
+        # Local fallback since Firebase requires billing account
         try:
-            file_url = firebase_db.upload_to_storage(
-                file, 
-                f"uploads/{file_type}/{unique_name}",
-                file.content_type
-            )
+            upload_dir = os.path.join(APP_DIR, "static", "uploads", file_type)
+            os.makedirs(upload_dir, exist_ok=True)
+            file_path = os.path.join(upload_dir, unique_name)
+            file.save(file_path)
+            file_url = url_for("static", filename=f"uploads/{file_type}/{unique_name}")
             return jsonify({"url": file_url, "name": filename})
         except Exception as e:
-            return jsonify({"error": f"Cloud upload failed: {str(e)}"}), 500
+            return jsonify({"error": f"Local upload failed: {str(e)}"}), 500
     
     return jsonify({"error": "File upload failed"}), 500
 
