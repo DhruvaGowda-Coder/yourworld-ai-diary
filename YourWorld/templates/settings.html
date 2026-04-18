@@ -46,7 +46,6 @@
       <div id="audioUploadStatus" style="margin-top: 16px; font-size: 0.85em; color: var(--text-2); min-height: 1.2em; text-align: center;"></div>
       <input type="file" id="audioUploadInput" accept="audio/*" style="display: none;" />
     </div>
-  </div>
 </section>
 
 <style>
@@ -296,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmBtn.className = 'btn primary';
             confirmBtn.style.padding = '2px 8px';
             confirmBtn.style.fontSize = '0.7em';
-            confirmBtn.style.background = '#ff5f19'; // More aggressive orange/red
+            confirmBtn.style.background = 'var(--theme-accent-2)';
             confirmBtn.textContent = 'Confirm?';
             confirmBtn.onclick = (e) => {
               e.stopPropagation();
@@ -333,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
               resetBtn.className = 'btn ghost';
               resetBtn.style.padding = '2px 8px';
               resetBtn.style.fontSize = '0.7em';
-              resetBtn.style.color = '#ffb7c5';
+              resetBtn.style.color = 'var(--theme-accent)';
               resetBtn.textContent = 'Revert to Default';
               resetBtn.onclick = (e) => {
                 e.stopPropagation();
