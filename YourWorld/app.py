@@ -254,6 +254,11 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/favicon.ico")
+def favicon():
+    return redirect(url_for("static", filename="img/yourworld-symbol.svg"))
+
+
 
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
@@ -397,14 +402,16 @@ def api_upload(file_type):
         
         unique_name = f"{secrets.token_hex(8)}_{filename}"
         
-        upload_folder = os.path.join(APP_DIR, "static", "uploads", file_type)
-        os.makedirs(upload_folder, exist_ok=True)
-        
-        file_path = os.path.join(upload_folder, unique_name)
-        file.save(file_path)
-        
-        file_url = url_for("static", filename=f"uploads/{file_type}/{unique_name}")
-        return jsonify({"url": file_url})
+        # Use Firebase Storage instead of local filesystem
+        try:
+            file_url = firebase_db.upload_to_storage(
+                file, 
+                f"uploads/{file_type}/{unique_name}",
+                file.content_type
+            )
+            return jsonify({"url": file_url, "name": filename})
+        except Exception as e:
+            return jsonify({"error": f"Cloud upload failed: {str(e)}"}), 500
     
     return jsonify({"error": "File upload failed"}), 500
 
@@ -418,8 +425,22 @@ def api_settings_audio():
         
     theme = data["theme"]
     audio_url = data["url"]
+    filename = data.get("name") # Optional filename for adding to list
     
-    firebase_db.set_user_custom_audio(session["user_id"], theme, audio_url)
+    firebase_db.set_user_custom_audio(session["user_id"], theme, audio_url, filename)
+    return jsonify({"success": True})
+
+@app.route("/api/settings/audio/delete", methods=["POST"])
+@login_required
+def api_settings_audio_delete():
+    data = request.get_json()
+    if not data or "theme" not in data or "url" not in data:
+        return jsonify({"error": "Bad request"}), 400
+        
+    theme = data["theme"]
+    audio_url = data["url"]
+    
+    firebase_db.remove_custom_song(session["user_id"], theme, audio_url)
     return jsonify({"success": True})
 
 
@@ -870,7 +891,7 @@ def api_story_image():
 if __name__ == "__main__":
     debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
     port = int(os.environ.get("PORT", 5000))
-    app.run(debug=debug_mode, host="0.0.0.0", port=port)
+    app.run(debug=debug_mode, host="127.0.0.1", port=port)
 
 
 

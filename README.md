@@ -20,11 +20,11 @@ YourWorld is a Flask-based writing web app focused on immersive journaling and s
 - Theme, entries, sharing, and activity all work in this model.
 
 ## Tech Stack
-- Backend: Python, Flask, SQLite
+- Backend: Python, Flask, Firebase (Firestore + Storage)
 - Frontend: Jinja templates, Vanilla JavaScript, CSS
 - AI Integrations:
-  - Gemini-compatible chat endpoint for Aura
-  - OpenAI Images endpoint for story illustrations
+  - Groq API for Aura Chat (Llama 3.1)
+  - Hugging Face Inference for Story Illustrations
 
 ## Project Structure
 ```text
@@ -73,13 +73,16 @@ Set these in `YourWorld/.env`.
 | Variable | Default | Required | Purpose |
 |---|---|---|---|
 | `DIARY_SECRET_KEY` | `dev-secret-change-me` | Yes (production) | Flask session signing key |
+| `FIREBASE_ADMIN_CREDENTIALS_JSON` | empty | Yes | JSON string of Firebase Service Account |
+| `FIREBASE_STORAGE_BUCKET` | empty | Yes | Firebase Storage bucket name |
 | `GROQ_API_KEY` | empty | Optional | Enables Aura AI responses via Groq |
 | `GROQ_CHAT_MODEL` | `llama-3.1-8b-instant` | Optional | Groq chat model |
 | `HUGGINGFACE_API_KEY` | empty | Optional | Enables story image generation via Hugging Face |
-| `HUGGINGFACE_IMAGE_MODEL` | `stabilityai/stable-diffusion-xl-base-1.0` | Optional | Hugging Face image model |
+| `HUGGINGFACE_IMAGE_MODEL` | `black-forest-labs/FLUX.1-schnell` | Optional | Hugging Face image model |
+| `GOOGLE_CLIENT_ID` | empty | Optional | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | empty | Optional | Google OAuth client secret |
 | `SHOW_AI_ERRORS` | `0` | Optional | Include AI error detail in responses |
-| `SHOW_DB_ERRORS` | `0` | Optional | Include DB error detail in UI/API during debug |
-| `ENABLE_DEV_RESET` | empty | Optional | Allows `/reset?confirm=1` in local debug mode |
+| `FLASK_DEBUG` | `1` | Optional | Set to `0` in production |
 
 Notes:
 - If AI keys are missing, chat and image endpoints fail gracefully.
@@ -108,14 +111,10 @@ Legacy auth URLs currently redirect to home:
 - `POST /api/story/image`
 
 ## Data Model
-SQLite database: `YourWorld/data/app.db`
-
-Primary tables:
-- `users`
-- `entries`
-- `activity`
-- `email_verifications` (legacy)
-- `password_resets` (legacy)
+Cloud Firestore (NoSQL):
+- `users`: Profiles and theme preferences
+- `entries`: Diary and story pages
+- `activity`: Writing consistency tracking
 
 ## Production Notes
 - Use a strong `DIARY_SECRET_KEY`.

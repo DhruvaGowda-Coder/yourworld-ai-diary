@@ -3289,6 +3289,7 @@ if (workspace) {
     return saveInFlight;
   };
 
+
   const loadEntries = async () => {
     const response = await fetch(`/api/entries?type=${entryType}`);
     if (!response.ok) return;
@@ -3315,26 +3316,44 @@ if (workspace) {
   if (deleteEntryBtn) {
     deleteEntryBtn.addEventListener('click', async () => {
       const targetId = getActiveEntryId();
-      if (!targetId) return;
+      if (!targetId) {
+        console.warn('Delete attempt without targetId');
+        return;
+      }
+      
       const confirmed = window.confirm('Delete this page?');
       if (!confirmed) return;
+
+      setStatus('Deleting...');
       try {
-        const response = await fetch(`/api/entry/${targetId}`, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } });
-        if (!response.ok) throw new Error('Delete failed');
-        const removeIndex = entries.findIndex((entry) => entry.id === targetId);
-        if (removeIndex >= 0) entries.splice(removeIndex, 1);
+        const resp = await fetch(`/api/entry/${targetId}`, { 
+          method: 'DELETE', 
+          headers: { 'X-CSRFToken': csrfToken } 
+        });
+        if (!resp.ok) throw new Error('Delete failed');
+
+        const indexToRemove = entries.findIndex(e => e.id === targetId);
+        if (indexToRemove >= 0) {
+          entries.splice(indexToRemove, 1);
+        }
+
         currentEntryId = null;
         imageAttached = false;
         shareCode = null;
         updateShareUI();
+
         if (entries.length > 0) {
-          const nextIndex = Math.min(removeIndex, entries.length - 1);
+          const nextIndex = Math.min(indexToRemove, entries.length - 1);
           navigateToIndex(nextIndex);
         } else {
           createBlank();
         }
+        
         setStatus('Deleted');
+        renderEntries();
+        updatePageCount();
       } catch (err) {
+        console.error('Delete error:', err);
         setStatus('Delete failed');
       }
     });
@@ -3738,6 +3757,43 @@ if (workspace) {
 
   applyEditorStyle();
   loadEntries();
+
+  // Keyboard Shortcuts
+  window.addEventListener('keydown', (e) => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    const key = e.key.toLowerCase();
+    
+    // Formatting (B, I, U)
+    if (key === 'b') {
+      if (formatBoldBtn) { e.preventDefault(); formatBoldBtn.click(); }
+    } else if (key === 'i') {
+      if (formatItalicBtn) { e.preventDefault(); formatItalicBtn.click(); }
+    } else if (key === 'u') {
+      if (formatUnderlineBtn) { e.preventDefault(); formatUnderlineBtn.click(); }
+    }
+    // Save (S)
+    else if (key === 's') {
+      if (manualSaveBtn) { e.preventDefault(); manualSaveBtn.click(); }
+    }
+    // New (N)
+    else if (key === 'n') {
+      if (newEntryBtn) { e.preventDefault(); newEntryBtn.click(); }
+    }
+    // Delete (D)
+    else if (key === 'd') {
+      if (deleteEntryBtn) { e.preventDefault(); deleteEntryBtn.click(); }
+    }
+    // Chat (K)
+    else if (key === 'k') {
+      if (chatLaunch) { e.preventDefault(); chatLaunch.click(); }
+    }
+    // Navigation (Left/Right, [, ])
+    else if (key === 'arrowleft' || key === '[') {
+      if (prevBtn) { e.preventDefault(); prevBtn.click(); }
+    } else if (key === 'arrowright' || key === ']') {
+      if (nextBtn) { e.preventDefault(); nextBtn.click(); }
+    }
+  });
 }
 
 const themeForm = document.getElementById('themeForm');
@@ -4191,7 +4247,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- Ambient Audio Management (continuous across pages via localStorage) ---
 document.addEventListener('DOMContentLoaded', () => {
   const audioPlayer = document.getElementById('ambientAudioPlayer');
-  const audioSource = document.getElementById('ambientAudioSource');
   const toggleBtn = document.getElementById('audioToggleBtn');
   
   if (!audioPlayer || !toggleBtn) return;
@@ -4203,28 +4258,39 @@ document.addEventListener('DOMContentLoaded', () => {
   
   toggleBtn.textContent = isPlaying ? '🔊 Sound' : '🔇 Sound';
   
-  const loadAndPlay = (theme, seekTo) => {
-    let src = '';
+  const getAudioSrc = (theme) => {
     if (window.UserAudio && window.UserAudio[theme]) {
-      src = window.UserAudio[theme];
-    } else {
-      src = `/static/audio/${theme}.wav`;
+      return window.UserAudio[theme];
     }
+    return `/static/audio/${theme}.wav`;
+  };
+
+  const loadAndPlay = (theme, seekTo) => {
+    const src = getAudioSrc(theme);
     
-    audioSource.src = src;
+    // Explicitly stop and clear before switching to avoid layering or carry-over
+    audioPlayer.pause();
+    audioPlayer.src = "";
     audioPlayer.load();
     
+    // Set new src
+    audioPlayer.src = src;
+    
     if (isPlaying) {
-      audioPlayer.addEventListener('canplay', function onCanPlay() {
+      const onCanPlay = () => {
         audioPlayer.removeEventListener('canplay', onCanPlay);
-        if (seekTo > 0 && seekTo < audioPlayer.duration) {
+        if (seekTo > 0 && isFinite(audioPlayer.duration) && seekTo < audioPlayer.duration) {
           audioPlayer.currentTime = seekTo;
         }
         audioPlayer.play().catch(e => {
           console.warn('Autoplay prevented — click Sound to start', e);
+          isPlaying = false;
           toggleBtn.textContent = '🔇 Sound';
+          toggleBtn.classList.add('pulse-highlight'); // Visual hint
         });
-      });
+      };
+      audioPlayer.addEventListener('canplay', onCanPlay);
+      audioPlayer.load();
     }
   };
   
@@ -4250,11 +4316,20 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem('yw_sound_time', '0');
       toggleBtn.textContent = '🔇 Sound';
     } else {
+      // If no src is loaded yet, load the current theme
+      if (!audioPlayer.src || audioPlayer.src === window.location.href) {
+        const curTheme = typeof activeTheme !== 'undefined' ? activeTheme : 'campfire';
+        audioPlayer.src = getAudioSrc(curTheme);
+      }
       audioPlayer.play().then(() => {
         isPlaying = true;
         localStorage.setItem('yw_sound_enabled', 'true');
         toggleBtn.textContent = '🔊 Sound';
-      }).catch(err => console.warn(err));
+        toggleBtn.classList.remove('pulse-highlight');
+      }).catch(err => {
+        console.warn(err);
+        toggleBtn.classList.add('pulse-highlight');
+      });
     }
   });
 
@@ -4265,6 +4340,39 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('yw_sound_time', '0');
     loadAndPlay(nextTheme, 0);
   });
+
+  // Expose a global function so the settings page can reload audio after uploading a custom song
+  window.reloadThemeAudio = (theme, url) => {
+    if (url && window.UserAudio) {
+      window.UserAudio[theme] = url;
+      // Also persist to localStorage for guest users
+      try {
+        const stored = JSON.parse(localStorage.getItem('yw_custom_audio') || '{}');
+        stored[theme] = url;
+        localStorage.setItem('yw_custom_audio', JSON.stringify(stored));
+      } catch(e) {}
+    }
+    isPlaying = true;
+    localStorage.setItem('yw_sound_enabled', 'true');
+    toggleBtn.textContent = '🔊 Sound';
+    loadAndPlay(theme, 0);
+  };
+
+  // Expose a function to remove custom audio for a theme
+  window.removeThemeAudio = (theme) => {
+    if (window.UserAudio) {
+      window.UserAudio[theme] = '';
+    }
+    try {
+      const stored = JSON.parse(localStorage.getItem('yw_custom_audio') || '{}');
+      delete stored[theme];
+      localStorage.setItem('yw_custom_audio', JSON.stringify(stored));
+    } catch(e) {}
+    const curTheme = typeof activeTheme !== 'undefined' ? activeTheme : 'campfire';
+    if (theme === curTheme) {
+      loadAndPlay(theme, 0);
+    }
+  };
   
   // Initialize — load track and seek to saved position
   loadAndPlay(typeof activeTheme !== 'undefined' ? activeTheme : 'campfire', savedTime);

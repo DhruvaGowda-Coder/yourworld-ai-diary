@@ -37,83 +37,397 @@
   </div>
     <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 32px 0;">
     <h3 class="settings-subtitle">🎵 Theme Audio</h3>
-    <p class="settings-theme-hint">Customize the ambient song for your currently selected theme. You must select a theme and Apply it first before changing its song.</p>
+    <p class="settings-theme-hint">Create a custom library for each theme. Upload multiple songs and choose your favorite for the atmosphere.</p>
     
-    <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
-      <div style="display: flex; align-items: center; justify-content: space-between;">
-        <span>Current Theme: <strong>{{ current_theme or 'campfire' | title }}</strong></span>
-        <button class="btn ghost" id="audioUploadTriggerBtn" type="button">Upload Custom Song</button>
-        <input type="file" id="audioUploadInput" accept="audio/*" style="display: none;" />
+    <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; margin-top: 16px;">
+      <div id="themeAudioList" style="display: flex; flex-direction: column; gap: 12px;">
+        <!-- Filled dynamically -->
       </div>
-      <span id="audioUploadStatus" style="font-size: 0.85em; color: var(--text-2);">
-        {% if current_user and current_user.get('audio_' ~ (current_theme or 'campfire')) %}
-          ✅ Custom audio uploaded and active.
-        {% else %}
-          Using default ambient sound.
-        {% endif %}
-      </span>
+      <div id="audioUploadStatus" style="margin-top: 16px; font-size: 0.85em; color: var(--text-2); min-height: 1.2em; text-align: center;"></div>
+      <input type="file" id="audioUploadInput" accept="audio/*" style="display: none;" />
     </div>
   </div>
 </section>
 
+<style>
+  .library-section {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(0,0,0,0.15);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .song-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    font-size: 0.85em;
+  }
+  .song-item.active {
+    border: 1px solid var(--accent-1);
+    background: rgba(255,183,197,0.05); /* Subtle pink for active */
+  }
+  .song-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 12px;
+  }
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const audioUploadTriggerBtn = document.getElementById('audioUploadTriggerBtn');
   const audioUploadInput = document.getElementById('audioUploadInput');
   const audioUploadStatus = document.getElementById('audioUploadStatus');
-  const currentTheme = "{{ current_theme or 'campfire' }}";
+  const themeAudioList = document.getElementById('themeAudioList');
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+  const isGuestUser = {{ 'true' if is_guest_user else 'false' }};
+  let targetThemeForUpload = null;
+  let expandedTheme = null;
   
-  if (audioUploadTriggerBtn && audioUploadInput) {
-    audioUploadTriggerBtn.addEventListener('click', () => {
-      audioUploadInput.click();
-    });
-    
-    audioUploadInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      audioUploadTriggerBtn.disabled = true;
-      audioUploadStatus.textContent = 'Uploading...';
-      
-      try {
-        const uploadRes = await fetch('/api/upload/audio', {
-          method: 'POST',
-          headers: { 'X-CSRFToken': csrfToken },
-          body: formData
-        });
-        const uploadData = await uploadRes.json();
-        
-        if (!uploadRes.ok) {
-          audioUploadStatus.textContent = `Upload failed: ${uploadData.error || 'Unknown error'}`;
-          audioUploadTriggerBtn.disabled = false;
-          return;
-        }
-        
-        // Save mapping to user data
-        const saveRes = await fetch('/api/settings/audio', {
+  const allThemes = [
+    { id: 'campfire', icon: '🔥', name: 'Ember Hearth' },
+    { id: 'water', icon: '🌊', name: 'Tide Whisper' },
+    { id: 'wind', icon: '💨', name: 'Sky Drift' },
+    { id: 'earth', icon: '🌿', name: 'Rootstone' },
+    { id: 'ice', icon: '❄️', name: 'Crystal Frost' },
+    { id: 'storm', icon: '⚡', name: 'Volt Tempest' },
+    { id: 'space', icon: '🌌', name: 'Nebula Orbit' },
+    { id: 'garden', icon: '🌸', name: 'Bloom Haven' },
+    { id: 'cherry', icon: '🌺', name: 'Sakura Drift' }
+  ];
+
+  function saveLocalState() {
+    if (isGuestUser) {
+      localStorage.setItem('yw_custom_audio', JSON.stringify(window.UserAudio));
+      localStorage.setItem('yw_custom_songs', JSON.stringify(window.UserAudioLists));
+    }
+  }
+
+  async function handleSelect(themeId, url) {
+    audioUploadStatus.textContent = `Selecting song for ${themeId}...`;
+    try {
+      if (!isGuestUser) {
+        await fetch('/api/settings/audio', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-          body: JSON.stringify({ theme: currentTheme, url: uploadData.url })
+          body: JSON.stringify({ theme: themeId, url: url })
         });
-        
-        if (saveRes.ok) {
-          audioUploadStatus.textContent = '✅ Custom audio successfully applied! Refresh to hear it.';
-          if (window.UserAudio) window.UserAudio[currentTheme] = uploadData.url;
-        } else {
-          audioUploadStatus.textContent = 'Failed to save preference.';
-        }
-      } catch (err) {
-        audioUploadStatus.textContent = 'Upload failed due to connection error.';
-      } finally {
-        audioUploadTriggerBtn.disabled = false;
-        audioUploadInput.value = '';
       }
+      window.UserAudio[themeId] = url;
+      saveLocalState();
+      
+      if (window.reloadThemeAudio) window.reloadThemeAudio(themeId, url);
+      audioUploadStatus.textContent = `✅ Song selected for ${themeId}.`;
+      renderAudioList();
+    } catch (err) {
+      audioUploadStatus.textContent = 'Selection failed.';
+    }
+  }
+
+  let pendingDeleteUrl = null;
+  
+  async function handleDelete(themeId, url, btn) {
+    if (pendingDeleteUrl !== url) {
+      pendingDeleteUrl = url;
+      renderAudioList();
+      return;
+    }
+    
+    btn.disabled = true;
+    audioUploadStatus.textContent = `Deleting song from ${themeId}...`;
+    try {
+      if (!isGuestUser) {
+        await fetch('/api/settings/audio/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({ theme: themeId, url: url })
+        });
+      }
+      
+      // Update local state lists
+      window.UserAudioLists[themeId] = (window.UserAudioLists[themeId] || []).filter(s => s.url !== url);
+      if (window.UserAudio[themeId] === url) {
+        window.UserAudio[themeId] = "";
+        if (window.removeThemeAudio) window.removeThemeAudio(themeId);
+      }
+      
+      pendingDeleteUrl = null;
+      saveLocalState();
+      audioUploadStatus.textContent = `✅ Song removed from ${themeId}.`;
+      renderAudioList();
+    } catch (err) {
+      audioUploadStatus.textContent = 'Delete failed.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function handleReset(themeId, btn) {
+    btn.disabled = true;
+    audioUploadStatus.textContent = `Resetting ${themeId} to default...`;
+    try {
+      if (!isGuestUser) {
+        await fetch('/api/settings/audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({ theme: themeId, url: "" })
+        });
+      }
+      window.UserAudio[themeId] = "";
+      saveLocalState();
+      
+      if (window.removeThemeAudio) window.removeThemeAudio(themeId);
+      audioUploadStatus.textContent = `✅ ${themeId} reset to default ambient sounds.`;
+      renderAudioList();
+    } catch (err) {
+      audioUploadStatus.textContent = 'Reset failed.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function triggerUpload(themeId) {
+    targetThemeForUpload = themeId;
+    audioUploadInput.click();
+  }
+
+  function renderAudioList() {
+    if (!themeAudioList || !window.UserAudio || !window.UserAudioLists) return;
+    themeAudioList.innerHTML = '';
+    
+    allThemes.forEach(t => {
+      const activeUrl = window.UserAudio[t.id];
+      const songList = window.UserAudioLists[t.id] || [];
+      const isExpanded = expandedTheme === t.id;
+
+      const container = document.createElement('div');
+      container.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+
+      const row = document.createElement('div');
+      row.className = 'theme-audio-row';
+      row.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 10px 14px; border-radius: 8px; cursor: pointer;';
+      row.onclick = (e) => {
+        // If they click a button or something within a button, don't toggle here
+        if (e.target.closest('button')) return;
+
+        expandedTheme = isExpanded ? null : t.id;
+        renderAudioList();
+      };
+      
+      const leftPart = document.createElement('div');
+      leftPart.style.display = 'flex';
+      leftPart.style.flexDirection = 'column';
+      leftPart.style.gap = '2px';
+      
+      const themeTitle = document.createElement('span');
+      themeTitle.style.fontWeight = '600';
+      themeTitle.innerHTML = `${t.icon} ${t.name} <span style="font-weight: 400; opacity: 0.6; font-size: 0.8em;">(${t.id})</span>`;
+      
+      const statusText = document.createElement('span');
+      statusText.style.fontSize = '0.75em';
+      if (activeUrl) {
+         statusText.style.color = '#4CAF50';
+         statusText.textContent = `🎵 Active: ${songList.find(s => s.url === activeUrl)?.name || 'Custom Song'}`;
+      } else {
+         statusText.style.color = 'var(--text-3)';
+         statusText.style.opacity = '0.7';
+         statusText.textContent = 'Using default sounds';
+      }
+      
+      leftPart.appendChild(themeTitle);
+      leftPart.appendChild(statusText);
+      
+      const actions = document.createElement('div');
+      actions.style.display = 'flex';
+      actions.style.gap = '8px';
+
+      const manageBtn = document.createElement('button');
+      manageBtn.className = 'btn ghost';
+      manageBtn.style.padding = '4px 8px';
+      manageBtn.style.fontSize = '0.75em';
+      manageBtn.textContent = isExpanded ? 'Close' : `Library (${songList.length})`;
+      manageBtn.onclick = (e) => {
+         e.stopPropagation();
+         expandedTheme = isExpanded ? null : t.id;
+         renderAudioList();
+      };
+
+      actions.appendChild(manageBtn);
+      row.appendChild(leftPart);
+      row.appendChild(actions);
+      container.appendChild(row);
+
+      // Library Section
+      if (isExpanded) {
+        const lib = document.createElement('div');
+        lib.className = 'library-section';
+        
+        if (songList.length === 0) {
+          const empty = document.createElement('span');
+          empty.style.cssText = 'font-size: 0.8em; opacity: 0.5; padding: 4px;';
+          empty.textContent = 'No custom songs uploaded yet.';
+          lib.appendChild(empty);
+        }
+
+        songList.forEach(s => {
+          const item = document.createElement('div');
+          item.className = 'song-item' + (activeUrl === s.url ? ' active' : '');
+          
+          const name = document.createElement('span');
+          name.className = 'song-name';
+          name.textContent = s.name;
+          
+          const sActions = document.createElement('div');
+          sActions.style.display = 'flex';
+          sActions.style.gap = '6px';
+
+          const isPendingDelete = pendingDeleteUrl === s.url;
+
+          if (isPendingDelete) {
+            const confirmBtn = document.createElement('button');
+            confirmBtn.className = 'btn primary';
+            confirmBtn.style.padding = '2px 8px';
+            confirmBtn.style.fontSize = '0.7em';
+            confirmBtn.style.background = '#ff5f19'; // More aggressive orange/red
+            confirmBtn.textContent = 'Confirm?';
+            confirmBtn.onclick = (e) => {
+              e.stopPropagation();
+              handleDelete(t.id, s.url, confirmBtn);
+            };
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn ghost';
+            cancelBtn.style.padding = '2px 8px';
+            cancelBtn.style.fontSize = '0.7em';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.onclick = (e) => {
+              e.stopPropagation();
+              pendingDeleteUrl = null;
+              renderAudioList();
+            };
+            
+            sActions.appendChild(confirmBtn);
+            sActions.appendChild(cancelBtn);
+          } else {
+            if (activeUrl !== s.url) {
+              const selectBtn = document.createElement('button');
+              selectBtn.className = 'btn primary';
+              selectBtn.style.padding = '2px 8px';
+              selectBtn.style.fontSize = '0.7em';
+              selectBtn.textContent = 'Select';
+              selectBtn.onclick = (e) => {
+                e.stopPropagation();
+                handleSelect(t.id, s.url);
+              };
+              sActions.appendChild(selectBtn);
+            } else {
+              const resetBtn = document.createElement('button');
+              resetBtn.className = 'btn ghost';
+              resetBtn.style.padding = '2px 8px';
+              resetBtn.style.fontSize = '0.7em';
+              resetBtn.style.color = '#ffb7c5';
+              resetBtn.textContent = 'Revert to Default';
+              resetBtn.onclick = (e) => {
+                e.stopPropagation();
+                handleReset(t.id, resetBtn);
+              };
+              sActions.appendChild(resetBtn);
+            }
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn ghost';
+            delBtn.style.padding = '2px 8px';
+            delBtn.style.fontSize = '0.7em';
+            delBtn.innerHTML = '<span style="pointer-events: none;">🗑️</span>';
+            delBtn.title = 'Delete song';
+            delBtn.onclick = (e) => {
+              e.stopPropagation();
+              handleDelete(t.id, s.url, delBtn);
+            };
+            sActions.appendChild(delBtn);
+          }
+          item.appendChild(name);
+          item.appendChild(sActions);
+          lib.appendChild(item);
+        });
+
+        const upBtn = document.createElement('button');
+        upBtn.className = 'btn primary';
+        upBtn.style.marginTop = '4px';
+        upBtn.style.width = '100%';
+        upBtn.style.padding = '6px';
+        upBtn.style.fontSize = '0.8em';
+        upBtn.textContent = '+ Upload New Song';
+        upBtn.onclick = () => triggerUpload(t.id);
+        lib.appendChild(upBtn);
+
+        container.appendChild(lib);
+      }
+
+      themeAudioList.appendChild(container);
     });
   }
+
+  setTimeout(renderAudioList, 100);
+
+  audioUploadInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file || !targetThemeForUpload) return;
+    
+    const themeId = targetThemeForUpload;
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    audioUploadStatus.textContent = `Uploading "${file.name}" for ${themeId}...`;
+    
+    try {
+      const uploadRes = await fetch('/api/upload/audio', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken },
+        body: formData
+      });
+      const uploadData = await uploadRes.json();
+      
+      if (!uploadRes.ok) {
+        audioUploadStatus.textContent = `Upload failed: ${uploadData.error || 'Unknown error'}`;
+        return;
+      }
+      
+      if (!isGuestUser) {
+        await fetch('/api/settings/audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({ theme: themeId, url: uploadData.url, name: file.name })
+        });
+      }
+      
+      // Update local state
+      if (!window.UserAudioLists[themeId]) window.UserAudioLists[themeId] = [];
+      window.UserAudioLists[themeId].push({ url: uploadData.url, name: file.name });
+      window.UserAudio[themeId] = uploadData.url;
+      
+      saveLocalState();
+      
+      audioUploadStatus.textContent = `✅ "${file.name}" uploaded and active for ${themeId}!`;
+      if (window.reloadThemeAudio) {
+        window.reloadThemeAudio(themeId, uploadData.url);
+      }
+      renderAudioList();
+    } catch (err) {
+      audioUploadStatus.textContent = 'Connection error during upload.';
+    } finally {
+      audioUploadInput.value = '';
+      targetThemeForUpload = null;
+    }
+  });
 });
 </script>
 {% endblock %}

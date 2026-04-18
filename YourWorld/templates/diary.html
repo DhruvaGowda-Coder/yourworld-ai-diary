@@ -5,8 +5,8 @@
     <div class="sidebar-header">
       <h3>My Pages</h3>
       <div class="sidebar-actions">
-        <button class="btn ghost" id="newEntryBtn" type="button">Add Page</button>
-        <button class="btn ghost" id="deleteEntryBtn" type="button">Delete</button>
+        <button class="btn ghost" id="newEntryBtn" type="button" title="Add Page (Ctrl+N)">Add Page</button>
+        <button class="btn ghost" id="deleteEntryBtn" type="button" title="Delete Page (Ctrl+D)">Delete</button>
       </div>
     </div>
     <div class="entry-list" id="entryList"></div>
@@ -20,7 +20,7 @@
         <span id="saveTime"></span>
       </div>
       <div class="status-actions" style="display: flex; align-items: center; gap: 12px;">
-        <button class="btn ghost" id="manualSaveBtn" type="button" style="padding: 4px 10px; font-size: 0.8rem;">Save</button>
+        <button class="btn ghost" id="manualSaveBtn" type="button" style="padding: 4px 10px; font-size: 0.8rem;" title="Save (Ctrl+S)">Save</button>
         <label class="autosave-toggle">
           <input type="checkbox" id="autosaveToggle" />
           <span class="autosave-track"></span>
@@ -29,9 +29,9 @@
       </div>
     </div>
     <div class="editor-toolbar" id="editorToolbar" aria-label="Text formatting">
-      <button class="tool-btn" id="formatBoldBtn" type="button" title="Bold">B</button>
-      <button class="tool-btn" id="formatItalicBtn" type="button" title="Italic">I</button>
-      <button class="tool-btn" id="formatUnderlineBtn" type="button" title="Underline">U</button>
+      <button class="tool-btn" id="formatBoldBtn" type="button" title="Bold (Ctrl+B)">B</button>
+      <button class="tool-btn" id="formatItalicBtn" type="button" title="Italic (Ctrl+I)">I</button>
+      <button class="tool-btn" id="formatUnderlineBtn" type="button" title="Underline (Ctrl+U)">U</button>
       <label class="tool-size" for="fontSizeSelect">Size</label>
       <select id="fontSizeSelect" class="tool-select" aria-label="Font size">
         <option value="0.9">Small</option>
@@ -51,8 +51,8 @@
       <div class="page-turn" id="pageTurn"></div>
     </div>
     <div class="page-controls">
-      <button class="btn ghost" id="prevEntryBtn" type="button">Previous</button>
-      <button class="btn ghost" id="nextEntryBtn" type="button">Next</button>
+      <button class="btn ghost" id="prevEntryBtn" type="button" title="Previous Page (Ctrl+Left)">Previous</button>
+      <button class="btn ghost" id="nextEntryBtn" type="button" title="Next Page (Ctrl+Right)">Next</button>
     </div>
   </div>
 </section>

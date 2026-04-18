@@ -4,6 +4,15 @@ const ASSETS = [
   '/static/js/app.js',
   '/static/manifest.json',
   '/static/img/yourworld-symbol.svg',
+  '/static/audio/campfire.wav',
+  '/static/audio/water.wav',
+  '/static/audio/wind.wav',
+  '/static/audio/earth.wav',
+  '/static/audio/ice.wav',
+  '/static/audio/storm.wav',
+  '/static/audio/space.wav',
+  '/static/audio/garden.wav',
+  '/static/audio/cherry.wav',
   'https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&family=Noto+Serif:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap'
 ];
 

@@ -8,7 +8,8 @@
   <title>YourWorld Diary</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v='20260416a') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v='20260418c') }}" />
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/yourworld-symbol.svg') }}">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
   <script>
     if ('serviceWorker' in navigator) {
@@ -126,9 +127,7 @@
     </div>
   </footer>
 
-  <audio id="ambientAudioPlayer" loop>
-      <source id="ambientAudioSource" src="" type="audio/mpeg">
-  </audio>
+  <audio id="ambientAudioPlayer" loop preload="auto"></audio>
 
   <div class="chat-launch" id="chatLaunch" aria-label="Open Aura">
     <span>Aura</span>
@@ -153,23 +152,47 @@
   </div>
 
   <script>
-    window.UserAudio = {
-      {% if current_user %}
-        campfire: "{{ current_user.get('audio_campfire', '') }}",
-        water: "{{ current_user.get('audio_water', '') }}",
-        wind: "{{ current_user.get('audio_wind', '') }}",
-        earth: "{{ current_user.get('audio_earth', '') }}",
-        ice: "{{ current_user.get('audio_ice', '') }}",
-        storm: "{{ current_user.get('audio_storm', '') }}",
-        space: "{{ current_user.get('audio_space', '') }}",
-        garden: "{{ current_user.get('audio_garden', '') }}",
-        cherry: "{{ current_user.get('audio_cherry', '') }}"
-      {% else %}
-        campfire: "", water: "", wind: "", earth: "", ice: "", storm: "", space: "", garden: "", cherry: ""
-      {% endif %}
-    };
+    // Build UserAudio from server data, with localStorage fallback for guests
+    (function() {
+      var themes = ['campfire','water','wind','earth','ice','storm','space','garden','cherry'];
+      var user = {% if current_user %}{{ current_user | tojson }}{% else %}null{% endif %};
+      
+      var serverAudio = {};
+      var serverLists = {};
+      
+      themes.forEach(function(t) {
+        serverAudio[t] = user ? (user['audio_' + t] || "") : "";
+        serverLists[t] = user ? (user['audio_list_' + t] || []) : [];
+      });
+
+      // Merge with localStorage (guests or local additions)
+      var storedAudio = {};
+      var storedLists = {};
+      try { 
+        storedAudio = JSON.parse(localStorage.getItem('yw_custom_audio') || '{}');
+        storedLists = JSON.parse(localStorage.getItem('yw_custom_songs') || '{}'); 
+      } catch(e) {}
+      
+      themes.forEach(function(t) {
+        // If server has nothing, use local active
+        if (!serverAudio[t] && storedAudio[t]) serverAudio[t] = storedAudio[t];
+        
+        // Merge lists (don't duplicate URLs)
+        var localList = storedLists[t] || [];
+        var merged = serverLists[t].slice();
+        localList.forEach(function(ls) {
+          if (!merged.find(function(s) { return s.url === ls.url; })) {
+            merged.push(ls);
+          }
+        });
+        serverLists[t] = merged;
+      });
+      
+      window.UserAudio = serverAudio;
+      window.UserAudioLists = serverLists;
+    })();
   </script>
-  <script src="{{ url_for('static', filename='js/app.js', v='20260416a') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/app.js', v='20260418c') }}" defer></script>
   <script>
     /* Mobile drawer toggle */
     (function() {

@@ -1,11 +1,13 @@
 import os
 import json
 import firebase_admin
-from firebase_admin import credentials, firestore, auth
-from datetime import datetime, timezone
+from firebase_admin import credentials, firestore, auth, storage
+from google.cloud.firestore_v1.base_query import FieldFilter
+from datetime import datetime, timezone, timedelta
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 CRED_PATH = os.path.join(APP_DIR, "firebase-adminsdk.json")
+STORAGE_BUCKET = os.environ.get("FIREBASE_STORAGE_BUCKET", "diary-13644.firebasestorage.app")
 
 if not firebase_admin._apps:
     try:
@@ -14,10 +16,32 @@ if not firebase_admin._apps:
             cred_dict = json.loads(json_cred)
             cred = credentials.Certificate(cred_dict)
         else:
-            cred = credentials.Certificate(CRED_PATH)
-        firebase_admin.initialize_app(cred)
+            if os.path.exists(CRED_PATH):
+                cred = credentials.Certificate(CRED_PATH)
+            else:
+                raise Exception("Missing Firebase credentials (env or file)")
+        
+        firebase_admin.initialize_app(cred, {
+            'storageBucket': STORAGE_BUCKET
+        })
     except Exception as e:
         print(f"Error initializing Firebase Admin: {e}")
+
+def get_db():
+    return firestore.client()
+
+def get_bucket():
+    return storage.bucket()
+
+def upload_to_storage(file_stream, destination_path, content_type):
+    """Upload a file stream to Firebase Storage and return the public URL."""
+    bucket = get_bucket()
+    blob = bucket.blob(destination_path)
+    blob.upload_from_file(file_stream, content_type=content_type)
+    
+    # Make the blob publicly readable
+    blob.make_public()
+    return blob.public_url
 
 def get_db():
     return firestore.client()
@@ -41,8 +65,45 @@ def get_user_theme(user_id):
 def set_user_theme(user_id, theme):
     get_db().collection('users').document(str(user_id)).set({'theme': theme}, merge=True)
 
-def set_user_custom_audio(user_id, theme, audio_url):
-    get_db().collection('users').document(str(user_id)).set({f'audio_{theme}': audio_url}, merge=True)
+def set_user_custom_audio(user_id, theme, audio_url, filename=None):
+    """Set the active audio URL and add it to the list of songs for this theme."""
+    db = get_db()
+    doc_ref = db.collection('users').document(str(user_id))
+    doc = doc_ref.get()
+    
+    updates = {f'audio_{theme}': audio_url}
+    
+    if filename and audio_url:
+        # Add to list if it doesn't exist
+        songs_key = f'audio_list_{theme}'
+        current_data = doc.to_dict() if doc.exists else {}
+        current_list = current_data.get(songs_key, [])
+        
+        # Check if URL already in list
+        if not any(s.get('url') == audio_url for s in current_list):
+            current_list.append({'url': audio_url, 'name': filename})
+            updates[songs_key] = current_list
+            
+    doc_ref.set(updates, merge=True)
+
+def remove_custom_song(user_id, theme, audio_url):
+    """Remove a specific song from the library and clear active if it matches."""
+    db = get_db()
+    doc_ref = db.collection('users').document(str(user_id))
+    doc = doc_ref.get()
+    if not doc.exists: return
+    
+    data = doc.to_dict()
+    songs_key = f'audio_list_{theme}'
+    current_list = data.get(songs_key, [])
+    
+    new_list = [s for s in current_list if s.get('url') != audio_url]
+    updates = {songs_key: new_list}
+    
+    if data.get(f'audio_{theme}') == audio_url:
+        updates[f'audio_{theme}'] = ""
+        
+    doc_ref.set(updates, merge=True)
 
 def get_current_user_data(user_id):
     if not user_id: return None
@@ -77,7 +138,7 @@ def create_or_update_user(uid, email, name, picture=""):
 
 def get_entries(user_id, entry_type="diary"):
     db = get_db()
-    docs = db.collection('entries').where('user_id', '==', str(user_id)).where('type', '==', entry_type).stream()
+    docs = db.collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', entry_type)).stream()
     result = []
     for doc in docs:
         data = doc.to_dict()
@@ -149,7 +210,7 @@ def update_share_code(user_id, entry_id, code, share_type):
     return False
 
 def get_entry_by_share_code(code):
-    docs = get_db().collection('entries').where('share_code', '==', str(code)).stream()
+    docs = get_db().collection('entries').where(filter=FieldFilter('share_code', '==', str(code))).stream()
     for doc in docs:
         data = doc.to_dict()
         data['id'] = doc.id
@@ -157,7 +218,7 @@ def get_entry_by_share_code(code):
     return None
 
 def get_story_entries_for_user(user_id):
-    docs = get_db().collection('entries').where('user_id', '==', str(user_id)).where('type', '==', 'story').stream()
+    docs = get_db().collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', 'story')).stream()
     result = []
     for doc in docs:
         data = doc.to_dict()
@@ -168,7 +229,7 @@ def get_story_entries_for_user(user_id):
 
 def get_activity_counts(user_id, days):
     db = get_db()
-    docs = db.collection('activity').where('user_id', '==', str(user_id)).stream()
+    docs = db.collection('activity').where(filter=FieldFilter('user_id', '==', str(user_id))).stream()
     counts = {}
     for doc in docs:
         data = doc.to_dict()
@@ -177,7 +238,7 @@ def get_activity_counts(user_id, days):
 
 def increment_activity(user_id, day):
     db = get_db()
-    docs = db.collection('activity').where('user_id', '==', str(user_id)).where('day', '==', day).stream()
+    docs = db.collection('activity').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('day', '==', day)).stream()
     doc_id = None
     count = 0
     for doc in docs:
