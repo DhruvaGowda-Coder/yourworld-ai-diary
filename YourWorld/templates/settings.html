@@ -110,30 +110,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function handleSelect(themeId, url) {
+  function handleSelect(themeId, url) {
     audioUploadStatus.textContent = `Selecting song for ${themeId}...`;
-    try {
-      if (!isGuestUser) {
-        await fetch('/api/settings/audio', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-          body: JSON.stringify({ theme: themeId, url: url })
-        });
-      }
-      window.UserAudio[themeId] = url;
-      saveLocalState();
-      
-      if (window.reloadThemeAudio) window.reloadThemeAudio(themeId, url);
-      audioUploadStatus.textContent = `✅ Song selected for ${themeId}.`;
-      renderAudioList();
-    } catch (err) {
-      audioUploadStatus.textContent = 'Selection failed.';
+    
+    window.UserAudio[themeId] = url;
+    saveLocalState();
+    
+    if (window.reloadThemeAudio) window.reloadThemeAudio(themeId, url);
+    audioUploadStatus.textContent = `✅ Song selected for ${themeId}.`;
+    renderAudioList();
+
+    if (!isGuestUser) {
+      fetch('/api/settings/audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify({ theme: themeId, url: url })
+      }).catch(err => console.warn(err));
     }
   }
 
   let pendingDeleteUrl = null;
   
-  async function handleDelete(themeId, url, btn) {
+  function handleDelete(themeId, url, btn) {
     if (pendingDeleteUrl !== url) {
       pendingDeleteUrl = url;
       renderAudioList();
@@ -142,54 +140,45 @@ document.addEventListener('DOMContentLoaded', () => {
     
     btn.disabled = true;
     audioUploadStatus.textContent = `Deleting song from ${themeId}...`;
-    try {
-      if (!isGuestUser) {
-        await fetch('/api/settings/audio/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-          body: JSON.stringify({ theme: themeId, url: url })
-        });
-      }
-      
-      // Update local state lists
-      window.UserAudioLists[themeId] = (window.UserAudioLists[themeId] || []).filter(s => s.url !== url);
-      if (window.UserAudio[themeId] === url) {
-        window.UserAudio[themeId] = "";
-        if (window.removeThemeAudio) window.removeThemeAudio(themeId);
-      }
-      
-      pendingDeleteUrl = null;
-      saveLocalState();
-      audioUploadStatus.textContent = `✅ Song removed from ${themeId}.`;
-      renderAudioList();
-    } catch (err) {
-      audioUploadStatus.textContent = 'Delete failed.';
-    } finally {
-      btn.disabled = false;
+    
+    // Update local state lists
+    window.UserAudioLists[themeId] = (window.UserAudioLists[themeId] || []).filter(s => s.url !== url);
+    if (window.UserAudio[themeId] === url) {
+      window.UserAudio[themeId] = "";
+      if (window.removeThemeAudio) window.removeThemeAudio(themeId);
+    }
+    
+    pendingDeleteUrl = null;
+    saveLocalState();
+    audioUploadStatus.textContent = `✅ Song removed from ${themeId}.`;
+    renderAudioList();
+
+    if (!isGuestUser) {
+      fetch('/api/settings/audio/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify({ theme: themeId, url: url })
+      }).catch(err => console.warn(err));
     }
   }
 
-  async function handleReset(themeId, btn) {
+  function handleReset(themeId, btn) {
     btn.disabled = true;
     audioUploadStatus.textContent = `Resetting ${themeId} to default...`;
-    try {
-      if (!isGuestUser) {
-        await fetch('/api/settings/audio', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-          body: JSON.stringify({ theme: themeId, url: "" })
-        });
-      }
-      window.UserAudio[themeId] = "";
-      saveLocalState();
-      
-      if (window.removeThemeAudio) window.removeThemeAudio(themeId);
-      audioUploadStatus.textContent = `✅ ${themeId} reset to default ambient sounds.`;
-      renderAudioList();
-    } catch (err) {
-      audioUploadStatus.textContent = 'Reset failed.';
-    } finally {
-      btn.disabled = false;
+    
+    window.UserAudio[themeId] = "";
+    saveLocalState();
+    
+    if (window.removeThemeAudio) window.removeThemeAudio(themeId);
+    audioUploadStatus.textContent = `✅ ${themeId} reset to default ambient sounds.`;
+    renderAudioList();
+
+    if (!isGuestUser) {
+      fetch('/api/settings/audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify({ theme: themeId, url: "" })
+      }).catch(err => console.warn(err));
     }
   }
 
