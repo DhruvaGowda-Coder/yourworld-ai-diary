@@ -4342,7 +4342,8 @@ html {
 }
 
 .mobile-nav-logout {
-  color: rgba(255, 160, 140, 0.85);
+  color: var(--theme-accent);
+  opacity: 0.85;
 }
 
 .mobile-drawer-divider {
@@ -4424,11 +4425,13 @@ html {
 
 /* ─── Logout link ─── */
 .nav-link-logout {
-  color: rgba(255, 160, 140, 0.75) !important;
+  color: var(--theme-accent) !important;
+  opacity: 0.85;
 }
 .nav-link-logout:hover {
-  color: rgba(255, 160, 140, 1) !important;
-  background: rgba(255, 100, 80, 0.1);
+  color: var(--theme-accent-text) !important;
+  background: var(--theme-accent) !important;
+  opacity: 1;
 }
 
 /* ─── Site Footer ─── */
@@ -5399,4 +5402,40 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
 @keyframes dropdown-enter {
   0% { opacity: 0; transform: translateY(-10px) scale(0.98); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ==========================================================================
+   Mobile Interface Tweaks
+   ========================================================================== */
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+  .entry-sidebar {
+    max-width: 100%;
+    margin-bottom: 20px;
+  }
+  .entry-list {
+    max-height: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-panel {
+    width: calc(100vw - 32px) !important;
+    max-width: none !important;
+    height: 65vh !important;
+    bottom: 20px !important;
+    right: 16px !important;
+    left: 16px !important;
+  }
+  
+  .status-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .status-actions {
+    align-self: flex-end;
+  }
 }
