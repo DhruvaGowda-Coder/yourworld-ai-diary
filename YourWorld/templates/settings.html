@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const audioUploadStatus = document.getElementById('audioUploadStatus');
   const themeAudioList = document.getElementById('themeAudioList');
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-  const isGuestUser = {{ 'true' if is_guest_user else 'false' }};
+  const isGuestUser = ("{{ is_guest_user }}" === "True");
   let targetThemeForUpload = null;
   let expandedTheme = null;
   

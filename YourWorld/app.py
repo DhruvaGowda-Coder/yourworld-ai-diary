@@ -36,7 +36,12 @@ FIREBASE_WEB_CONFIG = {
 }
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("DIARY_SECRET_KEY") or secrets.token_hex(32)
+secret_key = os.environ.get("DIARY_SECRET_KEY")
+if not secret_key:
+    if not app.debug:
+        raise ValueError("DIARY_SECRET_KEY must be set in production environment!")
+    secret_key = secrets.token_hex(32)
+app.secret_key = secret_key
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload
 csrf = CSRFProtect(app)
 

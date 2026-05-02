@@ -2984,6 +2984,41 @@ if (workspace) {
   const renderImagePreview = () => {
     if (!imagePreview) return;
     imagePreview.innerHTML = '';
+    
+    let clearBtn = null;
+    if (currentImageUrl) {
+      clearBtn = document.createElement('button');
+      clearBtn.innerHTML = '&times;';
+      clearBtn.title = 'Remove Image';
+      clearBtn.type = 'button';
+      clearBtn.style.position = 'absolute';
+      clearBtn.style.top = '6px';
+      clearBtn.style.right = '6px';
+      clearBtn.style.background = 'rgba(0,0,0,0.6)';
+      clearBtn.style.color = 'white';
+      clearBtn.style.border = 'none';
+      clearBtn.style.borderRadius = '50%';
+      clearBtn.style.width = '24px';
+      clearBtn.style.height = '24px';
+      clearBtn.style.cursor = 'pointer';
+      clearBtn.style.display = 'flex';
+      clearBtn.style.alignItems = 'center';
+      clearBtn.style.justifyContent = 'center';
+      clearBtn.style.fontSize = '16px';
+      clearBtn.style.zIndex = '10';
+      clearBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (confirm("Are you sure you want to discard this image?")) {
+          currentImageUrl = null;
+          imageAttached = false;
+          dirty = true;
+          renderImagePreview();
+          updateImageActions();
+          updatePageIllustration();
+        }
+      };
+    }
+
     if (imageError) {
       const placeholder = document.createElement('div');
       placeholder.className = 'image-placeholder error';
@@ -2992,7 +3027,9 @@ if (workspace) {
     } else if (currentImageUrl) {
       const img = document.createElement('img');
       img.src = currentImageUrl;
+      imagePreview.style.position = 'relative';
       imagePreview.appendChild(img);
+      imagePreview.appendChild(clearBtn);
     } else {
       const placeholder = document.createElement('div');
       placeholder.className = 'image-placeholder';

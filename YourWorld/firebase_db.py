@@ -57,6 +57,7 @@ def verify_token(id_token):
 
 def get_user_theme(user_id):
     if not user_id: return "campfire"
+    if str(user_id).startswith("guest_"): return "campfire"
     doc = get_db().collection('users').document(str(user_id)).get()
     if doc.exists:
         return doc.to_dict().get('theme', 'campfire')
@@ -106,7 +107,7 @@ def remove_custom_song(user_id, theme, audio_url):
     doc_ref.set(updates, merge=True)
 
 def get_current_user_data(user_id):
-    if not user_id: return None
+    if not user_id or str(user_id).startswith("guest_"): return None
     doc = get_db().collection('users').document(str(user_id)).get()
     if doc.exists:
         data = doc.to_dict()
@@ -138,7 +139,7 @@ def create_or_update_user(uid, email, name, picture=""):
 
 def get_entries(user_id, entry_type="diary"):
     db = get_db()
-    docs = db.collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', entry_type)).stream()
+    docs = db.collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', entry_type)).limit(500).stream()
     result = []
     for doc in docs:
         data = doc.to_dict()
@@ -218,7 +219,7 @@ def get_entry_by_share_code(code):
     return None
 
 def get_story_entries_for_user(user_id):
-    docs = get_db().collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', 'story')).stream()
+    docs = get_db().collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', 'story')).limit(500).stream()
     result = []
     for doc in docs:
         data = doc.to_dict()
@@ -229,7 +230,7 @@ def get_story_entries_for_user(user_id):
 
 def get_activity_counts(user_id, days):
     db = get_db()
-    docs = db.collection('activity').where(filter=FieldFilter('user_id', '==', str(user_id))).stream()
+    docs = db.collection('activity').where(filter=FieldFilter('user_id', '==', str(user_id))).limit(1000).stream()
     counts = {}
     for doc in docs:
         data = doc.to_dict()
