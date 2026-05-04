@@ -6,7 +6,7 @@ Immersive AI-powered journaling and storytelling platform that transforms writin
 
 ## 🌐 Live Demo
 
-👉 https://online-elemental-diary.onrender.com
+👉 https://worldbyyou.com/
 
 ---
 
