@@ -139,7 +139,7 @@ def create_or_update_user(uid, email, name, picture=""):
 
 def get_entries(user_id, entry_type="diary"):
     db = get_db()
-    docs = db.collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', entry_type)).limit(500).stream()
+    docs = db.collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', entry_type)).limit(2000).stream()
     result = []
     for doc in docs:
         data = doc.to_dict()
@@ -223,7 +223,7 @@ def get_entry_by_share_code(code):
     return None
 
 def get_story_entries_for_user(user_id):
-    docs = get_db().collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', 'story')).limit(500).stream()
+    docs = get_db().collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', 'story')).limit(2000).stream()
     result = []
     for doc in docs:
         data = doc.to_dict()
@@ -260,3 +260,29 @@ def increment_activity(user_id, day):
             'count': 1,
             'updated_at': utc_now_iso()
         })
+
+def cleanup_guest_data():
+    """Delete guest user entries and activity older than 48 hours."""
+    db = get_db()
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=48)).isoformat()
+    
+    # Query guest users via prefix
+    docs = db.collection('entries').where(filter=FieldFilter('user_id', '>=', 'guest_')).where(filter=FieldFilter('user_id', '<', 'guest`')).stream()
+    
+    deleted_count = 0
+    for doc in docs:
+        data = doc.to_dict()
+        updated_at = data.get('updated_at', '')
+        if updated_at < cutoff:
+            db.collection('entries').document(doc.id).delete()
+            deleted_count += 1
+            
+    # Clean up activity logs for guests
+    activity_docs = db.collection('activity').where(filter=FieldFilter('user_id', '>=', 'guest_')).where(filter=FieldFilter('user_id', '<', 'guest`')).stream()
+    for doc in activity_docs:
+        data = doc.to_dict()
+        updated_at = data.get('updated_at', '')
+        if updated_at < cutoff:
+            db.collection('activity').document(doc.id).delete()
+            
+    return deleted_count

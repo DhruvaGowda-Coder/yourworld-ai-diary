@@ -411,16 +411,24 @@ def api_upload(file_type):
         
         unique_name = f"{secrets.token_hex(8)}_{filename}"
         
-        # Local fallback since Firebase requires billing account
         try:
-            upload_dir = os.path.join(APP_DIR, "static", "uploads", file_type)
-            os.makedirs(upload_dir, exist_ok=True)
-            file_path = os.path.join(upload_dir, unique_name)
-            file.save(file_path)
-            file_url = url_for("static", filename=f"uploads/{file_type}/{unique_name}")
+            # Prioritize uploading to Firebase Storage
+            destination_path = f"uploads/{file_type}/{unique_name}"
+            content_type = file.content_type
+            file_url = firebase_db.upload_to_storage(file.stream, destination_path, content_type)
             return jsonify({"url": file_url, "name": filename})
         except Exception as e:
-            return jsonify({"error": f"Local upload failed: {str(e)}"}), 500
+            # Fallback to local storage if Firebase fails (e.g. missing billing account)
+            try:
+                file.stream.seek(0)
+                upload_dir = os.path.join(APP_DIR, "static", "uploads", file_type)
+                os.makedirs(upload_dir, exist_ok=True)
+                file_path = os.path.join(upload_dir, unique_name)
+                file.save(file_path)
+                file_url = url_for("static", filename=f"uploads/{file_type}/{unique_name}")
+                return jsonify({"url": file_url, "name": filename})
+            except Exception as inner_e:
+                return jsonify({"error": f"Firebase failed: {str(e)}, Local fallback failed: {str(inner_e)}"}), 500
     
     return jsonify({"error": "File upload failed"}), 500
 
@@ -916,6 +924,17 @@ def api_story_image():
     if error:
         message = error
     return jsonify({"error": error or "image_failed", "message": message, "provider": "huggingface"}), 502
+
+
+@app.route("/api/system/cleanup", methods=["POST"])
+def api_system_cleanup():
+    auth_header = request.headers.get("Authorization")
+    cron_secret = os.environ.get("CRON_SECRET")
+    if cron_secret and auth_header != f"Bearer {cron_secret}":
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    count = firebase_db.cleanup_guest_data()
+    return jsonify({"success": True, "deleted_entries": count})
 
 
 if __name__ == "__main__":

@@ -159,11 +159,14 @@
     <button class="chat-resize-handle" id="chatResizeHandle" type="button" aria-label="Resize chat panel"></button>
   </div>
 
+  <script id="current-user-data" type="application/json">
+    {{ current_user | tojson | safe if current_user else 'null' }}
+  </script>
   <script>
     // Build UserAudio from server data, with localStorage fallback for guests
     (function() {
       var themes = ['campfire','water','wind','earth','ice','storm','space','garden','cherry'];
-      var user = {{ current_user | tojson | safe if current_user else 'null' }};
+      var user = JSON.parse(document.getElementById('current-user-data').textContent);
       
       var serverAudio = {};
       var serverLists = {};
