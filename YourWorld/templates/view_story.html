@@ -1,4 +1,15 @@
 {% extends "base.html" %}
+{% block title %}{{ pages[0].title if pages else 'Story Not Found' }} - YourWorld{% endblock %}
+{% block meta %}
+{% if pages %}
+<meta property="og:title" content="{{ pages[0].title }}">
+<meta property="og:description" content="{{ (pages[0].content | striptags)[:150] }}...">
+<meta property="og:type" content="article">
+{% if pages[0].image_url %}
+<meta property="og:image" content="{{ pages[0].image_url }}">
+{% endif %}
+{% endif %}
+{% endblock %}
 {% block content %}
 <section class="public-story">
   {% if not_found %}
@@ -18,8 +29,8 @@
       <div class="public-main">
         <div class="book public-book" id="publicBook">
           <div class="public-page">
-            <h2 class="public-title" id="publicTitle"></h2>
-            <div class="public-content" id="publicContent"></div>
+            <h2 class="public-title" id="publicTitle" {% if can_edit %}contenteditable="true" style="outline:none; border-bottom:1px dashed var(--border-color);"{% endif %}></h2>
+            <div class="public-content" id="publicContent" {% if can_edit %}contenteditable="true" style="outline:none;"{% endif %}></div>
             <div class="page-illustration" id="publicIllustration">
               <img id="publicIllustrationImg" alt="Story illustration" />
             </div>
@@ -29,10 +40,13 @@
           <span class="public-page-count" id="publicPageCount"></span>
           <button class="btn ghost" id="publicPrevBtn" type="button">Previous</button>
           <button class="btn ghost" id="publicNextBtn" type="button">Next</button>
+          {% if can_edit %}
+            <button class="btn" id="publicSaveBtn" type="button" style="margin-left: auto;">Save Changes</button>
+          {% endif %}
         </div>
-        <div class="public-meta">
-          Shared code: {{ code }}
-          <span class="public-mode">{{ "Full story" if share_type == "story" else "Single page" }}</span>
+        <div class="public-meta" style="color: var(--text-color); margin-top: 20px; text-align: center; font-size: 0.95rem; opacity: 0.9;">
+          Shared code: <strong>{{ code }}</strong>
+          <span class="public-mode" style="color: var(--text-color); margin-left: 10px; padding: 4px 8px; background: var(--hover-color); border-radius: 4px; font-size: 0.85rem;">{{ "Full story" if share_type == "story" else "Single page" }}</span>
         </div>
       </div>
     </div>

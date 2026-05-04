@@ -187,8 +187,12 @@ def save_entry(user_id, entry_id, data):
     if entry_id:
         doc_ref = db.collection('entries').document(str(entry_id))
         existing = doc_ref.get()
-        if not existing.exists or existing.to_dict().get('user_id') != str(user_id):
+        if not existing.exists:
+            return None
+        existing_data = existing.to_dict()
+        if existing_data.get('user_id') != str(user_id) and not existing_data.get('can_edit'):
             return None # Not found or unauthorized
+        doc_data['user_id'] = existing_data.get('user_id') # Preserve the original owner
         doc_ref.update(doc_data)
         doc_data['id'] = entry_id
         return doc_data
@@ -201,12 +205,12 @@ def save_entry(user_id, entry_id, data):
         doc_data['id'] = new_ref.id
         return doc_data
 
-def update_share_code(user_id, entry_id, code, share_type):
+def update_share_code(user_id, entry_id, code, share_type, can_edit=False):
     db = get_db()
     doc_ref = db.collection('entries').document(str(entry_id))
     doc = doc_ref.get()
     if doc.exists and doc.to_dict().get('user_id') == str(user_id):
-        doc_ref.update({'share_code': code, 'share_type': share_type})
+        doc_ref.update({'share_code': code, 'share_type': share_type, 'can_edit': can_edit})
         return True
     return False
 

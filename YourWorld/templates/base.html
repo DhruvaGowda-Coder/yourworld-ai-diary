@@ -5,7 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="description" content="YourWorld — a private diary and storybook that feels like a real book. Write across pages with real-time autosave, immersive elemental themes, and Aura, your friendly AI companion.">
-  <title>YourWorld Diary</title>
+  <title>{% block title %}YourWorld Diary{% endblock %}</title>
+  {% block meta %}
+  <meta property="og:title" content="YourWorld Diary">
+  <meta property="og:description" content="YourWorld — a private diary and storybook that feels like a real book. Write across pages with real-time autosave, immersive elemental themes, and Aura, your friendly AI companion.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://worldbyyou.com">
+  {% endblock %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v='20260418c') }}" />

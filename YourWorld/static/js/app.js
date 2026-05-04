@@ -2869,6 +2869,7 @@ if (workspace) {
   });
   let imageError = null;
   let shareCode = null;
+  let shareCanEditValue = false;
   let lastActiveIndex = -1;
   let dirty = false;
   let isSaving = false;
@@ -3080,6 +3081,8 @@ if (workspace) {
     shareCodeInput.value = shareCode || '';
     if (shareCopyBtn) shareCopyBtn.disabled = !shareCode;
     if (shareRemoveBtn) shareRemoveBtn.disabled = !shareCode;
+    const shareCanEdit = document.getElementById('shareCanEdit');
+    if (shareCanEdit) shareCanEdit.checked = shareCanEditValue;
   };
 
   const getStyleState = (target) => (target === 'title' ? titleStyleState : contentStyleState);
@@ -3188,6 +3191,7 @@ if (workspace) {
       imageStyleState = { x: 0, y: 0, width: null, height: null };
     }
     shareCode = data.share_code || null;
+    shareCanEditValue = data.can_edit || false;
     if (shareModeSelect) {
       const nextMode = data.share_type || 'story';
       setShareMode(nextMode, nextMode === 'single' ? 'Single page' : 'Full story');
@@ -3234,6 +3238,7 @@ if (workspace) {
     imageAttached = false;
     imageStyleState = { x: 0, y: 0, width: null, height: null };
     shareCode = null;
+    shareCanEditValue = false;
     renderImagePreview();
     updateImageActions();
     updateShareUI();
@@ -3377,6 +3382,7 @@ if (workspace) {
         currentEntryId = null;
         imageAttached = false;
         shareCode = null;
+        shareCanEditValue = false;
         updateShareUI();
 
         if (entries.length > 0) {
@@ -3703,15 +3709,19 @@ if (workspace) {
         return;
       }
       const mode = shareModeSelect ? shareModeSelect.value : 'story';
+      const shareCanEdit = document.getElementById('shareCanEdit');
+      const canEdit = shareCanEdit ? shareCanEdit.checked : false;
+      const customCode = shareCodeInput ? shareCodeInput.value.trim() : '';
       try {
         const response = await fetch(`/api/entry/${targetId}/share`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-          body: JSON.stringify({ rotate: Boolean(shareCode), mode }),
+          body: JSON.stringify({ rotate: Boolean(shareCode && !customCode), mode, custom_code: customCode, can_edit: canEdit }),
         });
         if (!response.ok) throw new Error('Share failed');
         const data = await response.json();
         shareCode = data.share_code;
+        shareCanEditValue = data.can_edit;
         if (data.share_type && shareModeSelect) {
           shareModeSelect.value = data.share_type;
         }
@@ -3733,6 +3743,7 @@ if (workspace) {
         });
         if (!response.ok) throw new Error('Remove failed');
         shareCode = null;
+        shareCanEditValue = false;
         updateShareUI();
       } catch (err) {
         setStatus('Remove failed');
@@ -4159,7 +4170,8 @@ if (publicPagesData) {
     renderPageList();
   };
 
-  if (controls && pages.length <= 1) {
+  const publicSaveBtn = document.getElementById('publicSaveBtn');
+  if (controls && pages.length <= 1 && !publicSaveBtn) {
     controls.classList.add('is-hidden');
   }
 
@@ -4176,6 +4188,46 @@ if (publicPagesData) {
       if (index >= pages.length - 1) return;
       index += 1;
       renderPage();
+    });
+  }
+
+  const publicSaveBtn = document.getElementById('publicSaveBtn');
+  if (publicSaveBtn) {
+    publicSaveBtn.addEventListener('click', async () => {
+      const page = pages[index];
+      if (!page) return;
+      const newTitle = titleEl ? titleEl.innerText : '';
+      const newContent = contentEl ? contentEl.innerHTML : '';
+      
+      publicSaveBtn.textContent = 'Saving...';
+      try {
+        const metaCsrf = document.querySelector('meta[name="csrf-token"]');
+        const token = metaCsrf ? metaCsrf.getAttribute('content') : '';
+        const response = await fetch('/api/entry/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': token },
+          body: JSON.stringify({
+            id: page.id,
+            title: newTitle,
+            content: newContent,
+            type: 'story',
+            image_url: page.image_url,
+            image_attached: page.image_attached ? 1 : 0,
+            image_style: page.image_style,
+            image_prompt: page.image_prompt
+          })
+        });
+        if (response.ok) {
+          publicSaveBtn.textContent = 'Saved!';
+          page.title = newTitle;
+          page.content = newContent;
+        } else {
+          publicSaveBtn.textContent = 'Error';
+        }
+      } catch(e) {
+        publicSaveBtn.textContent = 'Error';
+      }
+      setTimeout(() => { publicSaveBtn.textContent = 'Save Changes'; }, 2000);
     });
   }
 

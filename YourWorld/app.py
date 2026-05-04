@@ -13,6 +13,9 @@ import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for, g
 from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import bleach
 import firebase_db
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -44,6 +47,7 @@ if not secret_key:
 app.secret_key = secret_key
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload
 csrf = CSRFProtect(app)
+limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per day", "100 per hour"])
 
 ALLOWED_IMAGE_EXT = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'}
 ALLOWED_AUDIO_EXT = {'.mp3', '.wav', '.ogg', '.m4a', '.flac'}
@@ -511,6 +515,8 @@ def api_entry_share(entry_id):
     mode = data.get("mode", "story")
     if mode not in ("story", "single"):
         mode = "story"
+    custom_code = data.get("custom_code")
+    can_edit = bool(data.get("can_edit", False))
 
     row = firebase_db.get_entry(session["user_id"], entry_id)
     if not row:
@@ -521,15 +527,19 @@ def api_entry_share(entry_id):
     share_code = row.get("share_code")
     share_type = row.get("share_type", "story")
     
-    if share_code and not rotate:
-        if share_type != mode:
-            firebase_db.update_share_code(session["user_id"], entry_id, share_code, mode)
-        return jsonify({"share_code": share_code, "share_type": mode})
-        
-    code = _generate_share_code()
-    # Assume _generate_share_code is unique enough for now
-    firebase_db.update_share_code(session["user_id"], entry_id, code, mode)
-    return jsonify({"share_code": code, "share_type": mode})
+    if custom_code:
+        code = custom_code.strip().upper()
+        # Ensure it's not already used by another entry
+        existing = firebase_db.get_entry_by_share_code(code)
+        if existing and existing.get("id") != entry_id:
+            return jsonify({"error": "Custom code already in use"}), 400
+    elif share_code and not rotate:
+        code = share_code
+    else:
+        code = _generate_share_code()
+
+    firebase_db.update_share_code(session["user_id"], entry_id, code, mode, can_edit)
+    return jsonify({"share_code": code, "share_type": mode, "can_edit": can_edit})
 
 
 @app.route("/api/entry/<entry_id>/share", methods=["DELETE"])
@@ -578,6 +588,7 @@ def view_story(code):
         "view_story.html",
         pages=[
             {
+                "id": r.get("id"),
                 "title": r.get("title", ""),
                 "content": r.get("content", ""),
                 "image_url": r.get("image_url"),
@@ -591,11 +602,13 @@ def view_story(code):
         code=safe_code,
         not_found=False,
         share_type=share_type,
+        can_edit=owner_row.get("can_edit", False)
     )
 
 
 @app.route("/api/entry/save", methods=["POST"])
 @login_required
+@limiter.limit("30 per minute")
 def api_entry_save():
     try:
         data = request.get_json(force=True)
@@ -608,13 +621,22 @@ def api_entry_save():
     if entry_id is not None:
         entry_id = str(entry_id)
 
+    allowed_tags = ['b', 'i', 'u', 'div', 'br', 'span', 'strike', 'strong', 'em', 'p', 'ul', 'ol', 'li']
+    allowed_attrs = {'*': ['style', 'class']}
+    
+    content = data.get("content", "").strip()
+    content = bleach.clean(content, tags=allowed_tags, attributes=allowed_attrs, styles=['color', 'background-color', 'text-align', 'font-size', 'font-family'])
+    
     title = (data.get("title") or "").strip()
     if not title:
-        plain = _strip_html(data.get("content", ""))
+        plain = _strip_html(content)
         first_line = plain.strip().splitlines()[0] if plain.strip() else "Untitled"
         title = (first_line[:40] + "...") if len(first_line) > 40 else first_line
 
-    data['title'] = title
+    title = bleach.clean(title, tags=[], attributes={})
+    
+    data['title'] = title[:150]
+    data['content'] = content
     
     activity_day = datetime.now(timezone.utc).date().isoformat()
     
@@ -624,7 +646,7 @@ def api_entry_save():
         
     firebase_db.increment_activity(session["user_id"], activity_day)
 
-    return jsonify({"id": saved["id"], "title": title, "updated_at": saved["updated_at"]})
+    return jsonify({"id": saved["id"], "title": saved["title"], "updated_at": saved["updated_at"]})
 
 
 def _escape_svg(text: str) -> str:
@@ -710,6 +732,8 @@ def call_hf_image(prompt):
 
 
 @app.route("/api/chat", methods=["POST"])
+@login_required
+@limiter.limit("10 per minute")
 def api_chat():
     data = request.get_json(force=True)
     message = (data.get("message") or "").strip()
@@ -881,6 +905,7 @@ def api_activity():
 
 @app.route("/api/story/image", methods=["POST"])
 @login_required
+@limiter.limit("5 per minute")
 def api_story_image():
     data = request.get_json(force=True)
     prompt = (data.get("prompt") or "").strip() or "A quiet story moment"
