@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&family=Noto+Serif:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+:root {
+  --ink: #1d1510;
+  --paper: #f7ead2;
+  --ember: #ffb783;
+  --ember-deep: #fb8e32;
+  --night: #161311;
+  --smoke: rgba(255, 255, 255, 0.08);
+  --glow: rgba(255, 183, 131, 0.35);
+  --gold: #e9c349;
+  --shadow: rgba(10, 4, 2, 0.4);
+  --gutter: clamp(16px, 5vw, 80px);
+  --theme-bg: radial-gradient(circle at 20% 15%, #3b1b11 0%, #161311 55%, #0a0706 100%);
+  --ambient-a: rgba(255, 183, 131, 0.20);
+  --ambient-b: rgba(233, 195, 73, 0.14);
+  --ambient-c: rgba(255, 181, 160, 0.12);
+  --ui-font: 'Space Grotesk', sans-serif;
+  --title-font: 'Playfair Display', serif;
+  --editor-font: 'Noto Serif', 'Spectral', serif;
+
+  /* Theme UI tokens — Stitch "Digital Hearth" defaults (Campfire). */
+  --theme-accent: #ffb783;
+  --theme-accent-2: #fb8e32;
+  --theme-accent-soft: rgba(255, 183, 131, 0.20);
+  --theme-accent-soft-2: rgba(255, 183, 131, 0.36);
+  --theme-accent-text: #4f2500;
+  --theme-secondary: #e9c349;
+  --theme-tertiary: #ffb5a0;
+  --theme-surface: #161311;
+  --theme-surface-container: #231f1d;
+  --theme-panel-bg: rgba(46, 41, 39, 0.60);
+  --theme-panel-bg-2: rgba(35, 31, 29, 0.85);
+  --theme-panel-border: rgba(86, 67, 52, 0.15);
+  --theme-hover-bg: rgba(255, 183, 131, 0.08);
+  --theme-focus: rgba(255, 183, 131, 0.55);
+  --theme-scroll-thumb: rgba(255, 183, 131, 0.38);
+  --theme-scroll-thumb-hover: rgba(255, 183, 131, 0.58);
+  --book-cover: #6f3f24;
+  --heat-0: rgba(255, 255, 255, 0.07);
+  --heat-1: rgba(255, 183, 131, 0.25);
+  --heat-2: rgba(251, 142, 50, 0.45);
+  --heat-3: rgba(233, 195, 73, 0.65);
+  --heat-4: rgba(255, 95, 25, 0.9);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Spectral', serif;
+  color: #fbeedc;
+  background: var(--theme-bg);
+  position: relative;
+  overflow-x: hidden;
+  isolation: isolate;
+}
+
+::selection {
+  background: var(--theme-accent-soft);
+}
+
+input,
+textarea {
+  caret-color: var(--theme-accent);
+}
+
+button:focus-visible,
+.btn:focus-visible,
+.tool-btn:focus-visible,
+.share-mode-btn:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--theme-focus);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse at center, transparent 40%, rgba(10, 7, 6, 0.35) 100%),
+    linear-gradient(180deg, rgba(10, 5, 3, 0.2) 0%, transparent 34%, rgba(10, 5, 3, 0.18) 100%);
+}
+
+.ambient-bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 10%, var(--ambient-a), transparent 55%),
+    radial-gradient(circle at 80% 30%, var(--ambient-b), transparent 60%),
+    radial-gradient(circle at 30% 80%, var(--ambient-c), transparent 55%);
+  pointer-events: none;
+  z-index: -5;
+  animation: emberPulse 8s ease-in-out infinite;
+}
+
+.pulse-highlight {
+  animation: pulseHighlight 2s ease-in-out infinite;
+  box-shadow: 0 0 0 0 var(--theme-focus);
+}
+
+@keyframes pulseHighlight {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px 4px var(--theme-focus); }
+  100% { transform: scale(1); }
+}
+

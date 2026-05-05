@@ -1,10 +1,17 @@
 import os
 import json
+import threading
 import firebase_admin
 from firebase_admin import credentials, firestore, auth, storage
 from google.cloud.firestore_v1 import Increment
 from google.cloud.firestore_v1.base_query import FieldFilter
 from datetime import datetime, timezone, timedelta
+from functools import lru_cache
+
+# ── Simple in-memory cache for user themes (avoids repeated Firestore reads) ──
+_theme_cache = {}  # {user_id: (theme, timestamp)}
+_theme_cache_lock = threading.Lock()
+_THEME_CACHE_TTL = 300  # 5 minutes
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 CRED_PATH = os.path.join(APP_DIR, "firebase-adminsdk.json")
@@ -57,14 +64,30 @@ def verify_token(id_token):
 
 def get_user_theme(user_id):
     if not user_id: return "campfire"
-    if str(user_id).startswith("guest_"): return "campfire"
-    doc = get_db().collection('users').document(str(user_id)).get()
-    if doc.exists:
-        return doc.to_dict().get('theme', 'campfire')
-    return "campfire"
+    uid = str(user_id)
+    if uid.startswith("guest_"): return "campfire"
+    
+    # Check in-memory cache first
+    with _theme_cache_lock:
+        cached = _theme_cache.get(uid)
+        if cached:
+            theme, ts = cached
+            if (datetime.now(timezone.utc) - ts).total_seconds() < _THEME_CACHE_TTL:
+                return theme
+    
+    doc = get_db().collection('users').document(uid).get()
+    theme = doc.to_dict().get('theme', 'campfire') if doc.exists else "campfire"
+    
+    with _theme_cache_lock:
+        _theme_cache[uid] = (theme, datetime.now(timezone.utc))
+    return theme
 
 def set_user_theme(user_id, theme):
-    get_db().collection('users').document(str(user_id)).set({'theme': theme}, merge=True)
+    uid = str(user_id)
+    get_db().collection('users').document(uid).set({'theme': theme}, merge=True)
+    # Invalidate cache
+    with _theme_cache_lock:
+        _theme_cache.pop(uid, None)
 
 def set_user_custom_audio(user_id, theme, audio_url, filename=None):
     """Set the active audio URL and add it to the list of songs for this theme."""
@@ -137,7 +160,45 @@ def create_or_update_user(uid, email, name, picture=""):
         # Returning user: merge (preserves theme, etc.)
         doc_ref.set(user_data, merge=True)
 
-def get_entries(user_id, entry_type="diary"):
+def get_entries(user_id, entry_type="diary", limit=20, last_doc_id=None):
+    """Fetch entries with cursor-based pagination.
+    
+    Args:
+        user_id: The user's ID
+        entry_type: 'diary' or 'story'
+        limit: Max entries per page (default 20)
+        last_doc_id: ID of last document from previous page (for cursor pagination)
+    
+    Returns:
+        tuple: (entries_list, has_more)
+    """
+    db = get_db()
+    query = (db.collection('entries')
+             .where(filter=FieldFilter('user_id', '==', str(user_id)))
+             .where(filter=FieldFilter('type', '==', entry_type))
+             .order_by('created_at'))
+    
+    if last_doc_id:
+        last_doc = db.collection('entries').document(last_doc_id).get()
+        if last_doc.exists:
+            query = query.start_after(last_doc)
+    
+    # Fetch limit+1 to check if more exist
+    docs = list(query.limit(limit + 1).stream())
+    has_more = len(docs) > limit
+    if has_more:
+        docs = docs[:limit]
+    
+    result = []
+    for doc in docs:
+        data = doc.to_dict()
+        data['id'] = doc.id
+        result.append(data)
+    return result, has_more
+
+
+def get_entries_all(user_id, entry_type="diary"):
+    """Legacy: fetch ALL entries (used by chat context, activity). Use sparingly."""
     db = get_db()
     docs = db.collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', entry_type)).limit(2000).stream()
     result = []
@@ -223,18 +284,22 @@ def get_entry_by_share_code(code):
     return None
 
 def get_story_entries_for_user(user_id):
-    docs = get_db().collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', 'story')).limit(2000).stream()
+    docs = get_db().collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', 'story')).order_by('created_at').limit(500).stream()
     result = []
     for doc in docs:
         data = doc.to_dict()
         data['id'] = doc.id
         result.append(data)
-    result.sort(key=lambda x: x.get('created_at', ''))
     return result
 
 def get_activity_counts(user_id, days):
     db = get_db()
-    docs = db.collection('activity').where(filter=FieldFilter('user_id', '==', str(user_id))).limit(1000).stream()
+    cutoff_date = (datetime.now(timezone.utc).date() - timedelta(days=days)).isoformat()
+    docs = (db.collection('activity')
+            .where(filter=FieldFilter('user_id', '==', str(user_id)))
+            .where(filter=FieldFilter('day', '>=', cutoff_date))
+            .limit(days + 1)
+            .stream())
     counts = {}
     for doc in docs:
         data = doc.to_dict()

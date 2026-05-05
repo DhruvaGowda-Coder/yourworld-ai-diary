@@ -14,7 +14,15 @@
   {% endblock %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=20260505c" />
+  <link rel="dns-prefetch" href="https://api.groq.com">
+  <link rel="dns-prefetch" href="https://router.huggingface.co">
+  <meta name="theme-color" content="#161311">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=20260505d" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}?v=20260505d" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}?v=20260505d" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/editor.css') }}?v=20260505d" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=20260505d" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}?v=20260505d" />
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/yourworld-symbol.svg') }}">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
   <script>
@@ -203,7 +211,11 @@
       window.UserAudioLists = serverLists;
     })();
   </script>
-  <script src="{{ url_for('static', filename='js/app.js', v='20260505c') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/core.js', v='20260505d') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/animations.js', v='20260505d') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/chat.js', v='20260505d') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/editor.js', v='20260505d') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/theme.js', v='20260505d') }}" defer></script>
   <script>
     /* Mobile drawer toggle */
     (function() {

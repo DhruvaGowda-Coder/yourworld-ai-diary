@@ -238,30 +238,42 @@ def login_required(fn):
     return wrapper
 
 
+@app.after_request
+def add_cache_headers(response):
+    """Add cache-control headers for static assets."""
+    if request.path.startswith('/static/'):
+        # Cache static assets for 1 year (use cache-busting query params)
+        response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+    return response
+
+
 @app.context_processor
 def inject_user():
-    user_id = session.get("user_id")
-    is_guest_user = session.get("is_guest", False)
-    current_user = get_current_user()
-    
-    # Priority: Session -> Firestore User Data -> Firestore Theme Data -> Default
-    theme = session.get("theme")
-    if not theme:
-        if current_user:
-            theme = current_user.get("theme")
-        else:
-            theme = normalize_theme(firebase_db.get_user_theme(user_id))
-    
-    theme = normalize_theme(theme)
-    theme_meta = THEME_DETAILS.get(theme, THEME_DETAILS["campfire"])
-    
-    return {
-        "current_user": current_user,
-        "is_guest_user": is_guest_user,
-        "current_theme": theme,
-        "current_theme_meta": theme_meta,
-        "firebase_config": FIREBASE_WEB_CONFIG,
-    }
+    # Use Flask's g object to cache per-request and avoid duplicate Firestore reads
+    if not hasattr(g, '_yw_ctx'):
+        user_id = session.get("user_id")
+        is_guest_user = session.get("is_guest", False)
+        current_user = get_current_user()
+        
+        # Priority: Session -> Firestore User Data -> Firestore Theme Data -> Default
+        theme = session.get("theme")
+        if not theme:
+            if current_user:
+                theme = current_user.get("theme")
+            else:
+                theme = normalize_theme(firebase_db.get_user_theme(user_id))
+        
+        theme = normalize_theme(theme)
+        theme_meta = THEME_DETAILS.get(theme, THEME_DETAILS["campfire"])
+        
+        g._yw_ctx = {
+            "current_user": current_user,
+            "is_guest_user": is_guest_user,
+            "current_theme": theme,
+            "current_theme_meta": theme_meta,
+            "firebase_config": FIREBASE_WEB_CONFIG,
+        }
+    return g._yw_ctx
 
 
 @app.route("/")
@@ -423,25 +435,16 @@ def api_upload(file_type):
         unique_name = f"{secrets.token_hex(8)}_{filename}"
         
         try:
-            # Prioritize uploading to Firebase Storage
+            # Upload to Firebase Storage
             destination_path = f"uploads/{file_type}/{unique_name}"
             content_type = file.content_type
             file_url = firebase_db.upload_to_storage(file.stream, destination_path, content_type)
             return jsonify({"url": file_url, "name": filename})
         except Exception as e:
-            # Fallback to local storage if Firebase fails (e.g. missing billing account)
-            try:
-                file.stream.seek(0)
-                upload_dir = os.path.join(APP_DIR, "static", "uploads", file_type)
-                os.makedirs(upload_dir, exist_ok=True)
-                file_path = os.path.join(upload_dir, unique_name)
-                file.save(file_path)
-                file_url = url_for("static", filename=f"uploads/{file_type}/{unique_name}")
-                return jsonify({"url": file_url, "name": filename})
-            except Exception as inner_e:
-                return jsonify({"error": f"Firebase failed: {str(e)}, Local fallback failed: {str(inner_e)}"}), 500
+            app.logger.error(f"Firebase Storage upload failed: {str(e)}")
+            return jsonify({"error": "Failed to upload file to cloud storage. Please try again."}), 502
     
-    return jsonify({"error": "File upload failed"}), 500
+    return jsonify({"error": "File upload failed"}), 400
 
 
 @app.route("/api/settings/audio", methods=["POST"])
@@ -476,16 +479,22 @@ def api_settings_audio_delete():
 @login_required
 def api_entries():
     entry_type = request.args.get("type", "diary")
-    rows = firebase_db.get_entries(session["user_id"], entry_type)
-    return jsonify([
-        {
-            "id": r["id"],
-            "title": r.get("title", "Untitled"),
-            "updated_at": r.get("updated_at"),
-            "created_at": r.get("created_at")
-        }
-        for r in rows
-    ])
+    limit = min(int(request.args.get("limit", 20)), 100)  # Max 100 per request
+    last_doc_id = request.args.get("after")  # Cursor for pagination
+    
+    rows, has_more = firebase_db.get_entries(session["user_id"], entry_type, limit=limit, last_doc_id=last_doc_id or None)
+    return jsonify({
+        "entries": [
+            {
+                "id": r["id"],
+                "title": r.get("title", "Untitled"),
+                "updated_at": r.get("updated_at"),
+                "created_at": r.get("created_at")
+            }
+            for r in rows
+        ],
+        "has_more": has_more
+    })
 
 
 @app.route("/api/entry/<entry_id>")
@@ -806,7 +815,7 @@ def api_chat():
             page_label = raw_label.strip()[:80]  # type: ignore # pyre-ignore
 
     if user_id and entry_type:
-        rows = firebase_db.get_entries(user_id, entry_type)
+        rows = firebase_db.get_entries_all(user_id, entry_type)
         # Sort by updated_at descending and get top 4
         rows.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
         rows = rows[:4]
@@ -881,8 +890,8 @@ def api_activity():
     counts = firebase_db.get_activity_counts(session["user_id"], days)
     
     # Also fetch individual entries just in case they don't have explicit activity rows
-    entry_rows = firebase_db.get_entries(session["user_id"], "diary")
-    entry_rows += firebase_db.get_entries(session["user_id"], "story")
+    entry_rows = firebase_db.get_entries_all(session["user_id"], "diary")
+    entry_rows += firebase_db.get_entries_all(session["user_id"], "story")
     
     entry_counts = {}
     for row in entry_rows:
@@ -957,6 +966,21 @@ def api_system_cleanup():
     
     count = firebase_db.cleanup_guest_data()
     return jsonify({"success": True, "deleted_entries": count})
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    app.logger.exception("Internal Server Error")
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "Internal Server Error"}), 500
+    return "Internal Server Error", 500
+
+
+@app.errorhandler(404)
+def not_found_error(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "Not Found"}), 404
+    return "Not Found", 404
 
 
 if __name__ == "__main__":
