@@ -2629,6 +2629,8 @@ if (chatResizeHandle && chatPanel) {
     dragging = false;
     document.removeEventListener('mousemove', onMove);
     document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchmove', onTouchMove);
+    document.removeEventListener('touchend', stopDrag);
   };
 
   const startResize = (event) => {
@@ -2653,6 +2655,7 @@ if (chatResizeHandle && chatPanel) {
 
   const onTouchMove = (event) => {
     if (!dragging) return;
+    if (event.cancelable) event.preventDefault();
     onMove(event.touches[0]);
   };
 
@@ -2686,6 +2689,8 @@ if (chatDragHandle && chatPanel) {
     draggingPanel = false;
     document.removeEventListener('mousemove', onDragMove);
     document.removeEventListener('mouseup', stopDragPanel);
+    document.removeEventListener('touchmove', onTouchDragMove);
+    document.removeEventListener('touchend', stopDragPanel);
   };
 
   const startDragging = (event) => {
@@ -2709,6 +2714,7 @@ if (chatDragHandle && chatPanel) {
 
   const onTouchDragMove = (event) => {
     if (!draggingPanel) return;
+    if (event.cancelable) event.preventDefault();
     onDragMove(event.touches[0]);
   };
 
