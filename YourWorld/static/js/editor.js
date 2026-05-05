@@ -260,6 +260,12 @@ if (workspace) {
     scheduleAutosave();
   };
 
+  const resizeContentInput = () => {
+    if (!contentInput) return;
+    contentInput.style.height = 'auto';
+    contentInput.style.height = `${Math.max(520, contentInput.scrollHeight)}px`;
+  };
+
   const animateTurn = (direction, callback) => {
     if (!pageTurn) {
       callback();
@@ -536,6 +542,7 @@ if (workspace) {
     const data = await response.json();
     titleInput.value = data.title || '';
     contentInput.value = data.content || '';
+    resizeContentInput();
     Object.assign(titleStyleState, parseStyleState(data.title_style, defaultTitleStyle));
     Object.assign(contentStyleState, parseStyleState(data.content_style, defaultContentStyle));
     applyEditorStyle();
@@ -599,6 +606,7 @@ if (workspace) {
     currentIndex = -1;
     titleInput.value = '';
     contentInput.value = '';
+    resizeContentInput();
     Object.assign(titleStyleState, defaultTitleStyle);
     Object.assign(contentStyleState, defaultContentStyle);
     applyEditorStyle();
@@ -825,7 +833,10 @@ if (workspace) {
       activeEditorTarget = 'content';
       refreshToolbarState();
     });
-    contentInput.addEventListener('input', markDirty);
+    contentInput.addEventListener('input', () => {
+      resizeContentInput();
+      markDirty();
+    });
   }
   if (imagePrompt) imagePrompt.addEventListener('input', markDirty);
 
@@ -900,12 +911,13 @@ if (workspace) {
     contentInput.addEventListener('paste', (event) => {
       const clipboard = event.clipboardData || window.clipboardData;
       if (!clipboard) return;
-      const html = clipboard.getData('text/html');
       const plain = clipboard.getData('text/plain');
+      const html = clipboard.getData('text/html');
       if (!html && !plain) return;
       event.preventDefault();
-      const text = html ? htmlToText(html) : plain;
+      const text = plain || htmlToText(html);
       insertAtCursor(contentInput, text);
+      resizeContentInput();
       markDirty();
     });
   }
@@ -1231,6 +1243,7 @@ if (workspace) {
   }
 
   applyEditorStyle();
+  resizeContentInput();
   loadEntries();
 
   // Keyboard Shortcuts
