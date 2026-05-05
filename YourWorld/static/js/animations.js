@@ -1247,8 +1247,13 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
     const iceCracks = [];
     let lastCrackTime = 0;
     let lastIceFrame = 0;
+    let nextIceCrackAt = 0;
     let iceCrackAnimationId = null;
     const isIceMobile = () => window.matchMedia('(max-width: 760px), (pointer: coarse)').matches;
+    const scheduleNextIceCrack = (fromTime = performance.now()) => {
+      const mobile = isIceMobile();
+      nextIceCrackAt = fromTime + (mobile ? 4200 : 1500) + Math.random() * (mobile ? 4200 : 2000);
+    };
 
     const resizeIceCrackCanvas = () => {
       dpr = Math.min(window.devicePixelRatio || 1, isIceMobile() ? 1 : 1.5);
@@ -1455,14 +1460,18 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
     const updateIceCracks = (timestamp) => {
       const mobile = isIceMobile();
       // Create new cracks less frequently
-      if (timestamp - lastCrackTime > (mobile ? 3200 : 1500) + Math.random() * (mobile ? 3200 : 2000)) {
+      if (timestamp >= nextIceCrackAt) {
         if (iceCracks.length < (mobile ? 1 : 4)) {
           createIceCrack();
           lastCrackTime = timestamp;
+          scheduleNextIceCrack(timestamp);
+        } else {
+          scheduleNextIceCrack(timestamp);
         }
       }
 
       // Update and draw existing cracks
+      if (mobile && iceCracks.length === 0) return;
       iceCrackCtx.clearRect(0, 0, viewportWidth, viewportHeight);
       
       for (let i = iceCracks.length - 1; i >= 0; i--) {
@@ -1479,7 +1488,7 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
 
     const animateIceCracks = (timestamp) => {
       if (!iceRunning) return;
-      const frameDelay = isIceMobile() ? 66 : 33;
+      const frameDelay = isIceMobile() ? 120 : 33;
       if (timestamp - lastIceFrame < frameDelay) {
         iceCrackAnimationId = requestAnimationFrame(animateIceCracks);
         return;
@@ -1496,9 +1505,14 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
       iceRunning = true;
       lastCrackTime = performance.now();
       lastIceFrame = 0;
+      scheduleNextIceCrack(lastCrackTime);
       window.setTimeout(() => {
         if (!iceRunning) return;
-        if (iceCracks.length === 0) createIceCrack();
+        if (iceCracks.length === 0) {
+          createIceCrack();
+          lastCrackTime = performance.now();
+          scheduleNextIceCrack(lastCrackTime);
+        }
       }, 700);
       iceCrackAnimationId = requestAnimationFrame(animateIceCracks);
     };
@@ -1509,6 +1523,7 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
       iceCrackAnimationId = null;
       lastCrackTime = 0;
       lastIceFrame = 0;
+      nextIceCrackAt = 0;
       iceCracks.length = 0;
       iceCrackCtx.clearRect(0, 0, viewportWidth, viewportHeight);
     };

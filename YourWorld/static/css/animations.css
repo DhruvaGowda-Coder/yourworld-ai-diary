@@ -591,8 +591,8 @@ body[data-theme="space"][data-cycle="day"] {
 
 @keyframes mobileFrostSheen {
   0% { transform: translate3d(-120%, -8%, 0) rotate(12deg); opacity: 0; }
-  18% { opacity: 0.22; }
-  42% { opacity: 0.08; }
+  12% { opacity: 0.16; }
+  30% { opacity: 0.06; }
   100% { transform: translate3d(120%, 8%, 0) rotate(12deg); opacity: 0; }
 }
 
@@ -895,10 +895,9 @@ body[data-theme="cherry"] {
       repeating-linear-gradient(132deg, rgba(235, 252, 255, 0.055) 0 1px, transparent 1px 24px),
       repeating-linear-gradient(48deg, rgba(144, 204, 235, 0.04) 0 1px, transparent 1px 32px);
     background-size: 92px 92px, 118px 118px, 100% 100%, 100% 100%;
-    opacity: 0.52;
-    animation: mobileFrostDrift 20s ease-in-out infinite;
+    opacity: 0.48;
+    animation: none;
     contain: paint;
-    will-change: transform, opacity;
   }
 
   body[data-theme="ice"] .theme-motion-c {
@@ -924,8 +923,8 @@ body[data-theme="cherry"] {
       radial-gradient(circle at 72% 26%, rgba(210, 244, 255, 0.22) 0 1px, transparent 2px),
       radial-gradient(circle at 42% 78%, rgba(255, 255, 255, 0.24) 0 1px, transparent 2px);
     background-size: 74px 74px, 96px 96px, 112px 112px;
-    opacity: 0.24;
-    animation: mobileFrostTwinkle 6s ease-in-out infinite;
+    opacity: 0.22;
+    animation: none;
   }
 
   body[data-theme="ice"] .theme-motion-b::after {
@@ -937,9 +936,9 @@ body[data-theme="cherry"] {
 
   body[data-theme="ice"] .theme-motion-c::before {
     inset: -18% -65%;
-    background: linear-gradient(100deg, transparent 40%, rgba(255, 255, 255, 0.18) 48%, rgba(184, 227, 247, 0.14) 52%, transparent 60%);
+    background: linear-gradient(100deg, transparent 40%, rgba(255, 255, 255, 0.14) 48%, rgba(184, 227, 247, 0.1) 52%, transparent 60%);
     opacity: 0;
-    animation: mobileFrostSheen 9s ease-in-out infinite;
+    animation: mobileFrostSheen 16s ease-in-out infinite;
     will-change: transform, opacity;
   }
 
