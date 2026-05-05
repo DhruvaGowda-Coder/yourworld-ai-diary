@@ -854,6 +854,40 @@ body[data-theme="cherry"] {
   --heat-4: rgba(255, 182, 193, 0.86);
 }
 
+@media (max-width: 760px), (pointer: coarse) {
+  body[data-theme="ice"] .theme-motion-a {
+    background:
+      radial-gradient(circle at 50% 45%, rgba(179, 220, 244, 0.07) 0 24%, transparent 62%),
+      radial-gradient(circle at 28% 28%, rgba(220, 248, 255, 0.045) 0 18%, transparent 48%);
+  }
+
+  body[data-theme="ice"] .theme-motion-a::before {
+    filter: blur(8px);
+    opacity: 0.36;
+  }
+
+  body[data-theme="ice"] .theme-motion-a::after {
+    filter: blur(10px);
+    opacity: 0.3;
+  }
+
+  body[data-theme="ice"] .theme-motion-b::before,
+  body[data-theme="ice"] .theme-motion-b::after,
+  body[data-theme="ice"] .theme-motion-c::before,
+  body[data-theme="ice"] .theme-motion-c::after {
+    display: none;
+  }
+
+  body[data-theme="ice"] .theme-motion-b,
+  body[data-theme="ice"] .theme-motion-c {
+    opacity: 0.35;
+  }
+
+  body[data-theme="ice"] .theme-particle-layer {
+    display: none;
+  }
+}
+
 body[data-theme="water"] .ember-field-canvas,
 body[data-theme="water"] .fire-band-canvas,
 body[data-theme="wind"] .ember-field-canvas,

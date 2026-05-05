@@ -1246,10 +1246,12 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
     let viewportWidth = 0, viewportHeight = 0, dpr = 1;
     const iceCracks = [];
     let lastCrackTime = 0;
+    let lastIceFrame = 0;
     let iceCrackAnimationId = null;
+    const isIceMobile = () => window.matchMedia('(max-width: 760px), (pointer: coarse)').matches;
 
     const resizeIceCrackCanvas = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      dpr = Math.min(window.devicePixelRatio || 1, isIceMobile() ? 1 : 1.5);
       viewportWidth = window.innerWidth;
       viewportHeight = window.innerHeight;
       iceCrackCanvas.width = Math.floor(viewportWidth * dpr);
@@ -1260,21 +1262,23 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
     };
 
     const createIceCrack = () => {
+      const mobile = isIceMobile();
       const crack = {
         x: Math.random() * viewportWidth,
         y: Math.random() * viewportHeight,
         branches: [],
         life: 0,
-        maxLife: 200 + Math.random() * 100, // 3.3-5 seconds
+        maxLife: mobile ? (120 + Math.random() * 60) : (200 + Math.random() * 100),
         opacity: 0,
-        maxOpacity: 0.7 + Math.random() * 0.25, // Higher opacity for realism
-        spreadSpeed: 0.3 + Math.random() * 0.3, // More controlled, realistic spread
+        maxOpacity: mobile ? (0.38 + Math.random() * 0.18) : (0.7 + Math.random() * 0.25),
+        spreadSpeed: mobile ? (0.5 + Math.random() * 0.25) : (0.3 + Math.random() * 0.3),
         growthPattern: Math.random() < 0.5 ? 'organic' : 'burst',
-        mainDirection: Math.random() * Math.PI * 2
+        mainDirection: Math.random() * Math.PI * 2,
+        drawCrystals: !mobile
       };
 
       // Create main crack with realistic branching
-      const numBranches = 6 + Math.floor(Math.random() * 7); // 6-12 main branches
+      const numBranches = mobile ? (3 + Math.floor(Math.random() * 3)) : (6 + Math.floor(Math.random() * 7));
       for (let i = 0; i < numBranches; i++) {
         let angle, length;
         
@@ -1290,16 +1294,16 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
         
         crack.branches.push({
           angle: angle,
-          length: length,
+          length: mobile ? length * 0.8 : length,
           currentLength: 0,
           subBranches: [],
-          thickness: 1.5 + Math.random() * 1.5,
-          growthDelay: Math.random() * 20 // Frames before starting growth
+          thickness: mobile ? (1 + Math.random() * 0.8) : (1.5 + Math.random() * 1.5),
+          growthDelay: Math.random() * (mobile ? 10 : 20)
         });
 
         // Add realistic sub-branches
-        if (Math.random() < 0.75) {
-          const numSubBranches = 1 + Math.floor(Math.random() * 4);
+        if (Math.random() < (mobile ? 0.35 : 0.75)) {
+          const numSubBranches = mobile ? 1 : (1 + Math.floor(Math.random() * 4));
           for (let j = 0; j < numSubBranches; j++) {
             const subAngle = angle + (Math.random() - 0.5) * 1.8;
             const subLength = length * (0.25 + Math.random() * 0.35);
@@ -1315,7 +1319,7 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
             });
 
             // Add realistic sub-sub-branches
-            if (Math.random() < 0.6) {
+            if (!mobile && Math.random() < 0.6) {
               const numSubSubBranches = 1 + Math.floor(Math.random() * 2);
               for (let k = 0; k < numSubSubBranches; k++) {
                 const subSubAngle = subAngle + (Math.random() - 0.5) * 1.0;
@@ -1377,7 +1381,7 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
         iceCrackCtx.stroke();
 
         // Add ice crystal texture to main branch
-        if (branch.currentLength > 5) {
+        if (crack.drawCrystals && branch.currentLength > 5) {
           const numCrystals = Math.floor(branch.currentLength / 8);
           for (let c = 0; c < numCrystals; c++) {
             const crystalX = crack.x + Math.cos(branch.angle) * (branch.currentLength * (c + 1) / (numCrystals + 1));
@@ -1410,7 +1414,7 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
             iceCrackCtx.stroke();
 
             // Add smaller crystals to sub-branches
-            if (subBranch.currentLength > 3) {
+            if (crack.drawCrystals && subBranch.currentLength > 3) {
               const numSubCrystals = Math.floor(subBranch.currentLength / 12);
               for (let c = 0; c < numSubCrystals; c++) {
                 const subCrystalX = subEndX + Math.cos(subBranch.angle) * (subBranch.currentLength * (c + 1) / (numSubCrystals + 1));
@@ -1449,9 +1453,10 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
     };
 
     const updateIceCracks = (timestamp) => {
+      const mobile = isIceMobile();
       // Create new cracks less frequently
-      if (timestamp - lastCrackTime > 1500 + Math.random() * 2000) { // Every 1.5-3.5 seconds
-        if (iceCracks.length < 4) { // Allow up to 4 concurrent cracks
+      if (timestamp - lastCrackTime > (mobile ? 3200 : 1500) + Math.random() * (mobile ? 3200 : 2000)) {
+        if (iceCracks.length < (mobile ? 1 : 4)) {
           createIceCrack();
           lastCrackTime = timestamp;
         }
@@ -1474,6 +1479,12 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
 
     const animateIceCracks = (timestamp) => {
       if (!iceRunning) return;
+      const frameDelay = isIceMobile() ? 66 : 33;
+      if (timestamp - lastIceFrame < frameDelay) {
+        iceCrackAnimationId = requestAnimationFrame(animateIceCracks);
+        return;
+      }
+      lastIceFrame = timestamp;
       updateIceCracks(timestamp);
       iceCrackAnimationId = requestAnimationFrame(animateIceCracks);
     };
@@ -1484,6 +1495,7 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
       if (iceRunning) return;
       iceRunning = true;
       lastCrackTime = performance.now();
+      lastIceFrame = 0;
       window.setTimeout(() => {
         if (!iceRunning) return;
         if (iceCracks.length === 0) createIceCrack();
@@ -1496,6 +1508,7 @@ if (iceCrackCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').mat
       if (iceCrackAnimationId) cancelAnimationFrame(iceCrackAnimationId);
       iceCrackAnimationId = null;
       lastCrackTime = 0;
+      lastIceFrame = 0;
       iceCracks.length = 0;
       iceCrackCtx.clearRect(0, 0, viewportWidth, viewportHeight);
     };

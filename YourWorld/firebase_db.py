@@ -173,28 +173,30 @@ def get_entries(user_id, entry_type="diary", limit=20, last_doc_id=None):
         tuple: (entries_list, has_more)
     """
     db = get_db()
-    query = (db.collection('entries')
-             .where(filter=FieldFilter('user_id', '==', str(user_id)))
-             .where(filter=FieldFilter('type', '==', entry_type))
-             .order_by('created_at'))
-    
-    if last_doc_id:
-        last_doc = db.collection('entries').document(last_doc_id).get()
-        if last_doc.exists:
-            query = query.start_after(last_doc)
-    
-    # Fetch limit+1 to check if more exist
-    docs = list(query.limit(limit + 1).stream())
-    has_more = len(docs) > limit
-    if has_more:
-        docs = docs[:limit]
-    
-    result = []
+    docs = (db.collection('entries')
+            .where(filter=FieldFilter('user_id', '==', str(user_id)))
+            .where(filter=FieldFilter('type', '==', entry_type))
+            .limit(2000)
+            .stream())
+
+    entries = []
     for doc in docs:
         data = doc.to_dict()
         data['id'] = doc.id
-        result.append(data)
-    return result, has_more
+        entries.append(data)
+
+    entries.sort(key=lambda x: (x.get('created_at', ''), x.get('id', '')))
+
+    start_index = 0
+    if last_doc_id:
+        for index, entry in enumerate(entries):
+            if entry.get('id') == last_doc_id:
+                start_index = index + 1
+                break
+
+    page = entries[start_index:start_index + limit + 1]
+    has_more = len(page) > limit
+    return page[:limit], has_more
 
 
 def get_entries_all(user_id, entry_type="diary"):
@@ -284,12 +286,17 @@ def get_entry_by_share_code(code):
     return None
 
 def get_story_entries_for_user(user_id):
-    docs = get_db().collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', 'story')).order_by('created_at').limit(500).stream()
+    docs = (get_db().collection('entries')
+            .where(filter=FieldFilter('user_id', '==', str(user_id)))
+            .where(filter=FieldFilter('type', '==', 'story'))
+            .limit(500)
+            .stream())
     result = []
     for doc in docs:
         data = doc.to_dict()
         data['id'] = doc.id
         result.append(data)
+    result.sort(key=lambda x: (x.get('created_at', ''), x.get('id', '')))
     return result
 
 def get_activity_counts(user_id, days):
@@ -297,13 +304,14 @@ def get_activity_counts(user_id, days):
     cutoff_date = (datetime.now(timezone.utc).date() - timedelta(days=days)).isoformat()
     docs = (db.collection('activity')
             .where(filter=FieldFilter('user_id', '==', str(user_id)))
-            .where(filter=FieldFilter('day', '>=', cutoff_date))
-            .limit(days + 1)
+            .limit(2000)
             .stream())
     counts = {}
     for doc in docs:
         data = doc.to_dict()
-        counts[data.get('day')] = data.get('count', 0)
+        day = data.get('day')
+        if day and day >= cutoff_date:
+            counts[day] = data.get('count', 0)
     return counts
 
 def increment_activity(user_id, day):
