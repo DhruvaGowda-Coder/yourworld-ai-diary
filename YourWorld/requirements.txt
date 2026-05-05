@@ -3,7 +3,6 @@ Werkzeug==3.0.3
 python-dotenv==1.0.1
 requests==2.32.3
 gunicorn==21.2.0
-gevent==24.2.1
 Flask-WTF==1.2.2
 firebase-admin>=6.5.0
 bleach>=6.1.0
