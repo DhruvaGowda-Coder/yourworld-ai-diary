@@ -1146,7 +1146,10 @@ if (workspace) {
         return;
       }
       if (!response.ok) {
-        throw new Error(data.error || 'Share failed');
+        if (data.error === 'code_unavailable') {
+          throw new Error(data.message || 'This code already exists. Choose another code.');
+        }
+        throw new Error(data.message || data.error || 'Share failed');
       }
       shareCode = data.share_code;
       shareCanEditValue = data.can_edit;

@@ -746,7 +746,10 @@ def api_entry_share(entry_id):
         # Ensure it's not already used by another entry
         existing = firebase_db.get_entry_by_share_code(code)
         if existing and existing.get("id") != entry_id:
-            return jsonify({"error": "Custom code already in use"}), 400
+            return jsonify({
+                "error": "code_unavailable",
+                "message": "This custom code already exists. Please choose another code.",
+            }), 400
     elif share_code and not rotate:
         code = share_code
     else:
