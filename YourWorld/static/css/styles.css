@@ -5418,6 +5418,16 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
   .entry-list {
     max-height: 220px;
   }
+  .book {
+    min-height: 480px !important;
+    padding: 24px !important;
+  }
+  .page-title {
+    font-size: 1.4rem !important;
+  }
+  .page-content {
+    font-size: 1rem !important;
+  }
 }
 
 @media (max-width: 768px) {

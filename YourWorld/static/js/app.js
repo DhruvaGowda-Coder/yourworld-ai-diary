@@ -2631,18 +2631,33 @@ if (chatResizeHandle && chatPanel) {
     document.removeEventListener('mouseup', stopDrag);
   };
 
-  chatResizeHandle.addEventListener('mousedown', (event) => {
+  const startResize = (event) => {
     event.preventDefault();
     dragging = true;
     const rect = chatPanel.getBoundingClientRect();
-    startX = event.clientX;
-    startY = event.clientY;
+    const touch = event.touches ? event.touches[0] : event;
+    startX = touch.clientX;
+    startY = touch.clientY;
     startWidth = rect.width;
     startHeight = rect.height;
     aspectRatio = startWidth / startHeight;
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', stopDrag);
-  });
+    
+    if (event.touches) {
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend', stopDrag);
+    } else {
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', stopDrag);
+    }
+  };
+
+  const onTouchMove = (event) => {
+    if (!dragging) return;
+    onMove(event.touches[0]);
+  };
+
+  chatResizeHandle.addEventListener('mousedown', startResize);
+  chatResizeHandle.addEventListener('touchstart', startResize, { passive: false });
 }
 
 if (chatDragHandle && chatPanel) {
@@ -2673,17 +2688,32 @@ if (chatDragHandle && chatPanel) {
     document.removeEventListener('mouseup', stopDragPanel);
   };
 
-  chatDragHandle.addEventListener('mousedown', (event) => {
+  const startDragging = (event) => {
     event.preventDefault();
     const rect = chatPanel.getBoundingClientRect();
-    dragStartX = event.clientX;
-    dragStartY = event.clientY;
+    const touch = event.touches ? event.touches[0] : event;
+    dragStartX = touch.clientX;
+    dragStartY = touch.clientY;
     dragOffsetX = dragStartX - rect.left;
     dragOffsetY = dragStartY - rect.top;
     draggingPanel = true;
-    document.addEventListener('mousemove', onDragMove);
-    document.addEventListener('mouseup', stopDragPanel);
-  });
+
+    if (event.touches) {
+      document.addEventListener('touchmove', onTouchDragMove, { passive: false });
+      document.addEventListener('touchend', stopDragPanel);
+    } else {
+      document.addEventListener('mousemove', onDragMove);
+      document.addEventListener('mouseup', stopDragPanel);
+    }
+  };
+
+  const onTouchDragMove = (event) => {
+    if (!draggingPanel) return;
+    onDragMove(event.touches[0]);
+  };
+
+  chatDragHandle.addEventListener('mousedown', startDragging);
+  chatDragHandle.addEventListener('touchstart', startDragging, { passive: false });
 }
 
 if (chatForm && chatText) {
@@ -3346,17 +3376,19 @@ if (workspace) {
   };
 
   if (newEntryBtn) {
-    newEntryBtn.addEventListener('click', async () => {
+    const handleNewEntry = async () => {
       await saveIfDirty();
       animateTurn('next', async () => {
         createBlank();
         await saveEntry({ allowEmpty: true, reuseActiveId: false });
       });
-    });
+    };
+    newEntryBtn.addEventListener('click', handleNewEntry);
+    newEntryBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleNewEntry(); }, { passive: false });
   }
 
   if (deleteEntryBtn) {
-    deleteEntryBtn.addEventListener('click', async () => {
+    const handleDeleteEntry = async () => {
       const targetId = getActiveEntryId();
       if (!targetId) {
         console.warn('Delete attempt without targetId');
@@ -3399,11 +3431,13 @@ if (workspace) {
         console.error('Delete error:', err);
         setStatus('Delete failed');
       }
-    });
+    };
+    deleteEntryBtn.addEventListener('click', handleDeleteEntry);
+    deleteEntryBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleDeleteEntry(); }, { passive: false });
   }
 
   if (prevBtn) {
-    prevBtn.addEventListener('click', async () => {
+    const handlePrev = async () => {
       await saveIfDirty();
       const activeIndex = getActiveIndex();
       if (activeIndex <= 0) {
@@ -3411,11 +3445,13 @@ if (workspace) {
         return;
       }
       navigateToIndex(activeIndex - 1);
-    });
+    };
+    prevBtn.addEventListener('click', handlePrev);
+    prevBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handlePrev(); }, { passive: false });
   }
 
   if (nextBtn) {
-    nextBtn.addEventListener('click', async () => {
+    const handleNext = async () => {
       await saveIfDirty();
       const activeIndex = getActiveIndex();
       if (activeIndex < 0 || activeIndex >= entries.length - 1) {
@@ -3423,7 +3459,9 @@ if (workspace) {
         return;
       }
       navigateToIndex(activeIndex + 1);
-    });
+    };
+    nextBtn.addEventListener('click', handleNext);
+    nextBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleNext(); }, { passive: false });
   }
 
   if (titleInput) {
