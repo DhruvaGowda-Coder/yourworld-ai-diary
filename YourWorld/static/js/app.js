@@ -3182,15 +3182,28 @@ if (workspace) {
       item.className = 'entry-item' + (index === currentIndex ? ' active' : '');
       item.textContent = entry.title || 'Untitled';
       item.dataset.index = index;
-      item.addEventListener('click', async () => {
+      
+      const handleSelect = async () => {
         await saveIfDirty();
         navigateToIndex(index);
-      });
+      };
+      
+      item.addEventListener('click', handleSelect);
+      item.addEventListener('touchstart', (e) => {
+        if (e.cancelable) e.preventDefault();
+        handleSelect();
+      }, { passive: false });
+      
       entryList.appendChild(item);
     });
     updateNavButtons();
     updatePageCount();
     updateDeleteButton();
+
+    const activeItem = entryList.querySelector('.entry-item.active');
+    if (activeItem) {
+      activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   };
 
   const loadEntry = async (entryId) => {
@@ -3390,84 +3403,56 @@ if (workspace) {
       });
     };
     newEntryBtn.addEventListener('click', handleNewEntry);
-    newEntryBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleNewEntry(); }, { passive: false });
+    newEntryBtn.addEventListener('touchstart', (e) => { handleNewEntry(); }, { passive: true });
   }
 
   if (deleteEntryBtn) {
     const handleDeleteEntry = async () => {
       const targetId = getActiveEntryId();
-      if (!targetId) {
-        console.warn('Delete attempt without targetId');
-        return;
-      }
-      
-      const confirmed = window.confirm('Delete this page?');
-      if (!confirmed) return;
-
+      if (!targetId) return;
+      if (!window.confirm('Delete this page?')) return;
       setStatus('Deleting...');
       try {
-        const resp = await fetch(`/api/entry/${targetId}`, { 
-          method: 'DELETE', 
-          headers: { 'X-CSRFToken': csrfToken } 
-        });
+        const resp = await fetch(`/api/entry/${targetId}`, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } });
         if (!resp.ok) throw new Error('Delete failed');
-
         const indexToRemove = entries.findIndex(e => e.id === targetId);
-        if (indexToRemove >= 0) {
-          entries.splice(indexToRemove, 1);
-        }
-
+        if (indexToRemove >= 0) entries.splice(indexToRemove, 1);
         currentEntryId = null;
         imageAttached = false;
         shareCode = null;
-        shareCanEditValue = false;
         updateShareUI();
-
-        if (entries.length > 0) {
-          const nextIndex = Math.min(indexToRemove, entries.length - 1);
-          navigateToIndex(nextIndex);
-        } else {
-          createBlank();
-        }
-        
+        if (entries.length > 0) navigateToIndex(Math.min(indexToRemove, entries.length - 1));
+        else createBlank();
         setStatus('Deleted');
         renderEntries();
-        updatePageCount();
       } catch (err) {
-        console.error('Delete error:', err);
         setStatus('Delete failed');
       }
     };
     deleteEntryBtn.addEventListener('click', handleDeleteEntry);
-    deleteEntryBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleDeleteEntry(); }, { passive: false });
+    deleteEntryBtn.addEventListener('touchstart', (e) => { handleDeleteEntry(); }, { passive: true });
   }
 
   if (prevBtn) {
     const handlePrev = async () => {
-      await saveIfDirty();
       const activeIndex = getActiveIndex();
-      if (activeIndex <= 0) {
-        setStatus('No previous page');
-        return;
-      }
+      if (activeIndex <= 0) return;
+      await saveIfDirty();
       navigateToIndex(activeIndex - 1);
     };
     prevBtn.addEventListener('click', handlePrev);
-    prevBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handlePrev(); }, { passive: false });
+    prevBtn.addEventListener('touchstart', (e) => { handlePrev(); }, { passive: true });
   }
 
   if (nextBtn) {
     const handleNext = async () => {
-      await saveIfDirty();
       const activeIndex = getActiveIndex();
-      if (activeIndex < 0 || activeIndex >= entries.length - 1) {
-        setStatus('No next page');
-        return;
-      }
+      if (activeIndex < 0 || activeIndex >= entries.length - 1) return;
+      await saveIfDirty();
       navigateToIndex(activeIndex + 1);
     };
     nextBtn.addEventListener('click', handleNext);
-    nextBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleNext(); }, { passive: false });
+    nextBtn.addEventListener('touchstart', (e) => { handleNext(); }, { passive: true });
   }
 
   if (titleInput) {
