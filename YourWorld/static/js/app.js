@@ -2907,7 +2907,7 @@ if (workspace) {
     if (autosaveTimer) clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(() => {
       if (dirty) saveEntry({ auto: true });
-    }, 900);
+    }, 3000);
   };
 
   const markDirty = () => {
@@ -3798,10 +3798,6 @@ if (workspace) {
       }
     });
   }
-
-  setInterval(() => {
-    if (dirty && autosaveEnabled) saveEntry({ auto: true });
-  }, 1500);
 
   applyEditorStyle();
   loadEntries();

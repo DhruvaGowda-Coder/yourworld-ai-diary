@@ -38,7 +38,10 @@ FIREBASE_WEB_CONFIG = {
     "measurementId": os.environ.get("FIREBASE_MEASUREMENT_ID", ""),
 }
 
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 secret_key = os.environ.get("DIARY_SECRET_KEY")
 if not secret_key:
     if not app.debug:
@@ -693,7 +696,7 @@ def call_chat_api(messages):
     else:
         return None, "missing_key"
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=20)
+        response = requests.post(url, json=payload, headers=headers, timeout=15)
     except requests.RequestException:
         return None, "request_failed"
     if not response.ok:
@@ -724,7 +727,7 @@ def call_hf_image(prompt):
         "Content-Type": "application/json",
     }
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=60)
+        response = requests.post(url, json=payload, headers=headers, timeout=25)
     except requests.RequestException:
         return None, "request_failed"
     if not response.ok:
