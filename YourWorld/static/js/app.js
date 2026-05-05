@@ -3182,18 +3182,10 @@ if (workspace) {
       item.className = 'entry-item' + (index === currentIndex ? ' active' : '');
       item.textContent = entry.title || 'Untitled';
       item.dataset.index = index;
-      
-      const handleSelect = async () => {
+      item.addEventListener('click', async () => {
         await saveIfDirty();
         navigateToIndex(index);
-      };
-      
-      item.addEventListener('click', handleSelect);
-      item.addEventListener('touchstart', (e) => {
-        if (e.cancelable) e.preventDefault();
-        handleSelect();
-      }, { passive: false });
-      
+      });
       entryList.appendChild(item);
     });
     updateNavButtons();
@@ -3403,7 +3395,6 @@ if (workspace) {
       });
     };
     newEntryBtn.addEventListener('click', handleNewEntry);
-    newEntryBtn.addEventListener('touchstart', (e) => { handleNewEntry(); }, { passive: true });
   }
 
   if (deleteEntryBtn) {
@@ -3430,7 +3421,6 @@ if (workspace) {
       }
     };
     deleteEntryBtn.addEventListener('click', handleDeleteEntry);
-    deleteEntryBtn.addEventListener('touchstart', (e) => { handleDeleteEntry(); }, { passive: true });
   }
 
   if (prevBtn) {
@@ -3441,7 +3431,6 @@ if (workspace) {
       navigateToIndex(activeIndex - 1);
     };
     prevBtn.addEventListener('click', handlePrev);
-    prevBtn.addEventListener('touchstart', (e) => { handlePrev(); }, { passive: true });
   }
 
   if (nextBtn) {
@@ -3452,7 +3441,6 @@ if (workspace) {
       navigateToIndex(activeIndex + 1);
     };
     nextBtn.addEventListener('click', handleNext);
-    nextBtn.addEventListener('touchstart', (e) => { handleNext(); }, { passive: true });
   }
 
   if (titleInput) {

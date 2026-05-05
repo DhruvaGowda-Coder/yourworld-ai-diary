@@ -3460,7 +3460,7 @@ body[data-theme="cherry"] .chat-bubble.bot {
   }
 
   .entry-sidebar {
-    order: 2;
+    order: -1;
   }
 
   .public-layout {
@@ -5435,41 +5435,106 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
   .workspace {
     grid-template-columns: 1fr;
   }
+
+  /* Show sidebar ABOVE the book so buttons are immediately accessible */
   .entry-sidebar {
+    order: -1 !important;
     max-width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
+
+  .sidebar-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .sidebar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .sidebar-actions .btn {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
   .entry-list {
-    max-height: 220px;
+    max-height: 180px;
   }
+
+  .entry-item {
+    padding: 12px 14px;
+    font-size: 0.95rem;
+  }
+
+  /* Page controls (Prev/Next) — bigger touch targets */
+  .page-controls {
+    justify-content: center;
+    gap: 16px;
+    margin-top: 12px;
+  }
+
+  .page-controls .btn {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+
   .book {
-    min-height: 480px !important;
-    padding: 24px !important;
+    min-height: 420px;
+    padding: 20px;
   }
+
   .page-title {
-    font-size: 1.4rem !important;
+    font-size: 1.3rem;
   }
+
   .page-content {
-    font-size: 1rem !important;
+    font-size: 1rem;
+  }
+
+  .status-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .status-actions {
+    align-self: flex-end;
   }
 }
 
 @media (max-width: 768px) {
+  /* Chat panel: use defaults that JS resize can override (NO !important on dimensions) */
   .chat-panel {
-    width: calc(100vw - 32px) !important;
-    max-width: none !important;
-    height: 65vh !important;
-    bottom: 20px !important;
-    right: 16px !important;
-    left: 16px !important;
+    width: calc(100vw - 32px);
+    max-width: none;
+    height: 55vh;
+    bottom: 20px;
+    right: 16px;
+    left: 16px;
+    touch-action: none;
   }
-  
-  .status-bar {
-    flex-direction: column;
-    align-items: flex-start;
+
+  /* Resize handle — much bigger on mobile */
+  .chat-resize-handle {
+    width: 28px;
+    height: 28px;
+    right: 4px;
+    bottom: 4px;
   }
-  
-  .status-actions {
-    align-self: flex-end;
+
+  /* Drag handle — much bigger on mobile */
+  .chat-drag-handle {
+    width: 26px;
+    height: 26px;
+  }
+
+  .sidebar-actions .btn {
+    padding: 12px 14px;
   }
 }
