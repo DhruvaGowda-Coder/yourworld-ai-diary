@@ -840,6 +840,17 @@ button:active:not(:disabled) {
   color: #fff;
 }
 
+.share-row input[readonly] {
+  color: var(--theme-accent);
+  border-color: var(--theme-accent-soft-2);
+  background: var(--theme-accent-soft);
+  font-weight: 700;
+}
+
+.share-custom-row {
+  margin-top: 4px;
+}
+
 .share-actions {
   display: flex;
   gap: 8px;

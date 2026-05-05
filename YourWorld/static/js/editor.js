@@ -24,6 +24,7 @@ if (workspace) {
   const imageDownloadBtn = document.getElementById('imageDownloadBtn');
   const imageAttachBtn = document.getElementById('imageAttachBtn');
   const shareCodeInput = document.getElementById('shareCode');
+  const shareCustomCodeInput = document.getElementById('shareCustomCode');
   const shareCopyBtn = document.getElementById('shareCopyBtn');
   const shareRandomBtn = document.getElementById('shareRandomBtn');
   const shareGenerateBtn = document.getElementById('shareGenerateBtn');
@@ -1111,12 +1112,12 @@ if (workspace) {
     const mode = shareModeSelect ? shareModeSelect.value : 'story';
     const shareCanEdit = document.getElementById('shareCanEdit');
     const canEdit = shareCanEdit ? shareCanEdit.checked : false;
-    let customCode = shareCodeInput ? normalizeShareCode(shareCodeInput.value) : '';
+    let customCode = shareCustomCodeInput ? normalizeShareCode(shareCustomCodeInput.value) : '';
     if (useRandom) {
       customCode = '';
-      if (shareCodeInput) shareCodeInput.value = '';
-    } else if (shareCodeInput) {
-      shareCodeInput.value = customCode;
+      if (shareCustomCodeInput) shareCustomCodeInput.value = '';
+    } else if (shareCustomCodeInput) {
+      shareCustomCodeInput.value = customCode;
     }
     if (!useRandom && !customCode) {
       setStatus('Enter a custom code or choose Random Code');
@@ -1149,6 +1150,9 @@ if (workspace) {
       }
       shareCode = data.share_code;
       shareCanEditValue = data.can_edit;
+      if (!useRandom && shareCustomCodeInput) {
+        shareCustomCodeInput.value = '';
+      }
       if (data.share_type && shareModeSelect) {
         shareModeSelect.value = data.share_type;
       }
