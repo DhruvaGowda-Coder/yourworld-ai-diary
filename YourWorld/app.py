@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 
 import requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for, g, Response
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for, g, Response, send_from_directory
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -359,6 +359,9 @@ def terms_and_conditions():
 def robots_txt():
     body = f"""User-agent: *
 Allow: /
+Allow: /favicon.ico
+Allow: /favicon-48x48.png
+Allow: /apple-touch-icon.png
 Allow: /about
 Allow: /privacy-policy
 Allow: /terms-and-conditions
@@ -409,7 +412,17 @@ def sitemap_xml():
 
 @app.route("/favicon.ico")
 def favicon():
-    return redirect(url_for("static", filename="img/yourworld-symbol.svg"))
+    return send_from_directory(os.path.join(APP_DIR, "static", "img"), "favicon.ico", mimetype="image/x-icon")
+
+
+@app.route("/favicon-48x48.png")
+def favicon_48():
+    return send_from_directory(os.path.join(APP_DIR, "static", "img"), "favicon-48x48.png", mimetype="image/png")
+
+
+@app.route("/apple-touch-icon.png")
+def apple_touch_icon():
+    return send_from_directory(os.path.join(APP_DIR, "static", "img"), "apple-touch-icon.png", mimetype="image/png")
 
 
 

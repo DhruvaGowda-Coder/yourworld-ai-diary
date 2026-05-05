@@ -7,9 +7,14 @@
   "theme_color": "#ffb783",
   "icons": [
     {
-      "src": "/static/img/yourworld-symbol.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "/static/img/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/img/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ],
   "description": "Create and share private content using unique codes. Only people with the code can access shared content."
