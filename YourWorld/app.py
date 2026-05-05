@@ -622,42 +622,52 @@ def view_story(code):
 @limiter.limit("30 per minute")
 def api_entry_save():
     try:
-        data = request.get_json(force=True)
-    except Exception:
-        return jsonify({"error": "Invalid JSON"}), 400
+        try:
+            data = request.get_json(force=True)
+        except Exception:
+            return jsonify({"error": "Invalid JSON"}), 400
 
-    entry_id = data.get("id")
-    if entry_id in ("", "null", "undefined"):
-        entry_id = None
-    if entry_id is not None:
-        entry_id = str(entry_id)
+        entry_id = data.get("id")
+        if entry_id in ("", "null", "undefined"):
+            entry_id = None
+        if entry_id is not None:
+            entry_id = str(entry_id)
 
-    allowed_tags = ['b', 'i', 'u', 'div', 'br', 'span', 'strike', 'strong', 'em', 'p', 'ul', 'ol', 'li']
-    allowed_attrs = {'*': ['style', 'class']}
-    
-    content = data.get("content", "").strip()
-    content = bleach.clean(content, tags=allowed_tags, attributes=allowed_attrs, styles=['color', 'background-color', 'text-align', 'font-size', 'font-family'])
-    
-    title = (data.get("title") or "").strip()
-    if not title:
-        plain = _strip_html(content)
-        first_line = plain.strip().splitlines()[0] if plain.strip() else "Untitled"
-        title = (first_line[:40] + "...") if len(first_line) > 40 else first_line
-
-    title = bleach.clean(title, tags=[], attributes={})
-    
-    data['title'] = title[:150]
-    data['content'] = content
-    
-    activity_day = datetime.now(timezone.utc).date().isoformat()
-    
-    saved = firebase_db.save_entry(session["user_id"], entry_id, data)
-    if not saved:
-        return jsonify({"error": "Not found or permission denied"}), 404
+        allowed_tags = ['b', 'i', 'u', 'div', 'br', 'span', 'strike', 'strong', 'em', 'p', 'ul', 'ol', 'li']
+        allowed_attrs = {'*': ['style', 'class']}
         
-    firebase_db.increment_activity(session["user_id"], activity_day)
+        content = data.get("content", "").strip()
+        try:
+            from bleach.css_sanitizer import CSSSanitizer
+            css_sanitizer = CSSSanitizer(allowed_css_properties=['color', 'background-color', 'text-align', 'font-size', 'font-family'])
+            content = bleach.clean(content, tags=allowed_tags, attributes=allowed_attrs, css_sanitizer=css_sanitizer)
+        except ImportError:
+            # Fallback for older bleach versions or if css_sanitizer is unavailable
+            content = bleach.clean(content, tags=allowed_tags, attributes=allowed_attrs)
+        
+        title = (data.get("title") or "").strip()
+        if not title:
+            plain = _strip_html(content)
+            first_line = plain.strip().splitlines()[0] if plain.strip() else "Untitled"
+            title = (first_line[:40] + "...") if len(first_line) > 40 else first_line
 
-    return jsonify({"id": saved["id"], "title": saved["title"], "updated_at": saved["updated_at"]})
+        title = bleach.clean(title, tags=[], attributes={})
+        
+        data['title'] = title[:150]
+        data['content'] = content
+        
+        activity_day = datetime.now(timezone.utc).date().isoformat()
+        
+        saved = firebase_db.save_entry(session["user_id"], entry_id, data)
+        if not saved:
+            return jsonify({"error": "Not found or permission denied"}), 404
+            
+        firebase_db.increment_activity(session["user_id"], activity_day)
+
+        return jsonify({"id": saved["id"], "title": saved["title"], "updated_at": saved["updated_at"]})
+    except Exception as e:
+        import traceback
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
 
 
 def _escape_svg(text: str) -> str:
