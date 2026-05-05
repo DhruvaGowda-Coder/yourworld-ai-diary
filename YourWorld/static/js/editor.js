@@ -196,7 +196,10 @@ if (workspace) {
     if (saveStatus) saveStatus.textContent = text;
   };
 
-  const showLoginPromptModal = () => {
+  const showLoginPromptModal = ({
+    title = 'Sign In Required',
+    message = "AI image generation is available to signed-in users. It's completely free.",
+  } = {}) => {
     const existing = document.getElementById('yw-login-modal');
     if (existing) existing.remove();
 
@@ -205,8 +208,8 @@ if (workspace) {
     modal.className = 'yw-modal-overlay';
     modal.innerHTML = `
       <div class="yw-modal-box">
-        <h3>Sign In Required</h3>
-        <p>AI image generation is available to signed-in users. It's completely free.</p>
+        <h3>${title}</h3>
+        <p>${message}</p>
         <div class="yw-modal-actions">
           <a href="/login" class="btn-primary">Sign In / Sign Up</a>
           <button type="button" class="btn-secondary" data-close-login-modal>Maybe Later</button>
@@ -1086,7 +1089,7 @@ if (workspace) {
 
   const saveShareCode = async ({ useRandom = false } = {}) => {
     if (!getActiveEntryId()) {
-      await saveEntry();
+      await saveEntry({ allowEmpty: true });
     }
     const targetId = getActiveEntryId();
     if (!targetId) {
@@ -1111,17 +1114,27 @@ if (workspace) {
       setStatus('Use 4-32 letters, numbers, or hyphens for the code');
       return;
     }
+    if (shareRandomBtn) shareRandomBtn.disabled = true;
+    if (shareGenerateBtn) shareGenerateBtn.disabled = true;
+    setStatus(useRandom ? 'Generating random code...' : 'Saving custom code...');
     try {
       const response = await fetch(`/api/entry/${targetId}/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
         body: JSON.stringify({ rotate: useRandom, mode, custom_code: customCode, can_edit: canEdit }),
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Share failed');
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401 && data.error === 'login_required') {
+        setStatus('Sign in to generate share codes.');
+        showLoginPromptModal({
+          title: 'Sign In Required',
+          message: "Share codes are available to signed-in users. It's completely free.",
+        });
+        return;
       }
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Share failed');
+      }
       shareCode = data.share_code;
       shareCanEditValue = data.can_edit;
       if (data.share_type && shareModeSelect) {
@@ -1131,6 +1144,10 @@ if (workspace) {
       setStatus(useRandom ? 'Random code generated' : 'Custom code saved');
     } catch (err) {
       setStatus(err.message || 'Share failed');
+    } finally {
+      if (shareRandomBtn) shareRandomBtn.disabled = false;
+      if (shareGenerateBtn) shareGenerateBtn.disabled = false;
+      updateShareUI();
     }
   };
 
