@@ -856,6 +856,24 @@ button:active:not(:disabled) {
   margin-top: 4px;
 }
 
+.share-custom-hint {
+  min-height: 1.1rem;
+  margin: -2px 0 0;
+  font-size: 0.78rem;
+}
+
+.share-custom-hint:empty {
+  display: none;
+}
+
+.share-custom-hint[data-kind="error"] {
+  color: #ffb4a8;
+}
+
+.share-custom-hint[data-kind="success"] {
+  color: var(--theme-accent);
+}
+
 .share-row .btn,
 .share-actions .btn,
 .share-mode-btn {

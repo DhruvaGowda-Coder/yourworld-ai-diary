@@ -25,6 +25,7 @@ if (workspace) {
   const imageAttachBtn = document.getElementById('imageAttachBtn');
   const shareCodeInput = document.getElementById('shareCode');
   const shareCustomCodeInput = document.getElementById('shareCustomCode');
+  const shareCustomHint = document.getElementById('shareCustomHint');
   const shareCopyBtn = document.getElementById('shareCopyBtn');
   const shareRandomBtn = document.getElementById('shareRandomBtn');
   const shareGenerateBtn = document.getElementById('shareGenerateBtn');
@@ -195,6 +196,12 @@ if (workspace) {
 
   const setStatus = (text) => {
     if (saveStatus) saveStatus.textContent = text;
+  };
+
+  const setCustomCodeHint = (message = '', kind = '') => {
+    if (!shareCustomHint) return;
+    shareCustomHint.textContent = message;
+    shareCustomHint.dataset.kind = kind;
   };
 
   const showLoginPromptModal = ({
@@ -1120,13 +1127,14 @@ if (workspace) {
       shareCustomCodeInput.value = customCode;
     }
     if (!useRandom && !customCode) {
-      setStatus('Enter a custom code or choose Random Code');
+      setCustomCodeHint('Enter a custom code here, or choose Random Code.', 'error');
       return;
     }
     if (customCode && !/^[A-Z0-9][A-Z0-9-]{3,31}$/.test(customCode)) {
-      setStatus('Use 4-32 letters, numbers, or hyphens for the code');
+      setCustomCodeHint('Use 4-32 letters, numbers, or hyphens.', 'error');
       return;
     }
+    setCustomCodeHint('');
     if (shareRandomBtn) shareRandomBtn.disabled = true;
     if (shareGenerateBtn) shareGenerateBtn.disabled = true;
     setStatus(useRandom ? 'Generating random code...' : 'Saving custom code...');
@@ -1147,7 +1155,8 @@ if (workspace) {
       }
       if (!response.ok) {
         if (data.error === 'code_unavailable') {
-          throw new Error(data.message || 'This code already exists. Choose another code.');
+          setCustomCodeHint(data.message || 'This code already exists. Please choose another code.', 'error');
+          return;
         }
         throw new Error(data.message || data.error || 'Share failed');
       }
@@ -1161,6 +1170,7 @@ if (workspace) {
       }
       updateShareUI();
       setStatus(useRandom ? 'Random code generated' : 'Custom code saved');
+      setCustomCodeHint(useRandom ? '' : 'Custom code saved.', useRandom ? '' : 'success');
     } catch (err) {
       setStatus(err.message || 'Share failed');
     } finally {
@@ -1179,6 +1189,12 @@ if (workspace) {
   if (shareGenerateBtn) {
     shareGenerateBtn.addEventListener('click', () => {
       saveShareCode({ useRandom: false });
+    });
+  }
+
+  if (shareCustomCodeInput) {
+    shareCustomCodeInput.addEventListener('input', () => {
+      setCustomCodeHint('');
     });
   }
 
