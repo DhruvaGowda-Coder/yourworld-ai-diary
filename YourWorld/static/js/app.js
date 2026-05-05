@@ -2788,6 +2788,23 @@ if (workspace) {
   const shareCopyBtn = document.getElementById('shareCopyBtn');
   const shareGenerateBtn = document.getElementById('shareGenerateBtn');
   const shareRemoveBtn = document.getElementById('shareRemoveBtn');
+
+  // Helper to reliably bind click/tap events on both desktop and mobile
+  const bindTap = (btn, handler) => {
+    if (!btn) return;
+    let isTouching = false;
+    btn.addEventListener('touchstart', () => { isTouching = true; }, { passive: true });
+    btn.addEventListener('touchend', (e) => {
+      if (isTouching) {
+        e.preventDefault(); // Prevent ghost clicks
+        handler(e);
+        isTouching = false;
+      }
+    });
+    btn.addEventListener('click', (e) => {
+      if (!isTouching) handler(e);
+    });
+  };
   const imageModal = document.getElementById('imageModal');
   const imageModalImg = document.getElementById('imageModalImg');
   const imageModalClose = document.getElementById('imageModalClose');
@@ -3182,10 +3199,17 @@ if (workspace) {
       item.className = 'entry-item' + (index === currentIndex ? ' active' : '');
       item.textContent = entry.title || 'Untitled';
       item.dataset.index = index;
-      item.addEventListener('click', async () => {
-        await saveIfDirty();
-        navigateToIndex(index);
-      });
+      const handleSelect = async () => {
+        try {
+          await saveIfDirty();
+          navigateToIndex(index);
+        } catch (err) {
+          console.error('Select failed:', err);
+        }
+      };
+      
+      bindTap(item, handleSelect);
+      
       entryList.appendChild(item);
     });
     updateNavButtons();
@@ -3387,18 +3411,23 @@ if (workspace) {
   };
 
   if (newEntryBtn) {
-    const handleNewEntry = async () => {
-      await saveIfDirty();
-      animateTurn('next', async () => {
-        createBlank();
-        await saveEntry({ allowEmpty: true, reuseActiveId: false });
-      });
+    const handleNewEntry = async (e) => {
+      try {
+        await saveIfDirty();
+        animateTurn('next', async () => {
+          createBlank();
+          await saveEntry({ allowEmpty: true, reuseActiveId: false });
+        });
+      } catch (err) {
+        console.error('New entry failed:', err);
+        setStatus('Error adding page');
+      }
     };
-    newEntryBtn.addEventListener('click', handleNewEntry);
+    bindTap(newEntryBtn, handleNewEntry);
   }
 
   if (deleteEntryBtn) {
-    const handleDeleteEntry = async () => {
+    const handleDeleteEntry = async (e) => {
       const targetId = getActiveEntryId();
       if (!targetId) return;
       if (!window.confirm('Delete this page?')) return;
@@ -3417,30 +3446,39 @@ if (workspace) {
         setStatus('Deleted');
         renderEntries();
       } catch (err) {
+        console.error('Delete failed:', err);
         setStatus('Delete failed');
       }
     };
-    deleteEntryBtn.addEventListener('click', handleDeleteEntry);
+    bindTap(deleteEntryBtn, handleDeleteEntry);
   }
 
   if (prevBtn) {
-    const handlePrev = async () => {
-      const activeIndex = getActiveIndex();
-      if (activeIndex <= 0) return;
-      await saveIfDirty();
-      navigateToIndex(activeIndex - 1);
+    const handlePrev = async (e) => {
+      try {
+        const activeIndex = getActiveIndex();
+        if (activeIndex <= 0) return;
+        await saveIfDirty();
+        navigateToIndex(activeIndex - 1);
+      } catch (err) {
+        console.error('Prev failed:', err);
+      }
     };
-    prevBtn.addEventListener('click', handlePrev);
+    bindTap(prevBtn, handlePrev);
   }
 
   if (nextBtn) {
-    const handleNext = async () => {
-      const activeIndex = getActiveIndex();
-      if (activeIndex < 0 || activeIndex >= entries.length - 1) return;
-      await saveIfDirty();
-      navigateToIndex(activeIndex + 1);
+    const handleNext = async (e) => {
+      try {
+        const activeIndex = getActiveIndex();
+        if (activeIndex < 0 || activeIndex >= entries.length - 1) return;
+        await saveIfDirty();
+        navigateToIndex(activeIndex + 1);
+      } catch (err) {
+        console.error('Next failed:', err);
+      }
     };
-    nextBtn.addEventListener('click', handleNext);
+    bindTap(nextBtn, handleNext);
   }
 
   if (titleInput) {
