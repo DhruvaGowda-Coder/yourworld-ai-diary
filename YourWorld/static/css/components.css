@@ -18,6 +18,19 @@
   display: flex;
 }
 
+.chat-panel.is-resizing {
+  transition: none !important;
+  transform: none !important;
+  contain: layout paint;
+  will-change: width, height, left, top;
+}
+
+body.chat-resize-active,
+body.chat-resize-active * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
 .chat-header {
   display: flex;
   justify-content: space-between;

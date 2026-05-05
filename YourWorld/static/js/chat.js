@@ -35,13 +35,16 @@ if (chatResizeHandle && chatPanel) {
   let startY = 0;
   let startWidth = 0;
   let startHeight = 0;
-  let dragging = false;
-
+  let startLeft = 0;
+  let startTop = 0;
+  let resizing = false;
+  let resizePointerId = null;
   let aspectRatio = null;
+  const RESIZE_MARGIN = 8;
 
   const applySize = (width, height, keepRatio) => {
-    const maxWidth = Math.min(window.innerWidth - 32, 520);
-    const maxHeight = Math.min(window.innerHeight - 140, 640);
+    const maxWidth = Math.min(window.innerWidth - (RESIZE_MARGIN * 2), 520);
+    const maxHeight = Math.min(window.innerHeight - (RESIZE_MARGIN * 2), 640);
     let nextWidth = width;
     let nextHeight = height;
     if (keepRatio && aspectRatio) {
@@ -53,6 +56,12 @@ if (chatResizeHandle && chatPanel) {
     }
     nextWidth = Math.max(280, Math.min(nextWidth, maxWidth));
     nextHeight = Math.max(260, Math.min(nextHeight, maxHeight));
+    const nextLeft = Math.max(RESIZE_MARGIN, Math.min(startLeft, window.innerWidth - nextWidth - RESIZE_MARGIN));
+    const nextTop = Math.max(RESIZE_MARGIN, Math.min(startTop, window.innerHeight - nextHeight - RESIZE_MARGIN));
+    chatPanel.style.left = `${nextLeft}px`;
+    chatPanel.style.top = `${nextTop}px`;
+    chatPanel.style.right = 'auto';
+    chatPanel.style.bottom = 'auto';
     chatPanel.style.width = `${nextWidth}px`;
     chatPanel.style.height = `${nextHeight}px`;
     if (chatMessages) {
@@ -61,49 +70,62 @@ if (chatResizeHandle && chatPanel) {
   };
 
   const onMove = (event) => {
-    if (!dragging) return;
+    if (!resizing || (resizePointerId !== null && event.pointerId !== resizePointerId)) return;
+    if (event.cancelable) event.preventDefault();
     const dx = event.clientX - startX;
     const dy = event.clientY - startY;
     applySize(startWidth + dx, startHeight + dy, true);
   };
 
-  const stopDrag = () => {
-    if (!dragging) return;
-    dragging = false;
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', stopDrag);
-    document.removeEventListener('touchmove', onTouchMove);
-    document.removeEventListener('touchend', stopDrag);
+  const stopResize = (event) => {
+    if (!resizing) return;
+    if (event && resizePointerId !== null && event.pointerId !== resizePointerId) return;
+    resizing = false;
+    resizePointerId = null;
+    chatPanel.classList.remove('is-resizing');
+    document.body.classList.remove('chat-resize-active');
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', stopResize);
+    document.removeEventListener('pointercancel', stopResize);
+    try {
+      if (event && chatResizeHandle.hasPointerCapture(event.pointerId)) {
+        chatResizeHandle.releasePointerCapture(event.pointerId);
+      }
+    } catch (_) {}
   };
 
   const startResize = (event) => {
     event.preventDefault();
-    dragging = true;
+    if (resizing) stopResize({ pointerId: resizePointerId });
+    resizing = true;
+    resizePointerId = event.pointerId;
     const rect = chatPanel.getBoundingClientRect();
-    const touch = event.touches ? event.touches[0] : event;
-    startX = touch.clientX;
-    startY = touch.clientY;
+    startX = event.clientX;
+    startY = event.clientY;
     startWidth = rect.width;
     startHeight = rect.height;
+    startLeft = Math.max(RESIZE_MARGIN, Math.min(rect.left, window.innerWidth - startWidth - RESIZE_MARGIN));
+    startTop = Math.max(RESIZE_MARGIN, Math.min(rect.top, window.innerHeight - startHeight - RESIZE_MARGIN));
     aspectRatio = startWidth / startHeight;
-    
-    if (event.touches) {
-      document.addEventListener('touchmove', onTouchMove, { passive: false });
-      document.addEventListener('touchend', stopDrag);
-    } else {
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', stopDrag);
-    }
+
+    chatPanel.classList.add('is-resizing');
+    document.body.classList.add('chat-resize-active');
+    chatPanel.style.left = `${startLeft}px`;
+    chatPanel.style.top = `${startTop}px`;
+    chatPanel.style.right = 'auto';
+    chatPanel.style.bottom = 'auto';
+    chatPanel.style.width = `${startWidth}px`;
+    chatPanel.style.height = `${startHeight}px`;
+
+    try {
+      chatResizeHandle.setPointerCapture(event.pointerId);
+    } catch (_) {}
+    document.addEventListener('pointermove', onMove, { passive: false });
+    document.addEventListener('pointerup', stopResize);
+    document.addEventListener('pointercancel', stopResize);
   };
 
-  const onTouchMove = (event) => {
-    if (!dragging) return;
-    if (event.cancelable) event.preventDefault();
-    onMove(event.touches[0]);
-  };
-
-  chatResizeHandle.addEventListener('mousedown', startResize);
-  chatResizeHandle.addEventListener('touchstart', startResize, { passive: false });
+  chatResizeHandle.addEventListener('pointerdown', startResize);
 }
 
 if (chatDragHandle && chatPanel) {

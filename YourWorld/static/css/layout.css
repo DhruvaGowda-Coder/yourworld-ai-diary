@@ -1320,6 +1320,13 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
     right: 16px;
     left: 16px;
     touch-action: none;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  .chat-panel.is-resizing {
+    right: auto;
+    bottom: auto;
   }
 
   /* Resize handle — much bigger on mobile */
