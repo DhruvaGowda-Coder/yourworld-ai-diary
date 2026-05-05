@@ -3435,10 +3435,6 @@ body[data-theme="cherry"] .chat-bubble.bot {
     grid-template-columns: 1fr;
   }
 
-  .entry-sidebar {
-    order: 2;
-  }
-
   .public-layout {
     grid-template-columns: 1fr;
   }
@@ -5407,35 +5403,211 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
 /* ==========================================================================
    Mobile Interface Tweaks
    ========================================================================== */
+
+/* ─── Mobile Sidebar Toggle Button ─── */
+.mobile-sidebar-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--theme-accent);
+  background: var(--theme-panel-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--theme-panel-border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.mobile-sidebar-toggle:hover,
+.mobile-sidebar-toggle:active {
+  background: var(--theme-hover-bg);
+  border-color: var(--theme-accent-soft-2);
+  box-shadow: 0 4px 20px var(--theme-accent-soft);
+}
+
+.mobile-sidebar-toggle .toggle-icon {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  font-size: 1.1rem;
+}
+
+.mobile-sidebar-toggle.open .toggle-icon {
+  transform: rotate(180deg);
+}
+
+/* ─── Mobile Sidebar Overlay ─── */
+.mobile-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 45;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-sidebar-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
 @media (max-width: 900px) {
   .workspace {
     grid-template-columns: 1fr;
   }
-  .entry-sidebar {
-    max-width: 100%;
-    margin-bottom: 20px;
+
+  .mobile-sidebar-toggle {
+    display: flex;
   }
+
+  .mobile-sidebar-overlay {
+    display: block;
+  }
+
+  /* Sidebar becomes a slide-up drawer on mobile */
+  .entry-sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 100%;
+    width: 100%;
+    max-height: 75vh;
+    overflow-y: auto;
+    z-index: 50;
+    border-radius: 22px 22px 0 0;
+    padding: 20px 16px 32px;
+    margin: 0;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.22, 0.68, 0, 1);
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.35);
+  }
+
+  .entry-sidebar.mobile-open {
+    transform: translateY(0);
+  }
+
+  /* Drag indicator at top of sidebar drawer */
+  .entry-sidebar::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 0 auto 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
   .entry-list {
-    max-height: 220px;
+    max-height: 180px;
+  }
+
+  /* Image panel gets better mobile spacing */
+  .story-image-panel {
+    padding: 12px 0;
+  }
+
+  .story-image-panel input {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+
+  .image-preview {
+    min-height: 120px;
   }
 }
 
 @media (max-width: 768px) {
+  /* ─── Chat Panel: Full-Width Mobile Drawer ─── */
   .chat-panel {
-    width: calc(100vw - 32px) !important;
+    width: 100vw !important;
     max-width: none !important;
-    height: 65vh !important;
-    bottom: 20px !important;
-    right: 16px !important;
-    left: 16px !important;
+    height: 70vh !important;
+    max-height: calc(100vh - 60px) !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    left: 0 !important;
+    top: auto !important;
+    border-radius: 18px 18px 0 0 !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  
+
+  /* Drag indicator at top of chat drawer */
+  .chat-panel.open::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 8px auto 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Hide resize/drag handles on mobile (not useful with touch) */
+  .chat-resize-handle,
+  .chat-drag-handle {
+    display: none !important;
+  }
+
+  .chat-messages {
+    max-height: none !important;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chat-input {
+    padding: 10px 12px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .chat-input input {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+
+  /* ─── Chat Launch Button: Safe for Mobile ─── */
+  .chat-launch {
+    bottom: 20px;
+    right: 16px;
+    z-index: 30;
+  }
+
   .status-bar {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .status-actions {
     align-self: flex-end;
+  }
+
+  /* Page controls stack better on small screens */
+  .page-controls {
+    gap: 8px;
+  }
+
+  .page-controls .btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* Editor toolbar scrollable on mobile */
+  .editor-toolbar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    gap: 4px;
   }
 }
