@@ -667,8 +667,8 @@ def api_entry(entry_id):
         return jsonify({"error": "Not found"}), 404
     return jsonify({
         "id": row["id"],
-        "title": row.get("title", ""),
-        "content": row.get("content", ""),
+        "title": unescape(row.get("title", "")),
+        "content": unescape(row.get("content", "")),
         "type": row.get("type", "diary"),
         "image_prompt": row.get("image_prompt"),
         "image_url": row.get("image_url"),
@@ -795,8 +795,8 @@ def view_story(code):
         pages=[
             {
                 "id": r.get("id"),
-                "title": r.get("title", ""),
-                "content": r.get("content", ""),
+                "title": unescape(r.get("title", "")),
+                "content": unescape(r.get("content", "")),
                 "image_url": r.get("image_url"),
                 "image_attached": bool(r.get("image_attached")),
                 "image_style": r.get("image_style"),
