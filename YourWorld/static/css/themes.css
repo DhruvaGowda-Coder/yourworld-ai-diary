@@ -10,8 +10,9 @@
 .cherry-canvas {
   position: fixed;
   inset: 0;
-  pointer-events: none;
-  z-index: -3;
+  pointer-events: none !important;
+  z-index: -10;
+  overflow: hidden;
 }
 
 .fire-band-canvas {
@@ -452,18 +453,18 @@ body[data-theme-preview="cherry"] .garden-canvas {
 .theme-particle-layer {
   position: fixed;
   inset: 0;
-  pointer-events: none;
+  pointer-events: none !important;
+  overflow: hidden;
 }
 
 .theme-motion {
-  z-index: -4;
+  z-index: -11;
   opacity: 0;
   transition: opacity 0.35s ease;
 }
 
 .theme-particle-layer {
-  z-index: -3;
-  overflow: hidden;
+  z-index: -12;
 }
 
 .theme-particle {
