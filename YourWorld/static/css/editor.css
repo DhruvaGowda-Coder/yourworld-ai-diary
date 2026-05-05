@@ -447,6 +447,7 @@ button:active:not(:disabled) {
   padding: 6px 14px;
   font-size: 0.85rem;
   min-width: 80px;
+  white-space: nowrap;
 }
 
 .entry-list {
