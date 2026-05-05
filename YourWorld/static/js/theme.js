@@ -346,11 +346,22 @@ if (publicPagesData) {
   }
 
   if (publicSaveBtn) {
+    const toPlainEditableText = (element) => (element ? (element.innerText || '').replace(/\u00a0/g, ' ') : '');
+    [titleEl, contentEl].forEach((element) => {
+      if (!element) return;
+      element.addEventListener('paste', (event) => {
+        const clipboard = event.clipboardData || window.clipboardData;
+        if (!clipboard) return;
+        event.preventDefault();
+        document.execCommand('insertText', false, clipboard.getData('text/plain') || '');
+      });
+    });
+
     publicSaveBtn.addEventListener('click', async () => {
       const page = pages[index];
       if (!page) return;
-      const newTitle = titleEl ? titleEl.innerText : '';
-      const newContent = contentEl ? contentEl.innerHTML : '';
+      const newTitle = toPlainEditableText(titleEl);
+      const newContent = toPlainEditableText(contentEl);
       
       publicSaveBtn.textContent = 'Saving...';
       try {

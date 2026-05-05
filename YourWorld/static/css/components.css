@@ -1096,3 +1096,228 @@ a:focus-visible {
 }
 
 /* ─── Print Styles ─── */
+/* Trust, SEO, and legal page UI */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.trust-hero .hero-text p {
+  max-width: 760px;
+}
+
+.trust-statement,
+.field-help,
+.mobile-share-hint,
+.home-code-form p {
+  font-family: var(--ui-font);
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.trust-statement {
+  font-weight: 600;
+  color: #fbeedc;
+}
+
+.home-code-form {
+  margin: 24px 0 18px;
+  max-width: 680px;
+  padding: 18px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.home-code-form label,
+.field-label {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--ui-font);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #fbeedc;
+}
+
+.home-code-row {
+  display: flex;
+  gap: 10px;
+}
+
+.home-code-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  font-family: var(--ui-font);
+}
+
+.home-code-form p,
+.field-help {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.trust-card .trust-code {
+  margin: 8px 0;
+  font-family: var(--ui-font);
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  color: var(--theme-accent);
+}
+
+.trust-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.trust-band p {
+  max-width: 760px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.7;
+}
+
+.trust-list {
+  display: grid;
+  gap: 10px;
+}
+
+.trust-list span {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--ui-font);
+  color: #fbeedc;
+}
+
+.feature-card .feature-icon {
+  font-family: var(--ui-font);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.security-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.security-links a,
+.legal-page a {
+  color: var(--theme-accent);
+}
+
+.faq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.faq-item,
+.legal-page {
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.faq-item {
+  padding: 18px;
+}
+
+.faq-item h3 {
+  margin: 0 0 8px;
+  font-family: var(--ui-font);
+  font-size: 1rem;
+}
+
+.faq-item p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.76);
+  line-height: 1.6;
+}
+
+.legal-page {
+  max-width: 920px;
+  margin: 56px auto;
+  padding: clamp(24px, 5vw, 48px);
+}
+
+.legal-page h1,
+.legal-page h2 {
+  font-family: var(--ui-font);
+}
+
+.legal-page h1 {
+  margin-top: 0;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+}
+
+.legal-page h2 {
+  margin-top: 28px;
+  font-size: 1.2rem;
+}
+
+.legal-page p {
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.75;
+}
+
+.legal-updated {
+  font-family: var(--ui-font);
+  font-size: 0.86rem;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.public-trust-note {
+  margin: 0 auto 16px;
+  max-width: 780px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--ui-font);
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.78);
+  text-align: center;
+}
+
+.share-panel .field-help {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.mobile-share-form {
+  flex-direction: column;
+}
+
+.mobile-share-hint {
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .home-code-row,
+  .trust-band {
+    grid-template-columns: 1fr;
+  }
+
+  .home-code-row {
+    flex-direction: column;
+  }
+}

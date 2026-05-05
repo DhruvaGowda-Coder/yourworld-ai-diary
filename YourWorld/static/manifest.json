@@ -1,5 +1,5 @@
 {
-  "name": "YourWorld Diary & Story",
+  "name": "YourWorld Private Code Sharing",
   "short_name": "YourWorld",
   "start_url": "/",
   "display": "standalone",
@@ -12,5 +12,5 @@
       "type": "image/svg+xml"
     }
   ],
-  "description": "Elemental Diary & Story Studio. A safe place for your thoughts and tales."
+  "description": "Create and share private content using unique codes. Only people with the code can access shared content."
 }

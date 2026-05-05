@@ -4,40 +4,38 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <meta name="description" content="YourWorld — a private diary and storybook that feels like a real book. Write across pages with real-time autosave, immersive elemental themes, and Aura, your friendly AI companion.">
-  <title>{% block title %}YourWorld Diary{% endblock %}</title>
+  <meta name="description" content="{% block description %}Share content using private codes on YourWorld, a secure code sharing platform for private content sharing, stories, notes, and anonymous sharing by code.{% endblock %}">
+  <meta name="keywords" content="code sharing platform, private content sharing, secure sharing by code, anonymous sharing tool, private story sharing">
+  <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
+  <link rel="canonical" href="{% block canonical %}{{ site_url }}{{ request.path }}{% endblock %}">
+  <title>{% block title %}Share content using private codes | Secure sharing platform{% endblock %}</title>
   {% block meta %}
-  <meta property="og:title" content="YourWorld Diary">
-  <meta property="og:description" content="YourWorld — a private diary and storybook that feels like a real book. Write across pages with real-time autosave, immersive elemental themes, and Aura, your friendly AI companion.">
+  <meta property="og:title" content="Share content using private codes | YourWorld">
+  <meta property="og:description" content="Create content and share it with a unique private code. Only people with the code can access shared content.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://worldbyyou.com">
+  <meta property="og:url" content="{{ site_url }}{{ request.path }}">
+  <meta property="og:site_name" content="YourWorld">
+  <meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Share content using private codes | YourWorld">
+  <meta name="twitter:description" content="A secure code-based sharing platform for private content sharing. No account required to access content by code.">
+  <meta name="twitter:image" content="{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}">
   {% endblock %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="dns-prefetch" href="https://api.groq.com">
   <link rel="dns-prefetch" href="https://router.huggingface.co">
   <meta name="theme-color" content="#161311">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=20260505j" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}?v=20260505j" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}?v=20260505j" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/editor.css') }}?v=20260505j" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=20260505j" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}?v=20260505j" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=20260505k" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}?v=20260505k" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}?v=20260505k" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/editor.css') }}?v=20260505k" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=20260505k" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}?v=20260505k" />
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/yourworld-symbol.svg') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/yourworld-symbol.png') }}">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
-  <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}")
-                .then(registration => {
-                    console.log('SW registered: ', registration);
-                })
-                .catch(registrationError => {
-                    console.log('SW registration failed: ', registrationError);
-                });
-        });
-    }
-  </script>
+  {% block structured_data %}{% endblock %}
 </head>
 <body data-theme="{{ current_theme or 'campfire' }}" data-cycle="day">
   <div class="ambient-bg"></div>
@@ -55,30 +53,29 @@
   <canvas id="spaceCanvas" class="space-canvas" aria-hidden="true"></canvas>
   <canvas id="cherryCanvas" class="cherry-canvas" aria-hidden="true"></canvas>
   <canvas id="gardenCanvas" class="garden-canvas" aria-hidden="true"></canvas>
+
   <header class="site-header">
     <a href="/" class="logo" aria-label="YourWorld Home">YourWorld</a>
     <nav class="nav-links" id="navLinks">
-        <form class="share-header" action="/view" method="get">
-          <input type="text" name="code" placeholder="Enter code" aria-label="Share code" />
-          <button class="btn ghost" type="submit">View</button>
-        </form>
-      
+      <form class="share-header" action="/view" method="get">
+        <label class="sr-only" for="headerShareCode">Enter a content sharing code</label>
+        <input id="headerShareCode" type="text" name="code" placeholder="Enter share code" aria-label="Content sharing code" autocomplete="off" inputmode="text" maxlength="32" pattern="[A-Za-z0-9-]{4,32}" />
+        <button class="btn ghost" type="submit">Open content</button>
+      </form>
       <a href="/" class="nav-link" data-page="home">Home</a>
+      <a href="/create" class="nav-link" data-page="create">Create</a>
       <a href="/diary" class="nav-link" data-page="diary">Diary</a>
-      <a href="/story" class="nav-link" data-page="story">Story Mode</a>
-      <a href="/profile" class="nav-link" data-page="profile">Profile</a>
-      <a href="/settings" class="nav-link" data-page="settings">Settings</a>
-      
+      <a href="/about" class="nav-link" data-page="about">About</a>
       {% if current_user %}
+        <a href="/profile" class="nav-link" data-page="profile">Profile</a>
+        <a href="/settings" class="nav-link" data-page="settings">Settings</a>
         <a href="/logout" class="nav-link nav-link-logout" data-page="logout">Logout</a>
       {% else %}
         <a href="/login/google" class="btn primary nav-google-btn" style="text-decoration: none;">
-          <svg viewBox="0 0 48 48" width="18" height="18"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
           <span>Sign In</span>
         </a>
       {% endif %}
     </nav>
-    <!-- Mobile hamburger -->
     <button class="hamburger" id="hamburgerBtn" type="button" aria-label="Open navigation menu" aria-expanded="false">
       <span class="hamburger-line"></span>
       <span class="hamburger-line"></span>
@@ -86,7 +83,6 @@
     </button>
   </header>
 
-  <!-- Mobile drawer overlay -->
   <div class="mobile-drawer-overlay" id="mobileDrawerOverlay" aria-hidden="true"></div>
   <nav class="mobile-drawer" id="mobileDrawer" aria-hidden="true">
     <div class="mobile-drawer-header">
@@ -94,24 +90,23 @@
       <button class="mobile-drawer-close" id="mobileDrawerClose" type="button" aria-label="Close navigation">&times;</button>
     </div>
     <div class="mobile-drawer-links">
-      <a href="/" class="mobile-nav-link">🏠 Home</a>
-      <a href="/diary" class="mobile-nav-link">📔 Diary</a>
-      <a href="/story" class="mobile-nav-link">📖 Story Mode</a>
-      <a href="/profile" class="mobile-nav-link">👤 Profile</a>
-      <a href="/settings" class="mobile-nav-link">⚙️ Settings</a>
+      <a href="/" class="mobile-nav-link">Home</a>
+      <a href="/create" class="mobile-nav-link">Create</a>
+      <a href="/diary" class="mobile-nav-link">Diary</a>
+      <a href="/about" class="mobile-nav-link">About</a>
+      <a href="/profile" class="mobile-nav-link">Profile</a>
+      <a href="/settings" class="mobile-nav-link">Settings</a>
       <div class="mobile-drawer-divider"></div>
-      
-        <form class="mobile-share-form" action="/view" method="get">
-          <input type="text" name="code" placeholder="Enter share code" aria-label="Share code" />
-          <button class="btn primary" type="submit">View</button>
-        </form>
-        <div class="mobile-drawer-divider"></div>
-        
+      <form class="mobile-share-form" action="/view" method="get">
+        <label class="mobile-share-hint" for="mobileShareCode">Only users with the code can open shared content.</label>
+        <input id="mobileShareCode" type="text" name="code" placeholder="Content share code" aria-label="Content sharing code" autocomplete="off" inputmode="text" maxlength="32" pattern="[A-Za-z0-9-]{4,32}" />
+        <button class="btn primary" type="submit">Open</button>
+      </form>
+      <div class="mobile-drawer-divider"></div>
       {% if current_user %}
-        <a href="/logout" class="mobile-nav-link mobile-nav-logout">🚪 Logout</a>
+        <a href="/logout" class="mobile-nav-link mobile-nav-logout">Logout</a>
       {% else %}
         <a href="/login/google" class="btn primary mobile-drawer-google" style="text-decoration: none;">
-          <svg viewBox="0 0 48 48" width="20" height="20"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
           <span>Sign in with Google</span>
         </a>
       {% endif %}
@@ -125,16 +120,21 @@
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Site Footer -->
   <footer class="site-footer">
     <div class="footer-inner">
       <div class="footer-brand">
         <span class="footer-logo">YourWorld</span>
-        <span class="footer-tagline">Your private diary & storybook</span>
+        <span class="footer-tagline">Private content sharing by unique code</span>
       </div>
-      <!-- Footer links removed as requested -->
+      <nav class="footer-links" aria-label="Trust and legal links">
+        <a class="footer-link" href="/privacy-policy">Privacy Policy</a>
+        <a class="footer-link" href="/terms-and-conditions">Terms</a>
+        <a class="footer-link" href="/about">About</a>
+        <a class="footer-link" href="/faq">FAQ</a>
+        <a class="footer-link" href="mailto:{{ contact_email }}">Contact</a>
+      </nav>
       <div class="footer-meta">
-        <button id="audioToggleBtn" class="btn ghost" style="padding: 4px 8px; font-size: 0.85rem;" aria-label="Toggle ambient sound">🔊 Sound</button>
+        <button id="audioToggleBtn" class="btn ghost" style="padding: 4px 8px; font-size: 0.85rem;" aria-label="Toggle ambient sound">Sound</button>
         <span class="footer-theme-indicator">
           <span class="footer-theme-dot"></span>
           {{ (current_theme or 'campfire') | title }}
@@ -161,7 +161,7 @@
     </div>
     <div class="chat-messages" id="chatMessages"></div>
     <form class="chat-input" id="chatForm">
-      <input type="text" id="chatText" placeholder="Say something..." autocomplete="off" />
+      <input type="text" id="chatText" placeholder="Ask for writing help..." autocomplete="off" />
       <button type="submit">Send</button>
     </form>
     <button class="chat-resize-handle" id="chatResizeHandle" type="button" aria-label="Resize chat panel"></button>
@@ -171,59 +171,51 @@
     {{ current_user | tojson | safe if current_user else 'null' }}
   </script>
   <script>
-    // Build UserAudio from server data, with localStorage fallback for guests
     (function() {
       var themes = ['campfire','water','wind','earth','ice','storm','space','garden','cherry'];
       var user = JSON.parse(document.getElementById('current-user-data').textContent);
-      
       var serverAudio = {};
       var serverLists = {};
-      
       themes.forEach(function(t) {
         serverAudio[t] = user ? (user['audio_' + t] || "") : "";
         serverLists[t] = user ? (user['audio_list_' + t] || []) : [];
       });
-
-      // Merge with localStorage (guests or local additions)
       var storedAudio = {};
       var storedLists = {};
-      try { 
+      try {
         storedAudio = JSON.parse(localStorage.getItem('yw_custom_audio') || '{}');
-        storedLists = JSON.parse(localStorage.getItem('yw_custom_songs') || '{}'); 
+        storedLists = JSON.parse(localStorage.getItem('yw_custom_songs') || '{}');
       } catch(e) {}
-      
       themes.forEach(function(t) {
-        // If server has nothing, use local active
         if (!serverAudio[t] && storedAudio[t]) serverAudio[t] = storedAudio[t];
-        
-        // Merge lists (don't duplicate URLs)
         var localList = storedLists[t] || [];
         var merged = serverLists[t].slice();
         localList.forEach(function(ls) {
-          if (!merged.find(function(s) { return s.url === ls.url; })) {
-            merged.push(ls);
-          }
+          if (!merged.find(function(s) { return s.url === ls.url; })) merged.push(ls);
         });
         serverLists[t] = merged;
       });
-      
       window.UserAudio = serverAudio;
       window.UserAudioLists = serverLists;
     })();
   </script>
-  <script src="{{ url_for('static', filename='js/core.js', v='20260505j') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/animations.js', v='20260505j') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/chat.js', v='20260505j') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/editor.js', v='20260505j') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/theme.js', v='20260505j') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/core.js', v='20260505k') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/animations.js', v='20260505k') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/chat.js', v='20260505k') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/editor.js', v='20260505k') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/theme.js', v='20260505k') }}" defer></script>
   <script>
-    /* Mobile drawer toggle */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}").catch(function() {});
+      });
+    }
     (function() {
       const btn = document.getElementById('hamburgerBtn');
       const overlay = document.getElementById('mobileDrawerOverlay');
       const drawer = document.getElementById('mobileDrawer');
       const close = document.getElementById('mobileDrawerClose');
-      if (!btn) return;
+      if (!btn || !overlay || !drawer || !close) return;
       function open() {
         drawer.classList.add('open');
         overlay.classList.add('open');

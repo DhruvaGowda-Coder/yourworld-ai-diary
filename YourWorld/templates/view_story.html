@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ pages[0].title if pages else 'Story Not Found' }} - YourWorld{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block description %}Shared YourWorld content opened by a private code. Only people with the code can access this page.{% endblock %}
 {% block meta %}
 {% if pages %}
 <meta property="og:title" content="{{ pages[0].title }}">
@@ -27,6 +29,9 @@
         </aside>
       {% endif %}
       <div class="public-main">
+        <div class="public-trust-note">
+          This is shared content from YourWorld. It is accessible only by code and should not ask you for passwords, payment details, or identity documents.
+        </div>
         <div class="book public-book" id="publicBook">
           <div class="public-page">
             <h2 class="public-title" id="publicTitle" {% if can_edit %}contenteditable="true" style="outline:none; border-bottom:1px dashed var(--border-color);"{% endif %}></h2>

@@ -27,6 +27,11 @@ if (workspace) {
   const shareCopyBtn = document.getElementById('shareCopyBtn');
   const shareGenerateBtn = document.getElementById('shareGenerateBtn');
   const shareRemoveBtn = document.getElementById('shareRemoveBtn');
+  const normalizeShareCode = (value) => (value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '-')
+    .slice(0, 32);
 
   // Helper to reliably bind click/tap events on both desktop and mobile
   const bindTap = (btn, handler) => {
@@ -1061,14 +1066,22 @@ if (workspace) {
       const mode = shareModeSelect ? shareModeSelect.value : 'story';
       const shareCanEdit = document.getElementById('shareCanEdit');
       const canEdit = shareCanEdit ? shareCanEdit.checked : false;
-      const customCode = shareCodeInput ? shareCodeInput.value.trim() : '';
+      const customCode = shareCodeInput ? normalizeShareCode(shareCodeInput.value) : '';
+      if (shareCodeInput) shareCodeInput.value = customCode;
+      if (customCode && !/^[A-Z0-9][A-Z0-9-]{3,31}$/.test(customCode)) {
+        setStatus('Use 4-32 letters, numbers, or hyphens for the code');
+        return;
+      }
       try {
         const response = await fetch(`/api/entry/${targetId}/share`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
           body: JSON.stringify({ rotate: Boolean(shareCode && !customCode), mode, custom_code: customCode, can_edit: canEdit }),
         });
-        if (!response.ok) throw new Error('Share failed');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Share failed');
+        }
         const data = await response.json();
         shareCode = data.share_code;
         shareCanEditValue = data.can_edit;
@@ -1077,7 +1090,7 @@ if (workspace) {
         }
         updateShareUI();
       } catch (err) {
-        setStatus('Share failed');
+        setStatus(err.message || 'Share failed');
       }
     });
   }

@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 
 import requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for, g
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for, g, Response
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -55,7 +55,12 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 csrf = CSRFProtect(app)
 limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per day", "100 per hour"])
 
-ALLOWED_IMAGE_EXT = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'}
+SITE_URL = os.environ.get("SITE_URL", "https://worldbyyou.com").rstrip("/")
+CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "elementaldiary@gmail.com").strip()
+SITEMAP_LASTMOD = "2026-05-05"
+SHARE_CODE_RE = re.compile(r"^[A-Z0-9][A-Z0-9-]{3,31}$")
+
+ALLOWED_IMAGE_EXT = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
 ALLOWED_AUDIO_EXT = {'.mp3', '.wav', '.ogg', '.m4a', '.flac'}
 
 THEME_ORDER = [
@@ -238,12 +243,49 @@ def login_required(fn):
     return wrapper
 
 
+@app.before_request
+def enforce_https():
+    """Redirect production traffic to HTTPS when served behind a proxy."""
+    forwarded_proto = request.headers.get("X-Forwarded-Proto")
+    is_https = request.is_secure or forwarded_proto == "https"
+    if app.debug or is_https:
+        return None
+    return redirect(request.url.replace("http://", "https://", 1), code=301)
+
+
 @app.after_request
-def add_cache_headers(response):
-    """Add cache-control headers for static assets."""
+def add_response_headers(response):
+    """Add cache-control and browser security headers."""
     if request.path.startswith('/static/'):
         # Cache static assets for 1 year (use cache-busting query params)
         response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+    else:
+        response.headers.setdefault('Cache-Control', 'no-store' if request.path.startswith('/view') else 'no-cache')
+
+    csp = (
+        "default-src 'self'; "
+        "base-uri 'self'; "
+        "object-src 'none'; "
+        "frame-ancestors 'none'; "
+        "form-action 'self' https://accounts.google.com; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com data:; "
+        "img-src 'self' data: https:; "
+        "media-src 'self' data: https:; "
+        "connect-src 'self' https://api.groq.com https://router.huggingface.co https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://firebasestorage.googleapis.com; "
+        "worker-src 'self'; "
+        "manifest-src 'self'; "
+        "upgrade-insecure-requests; "
+        "block-all-mixed-content"
+    )
+    response.headers.setdefault('Content-Security-Policy', csp)
+    response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+    response.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()')
+    response.headers.setdefault('Cross-Origin-Opener-Policy', 'same-origin')
+    if not app.debug:
+        response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
     return response
 
 
@@ -272,6 +314,8 @@ def inject_user():
             "current_theme": theme,
             "current_theme_meta": theme_meta,
             "firebase_config": FIREBASE_WEB_CONFIG,
+            "site_url": SITE_URL,
+            "contact_email": CONTACT_EMAIL,
         }
     return g._yw_ctx
 
@@ -279,6 +323,88 @@ def inject_user():
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/about")
+def about():
+    return render_template("legal.html", page="about")
+
+
+@app.route("/faq")
+def faq():
+    return render_template("legal.html", page="faq")
+
+
+@app.route("/create")
+def create_info():
+    return render_template("legal.html", page="create")
+
+
+@app.route("/how-it-works")
+def how_it_works():
+    return render_template("legal.html", page="how")
+
+
+@app.route("/privacy-policy")
+def privacy_policy():
+    return render_template("legal.html", page="privacy")
+
+
+@app.route("/terms-and-conditions")
+def terms_and_conditions():
+    return render_template("legal.html", page="terms")
+
+
+@app.route("/robots.txt")
+def robots_txt():
+    body = f"""User-agent: *
+Allow: /
+Allow: /about
+Allow: /privacy-policy
+Allow: /terms-and-conditions
+Allow: /faq
+Allow: /create
+Allow: /how-it-works
+Disallow: /code/
+Disallow: /view/
+Disallow: /view/*
+Disallow: /api/
+Disallow: /settings
+Disallow: /profile
+Disallow: /diary
+Disallow: /story
+
+Sitemap: {SITE_URL}/sitemap.xml
+"""
+    return Response(body, mimetype="text/plain")
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    pages = [
+        ("", "daily", "1.0"),
+        ("/how-it-works", "weekly", "0.9"),
+        ("/create", "weekly", "0.85"),
+        ("/faq", "weekly", "0.85"),
+        ("/about", "weekly", "0.8"),
+        ("/privacy-policy", "monthly", "0.7"),
+        ("/terms-and-conditions", "monthly", "0.6"),
+    ]
+    urls = "\n".join(
+        f"""  <url>
+    <loc>{SITE_URL}{path}</loc>
+    <lastmod>{SITEMAP_LASTMOD}</lastmod>
+    <changefreq>{changefreq}</changefreq>
+    <priority>{priority}</priority>
+  </url>"""
+        for path, changefreq, priority in pages
+    )
+    body = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{urls}
+</urlset>
+"""
+    return Response(body, mimetype="application/xml")
 
 
 @app.route("/favicon.ico")
@@ -535,6 +661,17 @@ def _generate_share_code(length=8):
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
+def _normalize_share_code(raw_code: str | None) -> str | None:
+    if not raw_code:
+        return None
+    code = re.sub(r"\s+", "-", raw_code.strip().upper())
+    if re.search(r"[^A-Z0-9-]", code):
+        return None
+    if not SHARE_CODE_RE.fullmatch(code):
+        return None
+    return code
+
+
 @app.route("/api/entry/<entry_id>/share", methods=["POST"])
 @login_required
 def api_entry_share(entry_id):
@@ -556,7 +693,9 @@ def api_entry_share(entry_id):
     share_type = row.get("share_type", "story")
     
     if custom_code:
-        code = custom_code.strip().upper()
+        code = _normalize_share_code(custom_code)
+        if not code:
+            return jsonify({"error": "Use 4-32 letters, numbers, or hyphens for a share code"}), 400
         # Ensure it's not already used by another entry
         existing = firebase_db.get_entry_by_share_code(code)
         if existing and existing.get("id") != entry_id:
@@ -585,7 +724,7 @@ def api_entry_share_delete(entry_id):
 
 @app.route("/view")
 def view_by_code():
-    code = (request.args.get("code") or "").strip().upper()
+    code = _normalize_share_code(request.args.get("code"))
     if not code:
         return redirect(url_for("index"))
     return redirect(url_for("view_story", code=code))
@@ -593,7 +732,7 @@ def view_by_code():
 
 @app.route("/view/<code>")
 def view_story(code):
-    safe_code = (code or "").strip().upper()
+    safe_code = _normalize_share_code(code)
     if not safe_code:
         return redirect(url_for("index"))
         
