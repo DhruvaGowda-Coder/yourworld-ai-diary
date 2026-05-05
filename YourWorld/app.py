@@ -3,6 +3,7 @@ import os
 import re
 import secrets
 import string
+from urllib.parse import urlencode
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from html import unescape
@@ -459,19 +460,26 @@ def login():
 
 @app.route("/login/google")
 def login_google():
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        return render_template(
+            "login.html",
+            error="Google sign-in is not configured. Please try again later.",
+        ), 503
+
     state = secrets.token_urlsafe(16)
     session["oauth_state"] = state
-    
-    redirect_uri = url_for("auth_google_callback", _external=True)
-    
-    auth_url = (
-        "https://accounts.google.com/o/oauth2/v2/auth"
-        "?response_type=code"
-        f"&client_id={GOOGLE_CLIENT_ID}"
-        f"&redirect_uri={redirect_uri}"
-        "&scope=openid%20email%20profile"
-        f"&state={state}"
-    )
+
+    redirect_uri = f"{SITE_URL}/auth/google/callback"
+    auth_params = {
+        "response_type": "code",
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "scope": "openid email profile",
+        "state": state,
+        "access_type": "online",
+        "prompt": "select_account",
+    }
+    auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(auth_params)
     return redirect(auth_url)
 
 @app.route("/auth/google/callback")
@@ -482,7 +490,7 @@ def auth_google_callback():
     if state != session.pop("oauth_state", None):
         return "Invalid state parameter.", 400
 
-    redirect_uri = url_for("auth_google_callback", _external=True)
+    redirect_uri = f"{SITE_URL}/auth/google/callback"
     
     token_url = "https://oauth2.googleapis.com/token"
     data = {

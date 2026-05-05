@@ -211,7 +211,7 @@ if (workspace) {
         <h3>${title}</h3>
         <p>${message}</p>
         <div class="yw-modal-actions">
-          <a href="/login" class="btn-primary">Sign In / Sign Up</a>
+          <a href="/login/google" class="btn-primary">Sign In / Sign Up</a>
           <button type="button" class="btn-secondary" data-close-login-modal>Maybe Later</button>
         </div>
       </div>
