@@ -2572,30 +2572,11 @@ function ensureGreeting() {
   chatHistory.push({ role: 'assistant', content: greeting });
 }
 
-const isMobileView = () => window.innerWidth <= 768;
-
-const resetChatPanelMobileStyles = () => {
-  if (!chatPanel || !isMobileView()) return;
-  // Clear any inline position/size styles set by drag/resize so CSS media query rules take effect
-  chatPanel.style.removeProperty('left');
-  chatPanel.style.removeProperty('top');
-  chatPanel.style.removeProperty('right');
-  chatPanel.style.removeProperty('bottom');
-  chatPanel.style.removeProperty('width');
-  chatPanel.style.removeProperty('height');
-  if (chatMessages) chatMessages.style.removeProperty('max-height');
-};
-
 if (chatLaunch && chatPanel) {
   chatLaunch.addEventListener('click', () => {
-    resetChatPanelMobileStyles();
     chatPanel.classList.add('open');
     chatPanel.setAttribute('aria-hidden', 'false');
     ensureGreeting();
-    // On mobile, scroll chat input into view after keyboard appears
-    if (isMobileView() && chatText) {
-      setTimeout(() => chatText.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 350);
-    }
   });
 }
 
@@ -2603,14 +2584,8 @@ if (chatClose && chatPanel) {
   chatClose.addEventListener('click', () => {
     chatPanel.classList.remove('open');
     chatPanel.setAttribute('aria-hidden', 'true');
-    resetChatPanelMobileStyles();
   });
 }
-
-// Reset chat panel styles when switching between mobile/desktop
-window.addEventListener('resize', () => {
-  if (isMobileView()) resetChatPanelMobileStyles();
-});
 
 if (chatResizeHandle && chatPanel) {
   let startX = 0;
@@ -2644,9 +2619,8 @@ if (chatResizeHandle && chatPanel) {
 
   const onMove = (event) => {
     if (!dragging) return;
-    const pt = event.touches ? event.touches[0] : event;
-    const dx = pt.clientX - startX;
-    const dy = pt.clientY - startY;
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
     applySize(startWidth + dx, startHeight + dy, true);
   };
 
@@ -2655,29 +2629,20 @@ if (chatResizeHandle && chatPanel) {
     dragging = false;
     document.removeEventListener('mousemove', onMove);
     document.removeEventListener('mouseup', stopDrag);
-    document.removeEventListener('touchmove', onMove);
-    document.removeEventListener('touchend', stopDrag);
   };
 
-  const beginResize = (event) => {
-    if (isMobileView()) return; // Resize disabled on mobile
+  chatResizeHandle.addEventListener('mousedown', (event) => {
     event.preventDefault();
     dragging = true;
     const rect = chatPanel.getBoundingClientRect();
-    const pt = event.touches ? event.touches[0] : event;
-    startX = pt.clientX;
-    startY = pt.clientY;
+    startX = event.clientX;
+    startY = event.clientY;
     startWidth = rect.width;
     startHeight = rect.height;
     aspectRatio = startWidth / startHeight;
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', stopDrag);
-    document.addEventListener('touchmove', onMove, { passive: false });
-    document.addEventListener('touchend', stopDrag);
-  };
-
-  chatResizeHandle.addEventListener('mousedown', beginResize);
-  chatResizeHandle.addEventListener('touchstart', beginResize, { passive: false });
+  });
 }
 
 if (chatDragHandle && chatPanel) {
@@ -2691,11 +2656,10 @@ if (chatDragHandle && chatPanel) {
 
   const onDragMove = (event) => {
     if (!draggingPanel) return;
-    const pt = event.touches ? event.touches[0] : event;
     const maxLeft = window.innerWidth - chatPanel.offsetWidth - 8;
     const maxTop = window.innerHeight - chatPanel.offsetHeight - 8;
-    const nextLeft = clamp(pt.clientX - dragOffsetX, 8, Math.max(8, maxLeft));
-    const nextTop = clamp(pt.clientY - dragOffsetY, 8, Math.max(8, maxTop));
+    const nextLeft = clamp(event.clientX - dragOffsetX, 8, Math.max(8, maxLeft));
+    const nextTop = clamp(event.clientY - dragOffsetY, 8, Math.max(8, maxTop));
     chatPanel.style.left = `${nextLeft}px`;
     chatPanel.style.top = `${nextTop}px`;
     chatPanel.style.right = 'auto';
@@ -2707,28 +2671,19 @@ if (chatDragHandle && chatPanel) {
     draggingPanel = false;
     document.removeEventListener('mousemove', onDragMove);
     document.removeEventListener('mouseup', stopDragPanel);
-    document.removeEventListener('touchmove', onDragMove);
-    document.removeEventListener('touchend', stopDragPanel);
   };
 
-  const beginDragPanel = (event) => {
-    if (isMobileView()) return; // Drag disabled on mobile
+  chatDragHandle.addEventListener('mousedown', (event) => {
     event.preventDefault();
     const rect = chatPanel.getBoundingClientRect();
-    const pt = event.touches ? event.touches[0] : event;
-    dragStartX = pt.clientX;
-    dragStartY = pt.clientY;
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
     dragOffsetX = dragStartX - rect.left;
     dragOffsetY = dragStartY - rect.top;
     draggingPanel = true;
     document.addEventListener('mousemove', onDragMove);
     document.addEventListener('mouseup', stopDragPanel);
-    document.addEventListener('touchmove', onDragMove, { passive: false });
-    document.addEventListener('touchend', stopDragPanel);
-  };
-
-  chatDragHandle.addEventListener('mousedown', beginDragPanel);
-  chatDragHandle.addEventListener('touchstart', beginDragPanel, { passive: false });
+  });
 }
 
 if (chatForm && chatText) {
@@ -4511,56 +4466,3 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAndPlay(typeof activeTheme !== 'undefined' ? activeTheme : 'campfire', savedTime);
 });
 
-/* ==========================================================================
-   Mobile Sidebar Drawer Toggle
-   ========================================================================== */
-(function() {
-  const toggleBtn = document.getElementById('mobileSidebarToggle');
-  const overlay = document.getElementById('mobileSidebarOverlay');
-  const sidebar = document.querySelector('.entry-sidebar');
-  if (!toggleBtn || !sidebar) return;
-
-  const openSidebar = () => {
-    sidebar.classList.add('mobile-open');
-    if (overlay) overlay.classList.add('open');
-    toggleBtn.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  };
-
-  const closeSidebar = () => {
-    sidebar.classList.remove('mobile-open');
-    if (overlay) overlay.classList.remove('open');
-    toggleBtn.classList.remove('open');
-    document.body.style.overflow = '';
-  };
-
-  toggleBtn.addEventListener('click', () => {
-    if (sidebar.classList.contains('mobile-open')) closeSidebar();
-    else openSidebar();
-  });
-
-  if (overlay) overlay.addEventListener('click', closeSidebar);
-
-  // Close on Escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) closeSidebar();
-  });
-
-  // Swipe-down to close sidebar drawer
-  let touchStartY = 0;
-  sidebar.addEventListener('touchstart', (e) => {
-    touchStartY = e.touches[0].clientY;
-  }, { passive: true });
-
-  sidebar.addEventListener('touchend', (e) => {
-    const dy = e.changedTouches[0].clientY - touchStartY;
-    if (dy > 80) closeSidebar(); // Swipe down > 80px = close
-  }, { passive: true });
-
-  // Also close sidebar when window resizes above mobile breakpoint
-  window.addEventListener('resize', () => {
-    if (window.innerWidth > 900 && sidebar.classList.contains('mobile-open')) {
-      closeSidebar();
-    }
-  });
-})();
