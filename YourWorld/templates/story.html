@@ -27,20 +27,24 @@
         <div class="image-placeholder">No image yet</div>
       </div>
       <div class="share-panel">
-        <label class="field-label" for="shareCode">Share code</label>
-        <p class="field-help">Only users with your code can access this content. Do not use this tool to collect passwords, payment details, or sensitive personal information.</p>
-        <div class="share-row">
-          <input id="shareCode" type="text" placeholder="No share code yet" autocomplete="off" readonly aria-label="Current share code" />
-          <button class="btn ghost" id="shareCopyBtn" type="button" disabled>Copy</button>
+        <div class="share-panel-head">
+          <label class="field-label" for="shareCode">Share code</label>
+          <span class="share-panel-note">Share this code with people you choose.</span>
         </div>
-        <div class="share-row share-custom-row">
-          <input id="shareCustomCode" type="text" placeholder="Type custom code" autocomplete="off" maxlength="32" pattern="[A-Za-z0-9-]{4,32}" aria-describedby="shareCodeHelp" />
-          <button class="btn ghost" id="shareGenerateBtn" type="button">Use Custom Code</button>
+        <div class="share-controls">
+          <div class="share-row">
+            <input id="shareCode" type="text" placeholder="No share code yet" autocomplete="off" readonly aria-label="Current share code" />
+            <button class="btn ghost" id="shareCopyBtn" type="button" disabled>Copy</button>
+          </div>
+          <div class="share-row share-custom-row">
+            <input id="shareCustomCode" type="text" placeholder="Type custom code" autocomplete="off" maxlength="32" pattern="[A-Za-z0-9-]{4,32}" aria-describedby="shareCodeHelp" />
+            <button class="btn ghost" id="shareGenerateBtn" type="button">Use Code</button>
+          </div>
+          <p class="field-help share-custom-hint" id="shareCustomHint" aria-live="polite"></p>
+          <p class="field-help" id="shareCodeHelp">Use 4-32 letters, numbers, or hyphens.</p>
         </div>
-        <p class="field-help share-custom-hint" id="shareCustomHint" aria-live="polite"></p>
-        <p class="field-help" id="shareCodeHelp">Current code is shown above. Type your own 4-32 character code below, or let YourWorld generate a random code for you.</p>
-        <div class="share-row" style="margin-top: 10px;">
-          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--text-color);">
+        <div class="share-permission-row">
+          <label class="share-checkbox-label">
             <input type="checkbox" id="shareCanEdit" />
             Allow code holders to edit this story
           </label>
