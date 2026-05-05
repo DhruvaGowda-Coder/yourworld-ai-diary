@@ -1311,6 +1311,55 @@ a:focus-visible {
   line-height: 1.45;
 }
 
+/* Login Prompt Modal */
+.yw-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease;
+}
+
+.yw-modal-box {
+  background: var(--surface, #1e1e2e);
+  color: var(--text, #cdd6f4);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 380px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.yw-modal-box h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.yw-modal-box p {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  opacity: 0.85;
+  line-height: 1.5;
+}
+
+.yw-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.chat-login-link {
+  color: var(--accent, #89b4fa);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
 @media (max-width: 760px) {
   .home-code-row,
   .trust-band {

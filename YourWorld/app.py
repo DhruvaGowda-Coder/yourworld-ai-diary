@@ -17,6 +17,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import bleach
 import firebase_db
+from firebase_db import utc_now_iso
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(APP_DIR, ".env"))
@@ -25,7 +26,6 @@ GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 GROQ_CHAT_MODEL = os.environ.get("GROQ_CHAT_MODEL", "llama-3.1-8b-instant").strip()
 HUGGINGFACE_API_KEY = os.environ.get("HUGGINGFACE_API_KEY", "").strip()
 HUGGINGFACE_IMAGE_MODEL = os.environ.get("HUGGINGFACE_IMAGE_MODEL", "black-forest-labs/FLUX.1-schnell").strip()
-SHOW_AI_ERRORS = os.environ.get("SHOW_AI_ERRORS", "0").strip() == "1"
 
 # Firebase Web Config (injected into frontend templates)
 FIREBASE_WEB_CONFIG = {
@@ -41,6 +41,20 @@ FIREBASE_WEB_CONFIG = {
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
+
+# WARNING: Set SHOW_AI_ERRORS=1 only in local development.
+# In production, this flag leaks internal Groq/HuggingFace error messages to the client.
+# It must always be "0" (the default) in any deployed environment.
+SHOW_AI_ERRORS = os.environ.get("SHOW_AI_ERRORS", "0").strip() == "1"
+if SHOW_AI_ERRORS and not app.debug:
+    import warnings
+    warnings.warn(
+        "SHOW_AI_ERRORS is enabled in a non-debug environment. "
+        "This exposes internal API errors to clients. Disable it in production.",
+        RuntimeWarning,
+        stacklevel=1,
+    )
+
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 secret_key = os.environ.get("DIARY_SECRET_KEY")
 if not secret_key:
@@ -177,10 +191,6 @@ THEME_DETAILS = {
 }
 
 
-def utc_now_iso():
-    return datetime.now(timezone.utc).isoformat()
-
-
 def build_theme_list():
     items = []
     for theme_id in THEME_ORDER:
@@ -240,6 +250,19 @@ def login_required(fn):
             session["is_guest"] = True
         return fn(*args, **kwargs)
 
+    return wrapper
+
+
+def auth_required(fn):
+    """Blocks guest users. Use on AI-powered endpoints that require a real account."""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not session.get("user_id") or session.get("is_guest"):
+            return jsonify({
+                "error": "login_required",
+                "message": "Please sign in to use AI features."
+            }), 401
+        return fn(*args, **kwargs)
     return wrapper
 
 
@@ -688,6 +711,9 @@ def _normalize_share_code(raw_code: str | None) -> str | None:
 @app.route("/api/entry/<entry_id>/share", methods=["POST"])
 @login_required
 def api_entry_share(entry_id):
+    if session.get("is_guest"):
+        return jsonify({"error": "login_required", "message": "Please sign in to share stories."}), 401
+
     data = request.get_json(silent=True) or {}
     rotate = bool(data.get("rotate"))
     mode = data.get("mode", "story")
@@ -818,8 +844,17 @@ def api_entry_save():
             plain = _strip_html(content)
             first_line = plain.strip().splitlines()[0] if plain.strip() else "Untitled"
             title = (first_line[:40] + "...") if len(first_line) > 40 else first_line
+        if len(title) > 150:
+            title = title[:150]
 
         title = bleach.clean(title, tags=[], attributes={})
+        if len(title) > 150:
+            title = title[:150]
+
+        # Enforce maximum content size (100KB of HTML)
+        MAX_CONTENT_BYTES = 100_000
+        if len(content.encode("utf-8")) > MAX_CONTENT_BYTES:
+            return jsonify({"error": "Content too large. Maximum 100KB per entry."}), 400
         
         data['title'] = title[:150]
         data['content'] = content
@@ -921,7 +956,7 @@ def call_hf_image(prompt):
 
 
 @app.route("/api/chat", methods=["POST"])
-@login_required
+@auth_required
 @limiter.limit("10 per minute")
 def api_chat():
     data = request.get_json(force=True)
@@ -930,6 +965,8 @@ def api_chat():
     context_data = data.get("context") or {}
     if not message:
         return jsonify({"error": "Message required"}), 400
+    if len(message) > 2000:
+        return jsonify({"error": "Message too long. Maximum 2000 characters."}), 400
 
     safe_history = []
     for item in history[-12:]:  # type: ignore # pyre-ignore
@@ -962,7 +999,7 @@ def api_chat():
         if isinstance(raw_title, str):
             page_title = raw_title.strip()[:220]  # type: ignore # pyre-ignore
         if isinstance(raw_content, str):
-            page_content = raw_content.strip()[:5000]  # type: ignore # pyre-ignore
+            page_content = raw_content.strip()[:3000]  # type: ignore # pyre-ignore
         if isinstance(raw_label, str):
             page_label = raw_label.strip()[:80]  # type: ignore # pyre-ignore
 
@@ -1066,22 +1103,19 @@ def api_activity():
     total_pages = len(entry_rows)
     active_days = len(counts)
     
-    # Calculate streak
+    # ── Streak Calculation ──────────────────────────────────────────────
     streak = 0
-    current_date = datetime.now(timezone.utc).date()
-    # Check if they have activity today or yesterday. If yes, streak is alive.
-    if current_date.isoformat() in counts or (current_date - timedelta(days=1)).isoformat() in counts:
-        check_date = current_date
-        # Count backwards
-        while True:
-            if check_date.isoformat() in counts:
-                streak += 1
-                check_date -= timedelta(days=1)
-            elif check_date == current_date:
-                # If no activity today, try yesterday
-                check_date -= timedelta(days=1)
-            else:
-                break
+    today = datetime.now(timezone.utc).date()
+
+    # Start counting from today if they wrote today, else start from yesterday
+    start_day = today if today.isoformat() in counts else (today - timedelta(days=1))
+
+    # Walk backwards day by day as long as each day has activity
+    check_day = start_day
+    while check_day.isoformat() in counts:
+        streak += 1
+        check_day -= timedelta(days=1)
+    # ────────────────────────────────────────────────────────────────────
 
     return jsonify({
         "days": days,
@@ -1093,11 +1127,12 @@ def api_activity():
 
 
 @app.route("/api/story/image", methods=["POST"])
-@login_required
+@auth_required
 @limiter.limit("5 per minute")
 def api_story_image():
     data = request.get_json(force=True)
     prompt = (data.get("prompt") or "").strip() or "A quiet story moment"
+    prompt = prompt[:500]  # Cap to prevent abuse
     image_url, error = call_hf_image(prompt)
     if image_url:
         return jsonify({"image_url": image_url, "ai": True, "provider": "huggingface"})

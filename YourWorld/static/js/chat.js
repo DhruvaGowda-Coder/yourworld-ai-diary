@@ -202,8 +202,14 @@ if (chatForm && chatText) {
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
       body: JSON.stringify({ message: text, history: historyPayload, context: pageContext }),
     })
-      .then((response) => response.json())
-      .then((data) => {
+      .then((response) => response.json().then((data) => ({ response, data })))
+      .then(({ response, data }) => {
+        if (response.status === 401 && data.error === 'login_required') {
+          typingBubble.innerHTML = 'AI chat requires a free account. <a href="/login" class="chat-login-link">Sign in here</a> - it only takes a second.';
+          chatHistory.push({ role: 'user', content: text });
+          chatHistory.push({ role: 'assistant', content: 'AI chat requires a free account. Sign in to continue.' });
+          return;
+        }
         if (data && data.theme) {
           setThemeState(data.theme);
           queueParticleRebuild(data.theme);

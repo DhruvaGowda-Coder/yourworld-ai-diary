@@ -195,6 +195,31 @@ if (workspace) {
     if (saveStatus) saveStatus.textContent = text;
   };
 
+  const showLoginPromptModal = () => {
+    const existing = document.getElementById('yw-login-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'yw-login-modal';
+    modal.className = 'yw-modal-overlay';
+    modal.innerHTML = `
+      <div class="yw-modal-box">
+        <h3>Sign In Required</h3>
+        <p>AI image generation is available to signed-in users. It's completely free.</p>
+        <div class="yw-modal-actions">
+          <a href="/login" class="btn-primary">Sign In / Sign Up</a>
+          <button type="button" class="btn-secondary" data-close-login-modal>Maybe Later</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal || event.target.closest('[data-close-login-modal]')) {
+        modal.remove();
+      }
+    });
+  };
+
   const setTime = (iso, prefix = 'Saved') => {
     if (!saveTime || !iso) return;
     const date = new Date(iso);
@@ -895,6 +920,11 @@ if (workspace) {
           body: JSON.stringify({ prompt }),
         });
         const data = await response.json().catch(() => ({}));
+        if (response.status === 401 && data.error === 'login_required') {
+          setStatus('Sign in to generate AI images. It is free.');
+          showLoginPromptModal();
+          return;
+        }
         if (!response.ok) {
           const rawError = String(data.message || data.error || 'Image failed').trim();
           const message = rawError.includes(':')

@@ -1,6 +1,9 @@
 # Secrets & credentials
 .env
 firebase-adminsdk.json
+*.db
+*.sqlite
+*.sqlite3
 
 # Legacy database
 database.sqlite

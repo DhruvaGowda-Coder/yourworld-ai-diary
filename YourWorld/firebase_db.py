@@ -1,8 +1,9 @@
 import os
 import json
 import threading
+import datetime as _dt
 import firebase_admin
-from firebase_admin import credentials, firestore, auth, storage
+from firebase_admin import credentials, firestore, storage
 from google.cloud.firestore_v1 import Increment
 from google.cloud.firestore_v1.base_query import FieldFilter
 from datetime import datetime, timezone, timedelta
@@ -42,25 +43,23 @@ def get_bucket():
     return storage.bucket()
 
 def upload_to_storage(file_stream, destination_path, content_type):
-    """Upload a file stream to Firebase Storage and return the public URL."""
+    """Upload a file to Firebase Storage and return a signed URL (expires in 1 hour)."""
     bucket = get_bucket()
     blob = bucket.blob(destination_path)
     blob.upload_from_file(file_stream, content_type=content_type)
-    
-    # Make the blob publicly readable
-    blob.make_public()
-    return blob.public_url
+
+    # Generate a signed URL valid for 1 hour instead of making the file permanently public
+    signed_url = blob.generate_signed_url(
+        expiration=_dt.timedelta(hours=1),
+        method="GET",
+        version="v4",
+    )
+    return signed_url
 
 # get_db is defined above at line 30
 
 def utc_now_iso():
     return datetime.now(timezone.utc).isoformat()
-
-def verify_token(id_token):
-    try:
-        return auth.verify_id_token(id_token)
-    except Exception:
-        return None
 
 def get_user_theme(user_id):
     if not user_id: return "campfire"
