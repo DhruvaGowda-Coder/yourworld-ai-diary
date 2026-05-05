@@ -2,6 +2,7 @@ import os
 import json
 import firebase_admin
 from firebase_admin import credentials, firestore, auth, storage
+from google.cloud.firestore_v1 import Increment
 from google.cloud.firestore_v1.base_query import FieldFilter
 from datetime import datetime, timezone, timedelta
 
@@ -43,8 +44,7 @@ def upload_to_storage(file_stream, destination_path, content_type):
     blob.make_public()
     return blob.public_url
 
-def get_db():
-    return firestore.client()
+# get_db is defined above at line 30
 
 def utc_now_iso():
     return datetime.now(timezone.utc).isoformat()
@@ -243,16 +243,13 @@ def get_activity_counts(user_id, days):
 
 def increment_activity(user_id, day):
     db = get_db()
-    docs = db.collection('activity').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('day', '==', day)).stream()
-    doc_id = None
-    count = 0
-    for doc in docs:
-        doc_id = doc.id
-        count = doc.to_dict().get('count', 0)
-        break
+    docs = list(db.collection('activity').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('day', '==', day)).limit(1).stream())
     
-    if doc_id:
-        db.collection('activity').document(doc_id).update({'count': count + 1, 'updated_at': utc_now_iso()})
+    if docs:
+        db.collection('activity').document(docs[0].id).update({
+            'count': Increment(1),
+            'updated_at': utc_now_iso()
+        })
     else:
         db.collection('activity').add({
             'user_id': str(user_id),

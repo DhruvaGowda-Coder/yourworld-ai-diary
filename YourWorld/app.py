@@ -49,6 +49,9 @@ if not secret_key:
     secret_key = secrets.token_hex(32)
 app.secret_key = secret_key
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload
+app.config['SESSION_COOKIE_SECURE'] = not app.debug
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 csrf = CSRFProtect(app)
 limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per day", "100 per hour"])
 
@@ -315,9 +318,12 @@ def auth_google_callback():
         "redirect_uri": redirect_uri,
         "grant_type": "authorization_code",
     }
-    r = requests.post(token_url, data=data)
+    try:
+        r = requests.post(token_url, data=data, timeout=10)
+    except requests.RequestException:
+        return "Authentication failed. Please try again.", 400
     if not r.ok:
-        return f"Failed to fetch token: {r.text}", 400
+        return "Authentication failed. Please try again.", 400
         
     token_data = r.json()
     access_token = token_data.get("access_token")
@@ -326,10 +332,12 @@ def auth_google_callback():
     
     userinfo_url = "https://www.googleapis.com/oauth2/v2/userinfo"
     headers = {"Authorization": f"Bearer {access_token}"}
-    r2 = requests.get(userinfo_url, headers=headers)
-    
+    try:
+        r2 = requests.get(userinfo_url, headers=headers, timeout=10)
+    except requests.RequestException:
+        return "Failed to retrieve user info. Please try again.", 400
     if not r2.ok:
-        return "Failed to get user info.", 400
+        return "Failed to retrieve user info. Please try again.", 400
         
     user_info = r2.json()
     uid = user_info.get("id")
@@ -634,7 +642,7 @@ def api_entry_save():
             entry_id = str(entry_id)
 
         allowed_tags = ['b', 'i', 'u', 'div', 'br', 'span', 'strike', 'strong', 'em', 'p', 'ul', 'ol', 'li']
-        allowed_attrs = {'*': ['style', 'class']}
+        allowed_attrs = {'*': ['class']}
         
         content = data.get("content", "").strip()
         try:
@@ -642,7 +650,6 @@ def api_entry_save():
             css_sanitizer = CSSSanitizer(allowed_css_properties=['color', 'background-color', 'text-align', 'font-size', 'font-family'])
             content = bleach.clean(content, tags=allowed_tags, attributes=allowed_attrs, css_sanitizer=css_sanitizer)
         except ImportError:
-            # Fallback for older bleach versions or if css_sanitizer is unavailable
             content = bleach.clean(content, tags=allowed_tags, attributes=allowed_attrs)
         
         title = (data.get("title") or "").strip()
@@ -666,8 +673,8 @@ def api_entry_save():
 
         return jsonify({"id": saved["id"], "title": saved["title"], "updated_at": saved["updated_at"]})
     except Exception as e:
-        import traceback
-        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
+        app.logger.exception("Entry save failed")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 def _escape_svg(text: str) -> str:
@@ -941,9 +948,11 @@ def api_story_image():
 
 @app.route("/api/system/cleanup", methods=["POST"])
 def api_system_cleanup():
-    auth_header = request.headers.get("Authorization")
     cron_secret = os.environ.get("CRON_SECRET")
-    if cron_secret and auth_header != f"Bearer {cron_secret}":
+    if not cron_secret:
+        return jsonify({"error": "Cleanup not configured"}), 403
+    auth_header = request.headers.get("Authorization")
+    if auth_header != f"Bearer {cron_secret}":
         return jsonify({"error": "Unauthorized"}), 401
     
     count = firebase_db.cleanup_guest_data()

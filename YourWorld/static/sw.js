@@ -1,7 +1,5 @@
-const CACHE_NAME = 'yourworld-cache-v4';
-const ASSETS = [
-  '/static/css/styles.css',
-  '/static/js/app.js',
+const CACHE_NAME = 'yourworld-cache-v5';
+const PRECACHE_ASSETS = [
   '/static/manifest.json',
   '/static/img/yourworld-symbol.svg',
   '/static/audio/campfire.wav',
@@ -19,15 +17,13 @@ const ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
+      return cache.addAll(PRECACHE_ASSETS);
     })
   );
-  // Activate new SW immediately instead of waiting
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  // Delete old caches when a new SW activates
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
@@ -37,7 +33,6 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
-  // Take control of all open pages immediately
   self.clients.claim();
 });
 
@@ -46,25 +41,18 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // HTML pages & API calls: always go network-first
-  // (so server-injected config like Firebase is always fresh)
-  if (event.request.mode === 'navigate' || url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(event.request);
-      })
-    );
+  // API calls: network only (never cache)
+  if (url.pathname.startsWith('/api/')) {
     return;
   }
 
-  // Static assets: cache-first with network fallback
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((response) => {
-        // Cache new static assets for next time
+  // HTML pages and JS/CSS: network-first, cache fallback
+  // This ensures versioned assets are always fetched fresh
+  if (event.request.mode === 'navigate' ||
+      url.pathname.endsWith('.js') ||
+      url.pathname.endsWith('.css')) {
+    event.respondWith(
+      fetch(event.request).then((response) => {
         if (response.ok && url.origin === self.location.origin) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -73,7 +61,28 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       }).catch(() => {
-        // Handle offline fallback gracefully if needed
+        return caches.match(event.request);
+      })
+    );
+    return;
+  }
+
+  // Audio, images, fonts: cache-first (these rarely change)
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request).then((response) => {
+        if (response.ok && url.origin === self.location.origin) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, clone);
+          });
+        }
+        return response;
+      }).catch(() => {
+        // Offline — no cached version available
       });
     })
   );

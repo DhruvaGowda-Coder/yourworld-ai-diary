@@ -19,6 +19,9 @@ venv/
 # Dev / utility scripts
 generate_audio.py
 test_audio.py
+test_save.py
+test_delete.py
+test_*.py
 
 # IDE
 .vscode/
