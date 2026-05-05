@@ -30,6 +30,7 @@ if (workspace) {
   const shareRandomBtn = document.getElementById('shareRandomBtn');
   const shareGenerateBtn = document.getElementById('shareGenerateBtn');
   const shareRemoveBtn = document.getElementById('shareRemoveBtn');
+  const customCodePlaceholder = 'Type custom code';
   const normalizeShareCode = (value) => (value || '')
     .trim()
     .toUpperCase()
@@ -199,9 +200,20 @@ if (workspace) {
   };
 
   const setCustomCodeHint = (message = '', kind = '') => {
-    if (!shareCustomHint) return;
-    shareCustomHint.textContent = message;
-    shareCustomHint.dataset.kind = kind;
+    if (shareCustomHint) {
+      shareCustomHint.textContent = '';
+      shareCustomHint.dataset.kind = '';
+    }
+    if (!shareCustomCodeInput) return;
+    shareCustomCodeInput.classList.toggle('is-error', kind === 'error');
+    if (kind === 'error' && message) {
+      shareCustomCodeInput.value = '';
+      shareCustomCodeInput.placeholder = message;
+      shareCustomCodeInput.title = message;
+      return;
+    }
+    shareCustomCodeInput.placeholder = customCodePlaceholder;
+    shareCustomCodeInput.title = '';
   };
 
   const showLoginPromptModal = ({
@@ -1164,13 +1176,16 @@ if (workspace) {
       shareCanEditValue = data.can_edit;
       if (!useRandom && shareCustomCodeInput) {
         shareCustomCodeInput.value = '';
+        shareCustomCodeInput.placeholder = customCodePlaceholder;
+        shareCustomCodeInput.title = '';
+        shareCustomCodeInput.classList.remove('is-error');
       }
       if (data.share_type && shareModeSelect) {
         shareModeSelect.value = data.share_type;
       }
       updateShareUI();
       setStatus(useRandom ? 'Random code generated' : 'Custom code saved');
-      setCustomCodeHint(useRandom ? '' : 'Custom code saved.', useRandom ? '' : 'success');
+      setCustomCodeHint('');
     } catch (err) {
       setStatus(err.message || 'Share failed');
     } finally {

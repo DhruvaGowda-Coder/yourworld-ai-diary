@@ -873,6 +873,18 @@ button:active:not(:disabled) {
   font-weight: 700;
 }
 
+.share-row input.is-error {
+  border-color: rgba(255, 120, 110, 0.82);
+  background: rgba(120, 24, 34, 0.28);
+  color: #ffd9d4;
+  box-shadow: 0 0 0 1px rgba(255, 120, 110, 0.18), 0 0 14px rgba(255, 120, 110, 0.18);
+}
+
+.share-row input.is-error::placeholder {
+  color: #ffb4a8;
+  opacity: 1;
+}
+
 .share-custom-row {
   margin-top: 0;
 }
