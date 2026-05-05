@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yourworld-cache-v3';
+const CACHE_NAME = 'yourworld-cache-v4';
 const ASSETS = [
   '/static/css/styles.css',
   '/static/js/app.js',

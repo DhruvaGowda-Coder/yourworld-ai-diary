@@ -2794,11 +2794,12 @@ if (workspace) {
     if (!btn) return;
     let isTouching = false;
     btn.addEventListener('touchstart', () => { isTouching = true; }, { passive: true });
+    btn.addEventListener('touchcancel', () => { isTouching = false; }, { passive: true });
     btn.addEventListener('touchend', (e) => {
       if (isTouching) {
-        e.preventDefault(); // Prevent ghost clicks
+        if (e.cancelable) { e.preventDefault(); } // Prevent ghost clicks only if cancelable
         handler(e);
-        isTouching = false;
+        setTimeout(() => { isTouching = false; }, 300);
       }
     });
     btn.addEventListener('click', (e) => {
