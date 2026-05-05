@@ -30,10 +30,10 @@
         <label class="field-label" for="shareCode">Share code</label>
         <p class="field-help">Only users with your code can access this content. Do not use this tool to collect passwords, payment details, or sensitive personal information.</p>
         <div class="share-row">
-          <input id="shareCode" type="text" placeholder="Enter custom code or generate" autocomplete="off" maxlength="32" pattern="[A-Za-z0-9-]{4,32}" aria-describedby="shareCodeHelp" />
+          <input id="shareCode" type="text" placeholder="Enter custom code" autocomplete="off" maxlength="32" pattern="[A-Za-z0-9-]{4,32}" aria-describedby="shareCodeHelp" />
           <button class="btn ghost" id="shareCopyBtn" type="button" disabled>Copy</button>
         </div>
-        <p class="field-help" id="shareCodeHelp">Use 4-32 letters, numbers, or hyphens. The share code opens only this selected content.</p>
+        <p class="field-help" id="shareCodeHelp">Type your own 4-32 character code, or let YourWorld generate a random code for you.</p>
         <div class="share-row" style="margin-top: 10px;">
           <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--text-color);">
             <input type="checkbox" id="shareCanEdit" />
@@ -55,7 +55,8 @@
             </div>
             <input type="hidden" id="shareModeSelect" value="story" />
           </div>
-          <button class="btn ghost" id="shareGenerateBtn" type="button">Generate</button>
+          <button class="btn ghost" id="shareRandomBtn" type="button">Random Code</button>
+          <button class="btn ghost" id="shareGenerateBtn" type="button">Use Custom Code</button>
           <button class="btn ghost" id="shareRemoveBtn" type="button" disabled>Remove</button>
         </div>
       </div>

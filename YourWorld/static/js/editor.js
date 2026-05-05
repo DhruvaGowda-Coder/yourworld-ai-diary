@@ -25,6 +25,7 @@ if (workspace) {
   const imageAttachBtn = document.getElementById('imageAttachBtn');
   const shareCodeInput = document.getElementById('shareCode');
   const shareCopyBtn = document.getElementById('shareCopyBtn');
+  const shareRandomBtn = document.getElementById('shareRandomBtn');
   const shareGenerateBtn = document.getElementById('shareGenerateBtn');
   const shareRemoveBtn = document.getElementById('shareRemoveBtn');
   const normalizeShareCode = (value) => (value || '')
@@ -1083,45 +1084,65 @@ if (workspace) {
   }
 
 
+  const saveShareCode = async ({ useRandom = false } = {}) => {
+    if (!getActiveEntryId()) {
+      await saveEntry();
+    }
+    const targetId = getActiveEntryId();
+    if (!targetId) {
+      setStatus('Save page first');
+      return;
+    }
+    const mode = shareModeSelect ? shareModeSelect.value : 'story';
+    const shareCanEdit = document.getElementById('shareCanEdit');
+    const canEdit = shareCanEdit ? shareCanEdit.checked : false;
+    let customCode = shareCodeInput ? normalizeShareCode(shareCodeInput.value) : '';
+    if (useRandom) {
+      customCode = '';
+      if (shareCodeInput) shareCodeInput.value = '';
+    } else if (shareCodeInput) {
+      shareCodeInput.value = customCode;
+    }
+    if (!useRandom && !customCode) {
+      setStatus('Enter a custom code or choose Random Code');
+      return;
+    }
+    if (customCode && !/^[A-Z0-9][A-Z0-9-]{3,31}$/.test(customCode)) {
+      setStatus('Use 4-32 letters, numbers, or hyphens for the code');
+      return;
+    }
+    try {
+      const response = await fetch(`/api/entry/${targetId}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify({ rotate: useRandom, mode, custom_code: customCode, can_edit: canEdit }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Share failed');
+      }
+      const data = await response.json();
+      shareCode = data.share_code;
+      shareCanEditValue = data.can_edit;
+      if (data.share_type && shareModeSelect) {
+        shareModeSelect.value = data.share_type;
+      }
+      updateShareUI();
+      setStatus(useRandom ? 'Random code generated' : 'Custom code saved');
+    } catch (err) {
+      setStatus(err.message || 'Share failed');
+    }
+  };
+
+  if (shareRandomBtn) {
+    shareRandomBtn.addEventListener('click', () => {
+      saveShareCode({ useRandom: true });
+    });
+  }
+
   if (shareGenerateBtn) {
-    shareGenerateBtn.addEventListener('click', async () => {
-      if (!getActiveEntryId()) {
-        await saveEntry();
-      }
-      const targetId = getActiveEntryId();
-      if (!targetId) {
-        setStatus('Save page first');
-        return;
-      }
-      const mode = shareModeSelect ? shareModeSelect.value : 'story';
-      const shareCanEdit = document.getElementById('shareCanEdit');
-      const canEdit = shareCanEdit ? shareCanEdit.checked : false;
-      const customCode = shareCodeInput ? normalizeShareCode(shareCodeInput.value) : '';
-      if (shareCodeInput) shareCodeInput.value = customCode;
-      if (customCode && !/^[A-Z0-9][A-Z0-9-]{3,31}$/.test(customCode)) {
-        setStatus('Use 4-32 letters, numbers, or hyphens for the code');
-        return;
-      }
-      try {
-        const response = await fetch(`/api/entry/${targetId}/share`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-          body: JSON.stringify({ rotate: Boolean(shareCode && !customCode), mode, custom_code: customCode, can_edit: canEdit }),
-        });
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Share failed');
-        }
-        const data = await response.json();
-        shareCode = data.share_code;
-        shareCanEditValue = data.can_edit;
-        if (data.share_type && shareModeSelect) {
-          shareModeSelect.value = data.share_type;
-        }
-        updateShareUI();
-      } catch (err) {
-        setStatus(err.message || 'Share failed');
-      }
+    shareGenerateBtn.addEventListener('click', () => {
+      saveShareCode({ useRandom: false });
     });
   }
 
