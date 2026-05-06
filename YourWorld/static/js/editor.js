@@ -231,15 +231,17 @@ if (workspace) {
         <style>
           @keyframes modalPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
           .yw-modal-overlay { display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; backdrop-filter: blur(4px); }
-          .yw-modal-icon { width: 64px; height: 64px; background: linear-gradient(135deg, var(--theme-accent, #ff7e5f), var(--theme-accent-2, #feb47b)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--theme-accent-text, #fff); box-shadow: 0 4px 15px var(--theme-accent-soft, rgba(0,0,0,0.3)); border: none; }
+          .yw-modal-icon { width: 68px; height: 68px; background: linear-gradient(135deg, var(--theme-accent, #ff7e5f), var(--theme-accent-2, #feb47b)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--theme-accent-text, #fff); box-shadow: 0 8px 24px var(--theme-accent-soft, rgba(0,0,0,0.3)), inset 0 -4px 12px rgba(0,0,0,0.15), inset 0 4px 12px rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.1); }
           .yw-modal-box h3 { margin: 0 0 12px; font-size: 1.5rem; color: var(--text-color, #fff); font-weight: 600; }
           .yw-modal-box p { margin: 0 0 24px; color: var(--text-color, #aaa); opacity: 0.8; line-height: 1.5; font-size: 1rem; }
           .yw-modal-actions { display: flex; flex-direction: column; gap: 12px; }
           .yw-modal-actions a, .yw-modal-actions button { width: 100%; display: inline-flex; justify-content: center; align-items: center; gap: 8px; padding: 12px; font-size: 1rem; box-sizing: border-box; }
         </style>
         <div class="yw-modal-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z"/>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.25));">
+            <path d="M10 2l1.528 4.708a3 3 0 001.764 1.764L18 10l-4.708 1.528a3 3 0 00-1.764 1.764L10 18l-1.528-4.708a3 3 0 00-1.764-1.764L2 10l4.708-1.528a3 3 0 001.764-1.764L10 2z"/>
+            <path d="M19 14l.764 2.354a1.5 1.5 0 00.882.882L23 18l-2.354.764a1.5 1.5 0 00-.882.882L19 22l-.764-2.354a1.5 1.5 0 00-.882-.882L15 18l2.354-.764a1.5 1.5 0 00.882-.882L19 14z" opacity="0.8"/>
+            <path d="M19 2l.509 1.57a1 1 0 00.588.588L22 4.5l-1.903.509a1 1 0 00-.588.588L19 7l-.509-1.57a1 1 0 00-.588-.588L16 4.5l1.903-.509a1 1 0 00.588-.588L19 2z" opacity="0.6"/>
           </svg>
         </div>
         <h3>${title}</h3>
