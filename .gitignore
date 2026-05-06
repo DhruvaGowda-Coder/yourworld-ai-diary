@@ -9,3 +9,4 @@ data/
 *.sqlite3
 .tmp_frames/
 YourWorld/firebase-adminsdk.json
+YourWorld/static/uploads/
