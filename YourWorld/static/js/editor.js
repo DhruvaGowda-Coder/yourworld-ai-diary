@@ -231,24 +231,25 @@ if (workspace) {
         <style>
           @keyframes modalPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
           .yw-modal-overlay { display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; backdrop-filter: blur(4px); }
-          .yw-modal-icon { width: 64px; height: 64px; background: var(--bg-elevated, rgba(255,255,255,0.05)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--theme-accent, #fff); font-size: 28px; border: 1px solid var(--border-color, #444); }
+          .yw-modal-icon { width: 64px; height: 64px; background: linear-gradient(135deg, var(--theme-accent, #ff7e5f), var(--theme-accent-2, #feb47b)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--theme-accent-text, #fff); box-shadow: 0 4px 15px var(--theme-accent-soft, rgba(0,0,0,0.3)); border: none; }
           .yw-modal-box h3 { margin: 0 0 12px; font-size: 1.5rem; color: var(--text-color, #fff); font-weight: 600; }
-          .yw-modal-box p { margin: 0 0 24px; color: var(--text-muted, #aaa); line-height: 1.5; font-size: 1rem; }
+          .yw-modal-box p { margin: 0 0 24px; color: var(--text-color, #aaa); opacity: 0.8; line-height: 1.5; font-size: 1rem; }
           .yw-modal-actions { display: flex; flex-direction: column; gap: 12px; }
-          .yw-modal-actions .btn-primary { background: var(--theme-accent, #ff7e5f); color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; display: inline-flex; justify-content: center; align-items: center; gap: 8px; border: none; font-size: 1rem; }
-          .yw-modal-actions .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 126, 95, 0.3); }
-          .yw-modal-actions .btn-secondary { background: transparent; color: var(--text-muted, #aaa); border: 1px solid var(--border-color, #555); padding: 10px 24px; border-radius: 8px; cursor: pointer; transition: background 0.2s, color 0.2s; font-size: 0.95rem; }
-          .yw-modal-actions .btn-secondary:hover { background: rgba(255,255,255,0.05); color: var(--text-color, #fff); }
+          .yw-modal-actions a, .yw-modal-actions button { width: 100%; display: inline-flex; justify-content: center; align-items: center; gap: 8px; padding: 12px; font-size: 1rem; box-sizing: border-box; }
         </style>
-        <div class="yw-modal-icon">✨</div>
+        <div class="yw-modal-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z"/>
+          </svg>
+        </div>
         <h3>${title}</h3>
         <p>${message}</p>
         <div class="yw-modal-actions">
-          <a href="/login/google" class="btn-primary">
+          <a href="/login/google" class="btn primary" style="color: var(--theme-accent-text, #fff);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
             Continue with Google
           </a>
-          <button type="button" class="btn-secondary" data-close-login-modal>Not right now</button>
+          <button type="button" class="btn ghost" data-close-login-modal>Not right now</button>
         </div>
       </div>
     `;
