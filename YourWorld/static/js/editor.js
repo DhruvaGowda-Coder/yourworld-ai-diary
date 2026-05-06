@@ -1192,7 +1192,6 @@ if (workspace) {
       shareCode = data.share_code;
       shareCanEditValue = data.can_edit;
       if (!useRandom && shareCustomCodeInput) {
-        shareCustomCodeInput.value = '';
         shareCustomCodeInput.placeholder = customCodePlaceholder;
         shareCustomCodeInput.title = '';
         shareCustomCodeInput.classList.remove('is-error');
@@ -1298,7 +1297,7 @@ if (workspace) {
       shareCopyBtn.disabled = true;
       setTimeout(() => {
         shareCopyBtn.innerHTML = originalHtml;
-        updateShareUI();
+        shareCopyBtn.disabled = false;
       }, 2000);
     });
   }
