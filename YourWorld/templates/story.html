@@ -72,6 +72,15 @@
   </aside>
 
   <div class="book-area">
+    {% if not current_user %}
+    <div class="guest-warning" style="background: var(--bg-elevated, rgba(255,255,255,0.05)); border: 1px solid var(--theme-accent-soft, rgba(255,160,0,0.3)); color: var(--text-color); padding: 10px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 0.9rem; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.2rem;">⚠️</span>
+        <span><strong>Guest Mode:</strong> Sign in to ensure your drafts are permanently saved across sessions.</span>
+      </div>
+      <a href="/login/google" class="btn primary" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none; color: var(--theme-accent-text, #fff);">Sign In</a>
+    </div>
+    {% endif %}
     <div class="status-bar">
       <div class="status-info">
         <span id="saveStatus">Ready</span>
