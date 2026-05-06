@@ -612,7 +612,7 @@ def api_upload(file_type):
             return jsonify({"url": file_url, "name": filename})
         except Exception as e:
             app.logger.error(f"Firebase Storage upload failed: {str(e)}")
-            return jsonify({"error": "Failed to upload file to cloud storage. Please try again."}), 502
+            return jsonify({"error": f"Failed to upload file to cloud storage: {str(e)}"}), 502
     
     return jsonify({"error": "File upload failed"}), 400
 

@@ -43,18 +43,20 @@ def get_bucket():
     return storage.bucket()
 
 def upload_to_storage(file_stream, destination_path, content_type):
-    """Upload a file to Firebase Storage and return a signed URL (expires in 1 hour)."""
+    """Upload a file to Firebase Storage and make it public permanently."""
     bucket = get_bucket()
     blob = bucket.blob(destination_path)
     blob.upload_from_file(file_stream, content_type=content_type)
 
-    # Generate a signed URL valid for 1 hour instead of making the file permanently public
-    signed_url = blob.generate_signed_url(
-        expiration=_dt.timedelta(hours=1),
-        method="GET",
-        version="v4",
-    )
-    return signed_url
+    try:
+        blob.make_public()
+        return blob.public_url
+    except Exception as e:
+        # If bucket-level ACLs prevent make_public, fallback to the standard unauthenticated download URL
+        # Note: This requires the Firebase Storage rules to allow public reads to the uploads/ directory
+        bucket_name = bucket.name
+        encoded_path = destination_path.replace("/", "%2F")
+        return f"https://firebasestorage.googleapis.com/v0/b/{bucket_name}/o/{encoded_path}?alt=media"
 
 # get_db is defined above at line 30
 
