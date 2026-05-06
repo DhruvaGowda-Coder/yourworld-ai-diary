@@ -11,6 +11,8 @@ import hashlib
 from werkzeug.utils import secure_filename
 
 import requests
+import boto3
+from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for, g, Response, send_from_directory
 from flask_wtf.csrf import CSRFProtect
@@ -27,6 +29,13 @@ GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 GROQ_CHAT_MODEL = os.environ.get("GROQ_CHAT_MODEL", "llama-3.1-8b-instant").strip()
 HUGGINGFACE_API_KEY = os.environ.get("HUGGINGFACE_API_KEY", "").strip()
 HUGGINGFACE_IMAGE_MODEL = os.environ.get("HUGGINGFACE_IMAGE_MODEL", "black-forest-labs/FLUX.1-schnell").strip()
+
+# Cloudflare R2 Config
+R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID", "").strip()
+R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID", "").strip()
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY", "").strip()
+R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME", "").strip()
+R2_PUBLIC_DEV_URL = os.environ.get("R2_PUBLIC_DEV_URL", "").strip().rstrip('/')
 
 # Firebase Web Config (injected into frontend templates)
 FIREBASE_WEB_CONFIG = {
@@ -609,7 +618,35 @@ def api_upload(file_type):
         unique_name = f"{secrets.token_hex(8)}_{filename}"
         
         try:
-            # Save locally instead of Firebase Storage to avoid billing plan limits
+            # If R2 is configured, upload to Cloudflare R2
+            if R2_ACCOUNT_ID and R2_BUCKET_NAME and R2_ACCESS_KEY_ID:
+                s3_client = boto3.client(
+                    's3',
+                    endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+                    aws_access_key_id=R2_ACCESS_KEY_ID,
+                    aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+                    region_name='auto'
+                )
+                
+                content_type = file.content_type or 'application/octet-stream'
+                object_name = f"{file_type}/{unique_name}"
+                
+                s3_client.upload_fileobj(
+                    file, 
+                    R2_BUCKET_NAME, 
+                    object_name,
+                    ExtraArgs={'ContentType': content_type}
+                )
+                
+                # Use custom domain if provided, otherwise fallback to local formatting (which will break if not R2 pub url)
+                if R2_PUBLIC_DEV_URL:
+                    file_url = f"{R2_PUBLIC_DEV_URL}/{object_name}"
+                else:
+                    file_url = f"https://{R2_BUCKET_NAME}.{R2_ACCOUNT_ID}.r2.cloudflarestorage.com/{object_name}"
+                
+                return jsonify({"url": file_url, "name": filename})
+                
+            # Fallback: Save locally if R2 isn't configured (Ephemeral on Render)
             upload_dir = os.path.join(app.root_path, 'static', 'uploads', file_type)
             os.makedirs(upload_dir, exist_ok=True)
             
@@ -619,8 +656,8 @@ def api_upload(file_type):
             file_url = f"/static/uploads/{file_type}/{unique_name}"
             return jsonify({"url": file_url, "name": filename})
         except Exception as e:
-            app.logger.error(f"Local file upload failed: {str(e)}")
-            return jsonify({"error": f"Failed to save file locally: {str(e)}"}), 502
+            app.logger.error(f"File upload failed: {str(e)}")
+            return jsonify({"error": f"Failed to save file: {str(e)}"}), 502
     
     return jsonify({"error": "File upload failed"}), 400
 
