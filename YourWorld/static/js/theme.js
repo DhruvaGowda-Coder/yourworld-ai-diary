@@ -534,6 +534,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!window.UserAudio) window.UserAudio = {};
   try {
     const stored = JSON.parse(localStorage.getItem('yw_custom_audio') || '{}');
+    Object.keys(stored).forEach(key => {
+      if (stored[key] && stored[key].startsWith('blob:')) {
+        delete stored[key];
+      }
+    });
     Object.assign(window.UserAudio, stored);
   } catch(e) {}
 
