@@ -65,12 +65,11 @@
         <button class="btn ghost" type="submit">Open content</button>
       </form>
       <a href="/" class="nav-link" data-page="home">Home</a>
-      <a href="/create" class="nav-link" data-page="create">Create</a>
+      <a href="/story" class="nav-link" data-page="story">Create</a>
       <a href="/diary" class="nav-link" data-page="diary">Diary</a>
-      <a href="/about" class="nav-link" data-page="about">About</a>
+      <a href="/settings" class="nav-link" data-page="settings">Settings</a>
       {% if current_user %}
         <a href="/profile" class="nav-link" data-page="profile">Profile</a>
-        <a href="/settings" class="nav-link" data-page="settings">Settings</a>
         <a href="/logout" class="nav-link nav-link-logout" data-page="logout">Logout</a>
       {% else %}
         <a href="/login/google" class="btn primary nav-google-btn" style="text-decoration: none;">
@@ -93,9 +92,8 @@
     </div>
     <div class="mobile-drawer-links">
       <a href="/" class="mobile-nav-link">Home</a>
-      <a href="/create" class="mobile-nav-link">Create</a>
+      <a href="/story" class="mobile-nav-link">Create</a>
       <a href="/diary" class="mobile-nav-link">Diary</a>
-      <a href="/about" class="mobile-nav-link">About</a>
       <a href="/profile" class="mobile-nav-link">Profile</a>
       <a href="/settings" class="mobile-nav-link">Settings</a>
       <div class="mobile-drawer-divider"></div>

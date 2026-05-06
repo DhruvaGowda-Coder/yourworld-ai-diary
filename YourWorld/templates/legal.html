@@ -9,7 +9,7 @@
 } %}
 {% block title %}{{ legal_titles.get(page, "YourWorld") }}{% endblock %}
 {% block description %}
-{% if page == "privacy" %}Privacy Policy for YourWorld, a code-based private content sharing platform that does not sell or share user data.{% elif page == "terms" %}Terms and Conditions for using YourWorld safely and responsibly as a private content sharing platform.{% elif page == "faq" %}Answers about YourWorld private code sharing, account requirements, privacy, and safe use.{% elif page == "create" %}Create private content on YourWorld and share selected pages using unique private codes.{% else %}Learn how YourWorld lets users create content and share it using unique private codes.{% endif %}
+{% if page == "privacy" %}Privacy Policy for YourWorld, a code-based private content sharing platform that does not sell or share user data.{% elif page == "terms" %}Terms and Conditions for using YourWorld safely and responsibly as a private content sharing platform.{% elif page == "faq" %}Answers about YourWorld private code sharing, account requirements, privacy, and safe use.{% else %}Learn how YourWorld lets users create content and share it using unique private codes.{% endif %}
 {% endblock %}
 {% block content %}
 <section class="legal-page">
@@ -87,39 +87,7 @@
 
     <h2>Does YourWorld sell my data?</h2>
     <p>No. YourWorld does not sell or share user data.</p>
-  {% elif page == "create" %}
-    <h1>Create Private Content</h1>
-    <p>YourWorld lets you create content and share it using a unique code. Only people with the code can access the shared content.</p>
 
-    <h2>What you can create</h2>
-    <p>You can create private pages, story pages, notes, reflections, and content collections in a focused writing space.</p>
-
-    <h2>How sharing stays controlled</h2>
-    <p>Sharing is opt-in. Generate a code only for the content you want to share, then give that code only to people you choose.</p>
-
-    <h2>No account required to view</h2>
-    <p>People who receive a valid code can open the shared content without creating an account.</p>
-
-    <h2>Start creating</h2>
-    <p><a href="/story">Open the creator</a> to write and generate a private share code.</p>
-  {% elif page == "how" %}
-    <h1>How It Works</h1>
-    <p>YourWorld uses a simple code-based sharing system for private content access.</p>
-
-    <h2>1. Create content</h2>
-    <p>Write a page or story in YourWorld. Your content is not publicly listed.</p>
-
-    <h2>2. Generate a unique code</h2>
-    <p>When you want to share, generate a code for the selected content. The code becomes the access key.</p>
-
-    <h2>3. Share the code</h2>
-    <p>Send the code only to people you trust. Anyone without the code cannot open the shared page.</p>
-
-    <h2>4. Manage access</h2>
-    <p>You can remove or replace a share code when you no longer want that content accessible through the old code.</p>
-
-    <h2>Safety note</h2>
-    <p>YourWorld is not designed to collect sensitive information. Shared content pages should not ask visitors for passwords, card numbers, or identity documents.</p>
   {% else %}
     <h1>About YourWorld</h1>
     <p>YourWorld is a code-based private content sharing platform. It lets users create content and share it using unique codes, so only people with the code can access the shared content.</p>

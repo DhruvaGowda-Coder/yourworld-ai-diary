@@ -361,7 +361,7 @@ def faq():
 
 @app.route("/create")
 def create_info():
-    return render_template("legal.html", page="create")
+    return redirect(url_for("story"))
 
 
 @app.route("/how-it-works")
@@ -719,9 +719,6 @@ def _normalize_share_code(raw_code: str | None) -> str | None:
 @app.route("/api/entry/<entry_id>/share", methods=["POST"])
 @login_required
 def api_entry_share(entry_id):
-    if session.get("is_guest"):
-        return jsonify({"error": "login_required", "message": "Please sign in to share stories."}), 401
-
     data = request.get_json(silent=True) or {}
     rotate = bool(data.get("rotate"))
     mode = data.get("mode", "story")

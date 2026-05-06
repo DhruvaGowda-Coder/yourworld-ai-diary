@@ -33,52 +33,6 @@
         "target": "{{ site_url }}/view?code={share_code}",
         "query-input": "required name=share_code"
       }
-    },
-    {
-      "@type": "FAQPage",
-      "@id": "{{ site_url }}/#faq",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "What is this platform?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "YourWorld is a code sharing platform for creating private content and sharing it with selected people using a unique code."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How does code sharing work?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Create content, generate a share code, and send that code only to people you choose. Anyone without the code cannot open that shared content."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Is my content private?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Your content is private by default. Shared content is only accessible to people who have its unique code."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do I need an account?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "No account is required to open content with a valid code. You can sign in when you want to save and manage your own pages."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Is this safe to use?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. YourWorld does not ask for bank details, passwords, government IDs, or other sensitive information to open shared content by code."
-          }
-        }
-      ]
     }
   ]
 }
@@ -89,11 +43,7 @@
   <div class="hero-text">
     <h1>Share content using private codes.</h1>
     <p>
-      This platform allows you to create and share content using a unique code.
-      Only people with the code can access it.
-    </p>
-    <p class="trust-statement">
-      No personal data is collected or shared without your control.
+      Create and share content using a unique code.
     </p>
     <form class="home-code-form" action="/view" method="get" aria-label="Open shared content by code">
       <label for="homeShareCode">Open content with a share code</label>
@@ -101,14 +51,9 @@
         <input id="homeShareCode" type="text" name="code" placeholder="Enter the private content code" autocomplete="off" inputmode="text" maxlength="32" pattern="[A-Za-z0-9-]{4,32}" aria-describedby="homeCodeHelp" />
         <button class="btn primary" type="submit">Open content</button>
       </div>
-      <p id="homeCodeHelp">Only users with your code can access this content. We never ask for passwords, banking details, or identity documents here.</p>
     </form>
     <div class="hero-actions">
-      <a class="btn ghost" href="/create">Create content</a>
-      <a class="btn ghost" href="#how-it-works">How it works</a>
-    </div>
-    <div class="hero-meta">
-      Your content is private and only accessible via your unique code.
+      <a class="btn ghost" href="/story">Create and share code</a>
     </div>
   </div>
   <div class="hero-visual">
@@ -124,124 +69,11 @@
       />
       <div class="campfire-text">
         <div class="campfire-title">Private share code</div>
-        <div class="trust-code">A7K9-PRIVATE</div>
+
         <div class="campfire-line"></div>
         <div class="campfire-line short"></div>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="home-section trust-band" aria-label="Trust signals">
-  <div>
-    <h2>Built for controlled sharing</h2>
-    <p>YourWorld is a sharing tool, not a credential collection page. You create content, choose when to share, and control who receives the code.</p>
-  </div>
-  <div class="trust-list">
-    <span>Your content is private and only accessible via your unique code.</span>
-    <span>We do not collect or sell personal data.</span>
-    <span>No account required to open shared content by code.</span>
-  </div>
-</section>
-
-<section class="feature-grid" id="features">
-  <div class="feature-card">
-    <div class="feature-icon">Code</div>
-    <h3>Code-based access</h3>
-    <p>Share a single page or a full story using a unique code that you give only to selected people.</p>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon">Lock</div>
-    <h3>Private by default</h3>
-    <p>Nothing is public unless you choose to generate and share a code.</p>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon">Safe</div>
-    <h3>No sensitive info required</h3>
-    <p>Opening shared content by code does not require passwords, payment details, or identity documents.</p>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon">Own</div>
-    <h3>You control sharing</h3>
-    <p>You decide what to write, when to share it, and when to remove a share code.</p>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon">Book</div>
-    <h3>Story and note creation</h3>
-    <p>Create private pages, longer stories, reflections, or content collections in a focused editor.</p>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon">Help</div>
-    <h3>Clear support</h3>
-    <p>Privacy, terms, about, and contact pages are available from every page footer.</p>
-  </div>
-</section>
-
-<section class="home-section home-steps" id="how-it-works">
-  <h2>How code sharing works</h2>
-  <div class="steps-grid">
-    <div class="step-card">
-      <div class="step-number">1</div>
-      <h3>Create content</h3>
-      <p>Write a private page or story in YourWorld. Your content is not listed publicly.</p>
-    </div>
-    <div class="step-card">
-      <div class="step-number">2</div>
-      <h3>Generate a code</h3>
-      <p>Create a unique share code for the content you want others to open.</p>
-    </div>
-    <div class="step-card">
-      <div class="step-number">3</div>
-      <h3>Share intentionally</h3>
-      <p>Send the code only to people you choose. The code is the access key.</p>
-    </div>
-    <div class="step-card">
-      <div class="step-number">4</div>
-      <h3>Remove access</h3>
-      <p>You can remove or replace a share code when you no longer want content accessible by that code.</p>
-    </div>
-  </div>
-</section>
-
-<section class="home-section home-security">
-  <div class="security-card">
-    <h2>Privacy and safety</h2>
-    <p>
-      No account required. Content is accessed only via code. YourWorld does not sell user data,
-      does not ask visitors for financial information, and does not hide the purpose of its inputs.
-    </p>
-    <div class="security-links">
-      <a href="/privacy-policy">Read Privacy Policy</a>
-      <a href="/terms-and-conditions">Read Terms</a>
-      <a href="/about">About code sharing</a>
-      <a href="/faq">FAQ</a>
-    </div>
-  </div>
-</section>
-
-<section class="home-section faq-section" id="faq">
-  <h2>Frequently asked questions</h2>
-  <div class="faq-grid">
-    <article class="faq-item">
-      <h3>What is this platform?</h3>
-      <p>YourWorld is a code sharing platform for private content sharing. You create content and share it only with people who have its code.</p>
-    </article>
-    <article class="faq-item">
-      <h3>How does code sharing work?</h3>
-      <p>Create content, generate a unique code, and send that code to selected people. The code opens the shared content page.</p>
-    </article>
-    <article class="faq-item">
-      <h3>Is my content private?</h3>
-      <p>Your content is private by default. Shared content is only accessible via the unique code you choose to share.</p>
-    </article>
-    <article class="faq-item">
-      <h3>Do I need an account?</h3>
-      <p>No account is required to open shared content by code. Sign-in is only used when you want to save and manage your own pages.</p>
-    </article>
-    <article class="faq-item">
-      <h3>Is this safe to use?</h3>
-      <p>Yes. YourWorld is a content sharing tool and does not ask code visitors for passwords, banking details, or identity documents.</p>
-    </article>
   </div>
 </section>
 {% endblock %}
