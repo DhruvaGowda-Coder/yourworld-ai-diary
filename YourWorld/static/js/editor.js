@@ -464,12 +464,20 @@ if (workspace) {
   };
 
   const updateShareUI = () => {
-    if (!shareCodeInput) return;
-    shareCodeInput.value = shareCode || '';
+    if (shareCodeInput) shareCodeInput.value = shareCode || '';
     if (shareCopyBtn) shareCopyBtn.disabled = !shareCode;
     if (shareRemoveBtn) shareRemoveBtn.disabled = !shareCode;
     const shareCanEdit = document.getElementById('shareCanEdit');
     if (shareCanEdit) shareCanEdit.checked = shareCanEditValue;
+    const activeCodeDisplay = document.getElementById('activeCodeDisplay');
+    if (activeCodeDisplay) {
+      if (shareCode) {
+        activeCodeDisplay.textContent = `Code: ${shareCode}`;
+        activeCodeDisplay.style.display = 'inline-block';
+      } else {
+        activeCodeDisplay.style.display = 'none';
+      }
+    }
   };
 
   const getStyleState = (target) => (target === 'title' ? titleStyleState : contentStyleState);
