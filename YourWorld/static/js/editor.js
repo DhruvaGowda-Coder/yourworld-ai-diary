@@ -33,7 +33,6 @@ if (workspace) {
   const customCodePlaceholder = 'Type custom code';
   const normalizeShareCode = (value) => (value || '')
     .trim()
-    .toUpperCase()
     .replace(/\s+/g, '-')
     .slice(0, 32);
 
@@ -111,15 +110,18 @@ if (workspace) {
     const syncShareMode = async (modeValue) => {
       const targetId = getActiveEntryId();
       if (!targetId || !shareCode) return;
+      const shareCanEdit = document.getElementById('shareCanEdit');
+      const canEdit = shareCanEdit ? shareCanEdit.checked : false;
       try {
         const response = await fetch(`/api/entry/${targetId}/share`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-          body: JSON.stringify({ rotate: false, mode: modeValue }),
+          body: JSON.stringify({ rotate: false, mode: modeValue, can_edit: canEdit }),
         });
         if (!response.ok) throw new Error('Share update failed');
         const data = await response.json();
         if (data.share_code) shareCode = data.share_code;
+        shareCanEditValue = data.can_edit;
         updateShareUI();
         setStatus('Share mode updated');
       } catch (err) {
@@ -1163,8 +1165,8 @@ if (workspace) {
       setCustomCodeHint('Enter a custom code here, or choose Random Code.', 'error');
       return;
     }
-    if (customCode && !/^[A-Z0-9][A-Z0-9-]{3,31}$/.test(customCode)) {
-      setCustomCodeHint('Use 4-32 letters, numbers, or hyphens.', 'error');
+    if (customCode && !/^[A-Za-z0-9][A-Za-z0-9_.~-]{3,31}$/.test(customCode)) {
+      setCustomCodeHint('Use 4-32 letters, numbers, hyphens, dots, underscores, or tildes.', 'error');
       return;
     }
     setCustomCodeHint('');
@@ -1231,6 +1233,38 @@ if (workspace) {
   if (shareCustomCodeInput) {
     shareCustomCodeInput.addEventListener('input', () => {
       setCustomCodeHint('');
+    });
+  }
+
+  // Auto-sync edit permission when checkbox is toggled
+  const shareCanEditCheckbox = document.getElementById('shareCanEdit');
+  if (shareCanEditCheckbox) {
+    shareCanEditCheckbox.addEventListener('change', async () => {
+      const targetId = getActiveEntryId();
+      if (!targetId || !shareCode) {
+        // No share code yet — just update local state
+        shareCanEditValue = shareCanEditCheckbox.checked;
+        return;
+      }
+      const mode = shareModeSelect ? shareModeSelect.value : 'story';
+      const canEdit = shareCanEditCheckbox.checked;
+      try {
+        const response = await fetch(`/api/entry/${targetId}/share`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({ rotate: false, mode, can_edit: canEdit }),
+        });
+        if (!response.ok) throw new Error('Permission update failed');
+        const data = await response.json();
+        shareCanEditValue = data.can_edit;
+        if (data.share_code) shareCode = data.share_code;
+        updateShareUI();
+        setStatus(canEdit ? 'Edit enabled for viewers' : 'Edit disabled for viewers');
+      } catch (err) {
+        setStatus('Permission update failed');
+        // Revert checkbox on failure
+        shareCanEditCheckbox.checked = shareCanEditValue;
+      }
     });
   }
 

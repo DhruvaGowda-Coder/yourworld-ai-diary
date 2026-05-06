@@ -73,7 +73,7 @@ limiter = Limiter(get_remote_address, app=app, default_limits=["1000 per day", "
 SITE_URL = os.environ.get("SITE_URL", "https://worldbyyou.com").rstrip("/")
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "elementaldiary@gmail.com").strip()
 SITEMAP_LASTMOD = "2026-05-05"
-SHARE_CODE_RE = re.compile(r"^[A-Z0-9][A-Z0-9-]{3,31}$")
+SHARE_CODE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.~-]{3,31}$")
 
 ALLOWED_IMAGE_EXT = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
 ALLOWED_AUDIO_EXT = {'.mp3', '.wav', '.ogg', '.m4a', '.flac'}
@@ -708,9 +708,7 @@ def _generate_share_code(length=8):
 def _normalize_share_code(raw_code: str | None) -> str | None:
     if not raw_code:
         return None
-    code = re.sub(r"\s+", "-", raw_code.strip().upper())
-    if re.search(r"[^A-Z0-9-]", code):
-        return None
+    code = re.sub(r"\s+", "-", raw_code.strip())
     if not SHARE_CODE_RE.fullmatch(code):
         return None
     return code
@@ -739,7 +737,7 @@ def api_entry_share(entry_id):
     if custom_code:
         code = _normalize_share_code(custom_code)
         if not code:
-            return jsonify({"error": "Use 4-32 letters, numbers, or hyphens for a share code"}), 400
+            return jsonify({"error": "Use 4-32 letters, numbers, hyphens, dots, underscores, or tildes"}), 400
         # Ensure it's not already used by another entry
         existing = firebase_db.get_entry_by_share_code(code)
         if existing and existing.get("id") != entry_id:

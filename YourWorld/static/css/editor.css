@@ -1213,6 +1213,20 @@ button:active:not(:disabled) {
   background: linear-gradient(-45deg, rgba(0, 0, 0, 0.5) 15%, transparent 60%);
 }
 
+/* Disable drag and resize on public view pages without edit permission */
+.public-story[data-can-edit="false"] .page-illustration {
+  cursor: default;
+  pointer-events: none;
+}
+
+.public-story[data-can-edit="false"] .page-illustration:active {
+  cursor: default;
+}
+
+.public-story[data-can-edit="false"] .resize-handle {
+  display: none;
+}
+
 .image-modal {
   position: fixed;
   inset: 0;

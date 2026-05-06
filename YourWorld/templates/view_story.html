@@ -13,7 +13,7 @@
 {% endif %}
 {% endblock %}
 {% block content %}
-<section class="public-story">
+<section class="public-story" data-can-edit="{{ 'true' if can_edit else 'false' }}">
   {% if not_found %}
     <div class="public-notice">
       <h2>Story not found</h2>
