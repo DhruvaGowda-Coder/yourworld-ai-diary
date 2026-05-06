@@ -203,19 +203,13 @@ if (workspace) {
 
   const setCustomCodeHint = (message = '', kind = '') => {
     if (shareCustomHint) {
-      shareCustomHint.textContent = '';
-      shareCustomHint.dataset.kind = '';
+      shareCustomHint.textContent = message;
+      shareCustomHint.dataset.kind = kind;
     }
     if (!shareCustomCodeInput) return;
     shareCustomCodeInput.classList.toggle('is-error', kind === 'error');
-    if (kind === 'error' && message) {
-      shareCustomCodeInput.value = '';
-      shareCustomCodeInput.placeholder = message;
-      shareCustomCodeInput.title = message;
-      return;
-    }
     shareCustomCodeInput.placeholder = customCodePlaceholder;
-    shareCustomCodeInput.title = '';
+    shareCustomCodeInput.title = message || '';
   };
 
   const showLoginPromptModal = ({
