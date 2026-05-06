@@ -820,6 +820,42 @@ def view_story(code):
     )
 
 
+@app.route("/api/view/<code>")
+def api_view_story(code):
+    safe_code = _normalize_share_code(code)
+    if not safe_code:
+        return jsonify({"error": "Invalid code"}), 400
+        
+    owner_row = firebase_db.get_entry_by_share_code(safe_code)
+    if not owner_row:
+        return jsonify({"error": "Not found"}), 404
+
+    share_type = owner_row.get("share_type", "story")
+    if share_type == "single":
+        rows = [owner_row]
+    else:
+        rows = firebase_db.get_story_entries_for_user(owner_row.get("user_id"))
+
+    pages = [
+        {
+            "id": r.get("id"),
+            "title": unescape(r.get("title", "")),
+            "content": unescape(r.get("content", "")),
+            "image_url": r.get("image_url"),
+            "image_attached": bool(r.get("image_attached")),
+            "image_style": r.get("image_style"),
+            "updated_at": r.get("updated_at"),
+            "created_at": r.get("created_at"),
+        }
+        for r in rows
+    ]
+
+    return jsonify({
+        "pages": pages,
+        "can_edit": owner_row.get("can_edit", False),
+        "share_type": share_type
+    })
+
 @app.route("/api/entry/save", methods=["POST"])
 @login_required
 @limiter.limit("30 per minute")

@@ -396,6 +396,26 @@ if (publicPagesData) {
   }
 
   renderPage();
+
+  setInterval(async () => {
+    if (document.hidden) return;
+    if (document.activeElement === titleEl || document.activeElement === contentEl) return;
+    const codeMatch = window.location.pathname.match(/\/view\/([^/]+)/);
+    if (!codeMatch) return;
+    const code = codeMatch[1];
+    try {
+      const res = await fetch(`/api/view/${code}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.pages && Array.isArray(data.pages)) {
+        if (JSON.stringify(data.pages) !== JSON.stringify(pages)) {
+          pages = data.pages;
+          if (index >= pages.length) index = Math.max(0, pages.length - 1);
+          renderPage();
+        }
+      }
+    } catch (e) {}
+  }, 3500);
 }
 
 // Global pointer events for dragging pageIllustration inside the book layout
