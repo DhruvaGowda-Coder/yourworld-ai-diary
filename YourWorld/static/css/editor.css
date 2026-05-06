@@ -1087,6 +1087,7 @@ button:active:not(:disabled) {
 
 .public-page {
   position: relative;
+  min-height: 62vh;
   max-height: 62vh;
   overflow-y: auto;
   padding-right: 10px;
