@@ -212,6 +212,22 @@ def get_entries_all(user_id, entry_type="diary"):
     result.sort(key=lambda x: x.get('created_at', ''))
     return result
 
+
+def get_entry_count(user_id):
+    """Lightweight count of all entries for a user (diary + story) without fetching full documents."""
+    db = get_db()
+    count = 0
+    for entry_type in ('diary', 'story'):
+        docs = (db.collection('entries')
+                .where(filter=FieldFilter('user_id', '==', str(user_id)))
+                .where(filter=FieldFilter('type', '==', entry_type))
+                .select([])
+                .limit(2000)
+                .stream())
+        count += sum(1 for _ in docs)
+    return count
+
+
 def get_entry(user_id, entry_id):
     doc = get_db().collection('entries').document(str(entry_id)).get()
     if doc.exists:

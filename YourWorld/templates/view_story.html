@@ -57,7 +57,7 @@
     <noscript>
       {% for page in pages %}
         <h3 class="public-title">{{ page.title or "Untitled" }}</h3>
-        <div class="public-content">{{ page.content }}</div>
+        <div class="public-content">{{ page.content | striptags }}</div>
       {% endfor %}
     </noscript>
   {% endif %}

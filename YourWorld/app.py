@@ -319,15 +319,19 @@ def inject_user():
     if not hasattr(g, '_yw_ctx'):
         user_id = session.get("user_id")
         is_guest_user = session.get("is_guest", False)
-        current_user = get_current_user()
-        
-        # Priority: Session -> Firestore User Data -> Firestore Theme Data -> Default
+        current_user = None
         theme = session.get("theme")
-        if not theme:
-            if current_user:
-                theme = current_user.get("theme")
-            else:
-                theme = normalize_theme(firebase_db.get_user_theme(user_id))
+
+        # Wrap all Firestore calls so a database outage doesn't crash the entire site
+        try:
+            current_user = get_current_user()
+            if not theme:
+                if current_user:
+                    theme = current_user.get("theme")
+                else:
+                    theme = normalize_theme(firebase_db.get_user_theme(user_id))
+        except Exception:
+            app.logger.warning("Firestore unavailable in context processor, using defaults")
         
         theme = normalize_theme(theme)
         theme_meta = THEME_DETAILS.get(theme, THEME_DETAILS["campfire"])
@@ -712,7 +716,7 @@ def _generate_share_code(length=8):
 def _normalize_share_code(raw_code: str | None) -> str | None:
     if not raw_code:
         return None
-    code = re.sub(r"\s+", "-", raw_code.strip())
+    code = re.sub(r"\s+", "-", raw_code.strip()).upper()
     if not SHARE_CODE_RE.fullmatch(code):
         return None
     return code
@@ -810,6 +814,8 @@ def view_story(code):
                 "image_url": r.get("image_url"),
                 "image_attached": bool(r.get("image_attached")),
                 "image_style": r.get("image_style"),
+                "title_style": r.get("title_style"),
+                "content_style": r.get("content_style"),
                 "updated_at": r.get("updated_at"),
                 "created_at": r.get("created_at"),
             }
@@ -846,6 +852,8 @@ def api_view_story(code):
             "image_url": r.get("image_url"),
             "image_attached": bool(r.get("image_attached")),
             "image_style": r.get("image_style"),
+            "title_style": r.get("title_style"),
+            "content_style": r.get("content_style"),
             "updated_at": r.get("updated_at"),
             "created_at": r.get("created_at"),
         }
@@ -1035,10 +1043,7 @@ def api_chat():
         if raw_type in {"diary", "story"}:
             entry_type = raw_type
         raw_id = context_data.get("entry_id")
-        try:
-            entry_id = int(raw_id) if raw_id is not None else None
-        except (TypeError, ValueError):
-            entry_id = None
+        entry_id = str(raw_id) if raw_id is not None else None
         raw_title = context_data.get("title")
         raw_content = context_data.get("content")
         raw_label = context_data.get("page_label")
@@ -1120,33 +1125,16 @@ def api_activity():
     except ValueError:
         days = 365
     days = max(7, min(days, 730))
-    cutoff = datetime.now(timezone.utc).date() - timedelta(days=days - 1)
     
+    # Use activity collection only (lightweight — avoids scanning all entries)
     counts = firebase_db.get_activity_counts(session["user_id"], days)
     
-    # Also fetch individual entries just in case they don't have explicit activity rows
-    entry_rows = firebase_db.get_entries_all(session["user_id"], "diary")
-    entry_rows += firebase_db.get_entries_all(session["user_id"], "story")
+    # Get total pages from a lightweight count instead of fetching all documents
+    try:
+        total_pages = firebase_db.get_entry_count(session["user_id"])
+    except Exception:
+        total_pages = 0
     
-    entry_counts = {}
-    for row in entry_rows:
-        updated_at = row.get("updated_at")
-        if not updated_at:
-            continue
-        try:
-            dt = datetime.fromisoformat(updated_at)
-        except ValueError:
-            continue
-        day = dt.date()
-        if day < cutoff:
-            continue
-        key = day.isoformat()
-        if key not in counts:
-            entry_counts[key] = entry_counts.get(key, 0) + 1
-
-    counts.update(entry_counts)
-    
-    total_pages = len(entry_rows)
     active_days = len(counts)
     
     # ── Streak Calculation ──────────────────────────────────────────────
@@ -1199,6 +1187,19 @@ def api_system_cleanup():
     
     count = firebase_db.cleanup_guest_data()
     return jsonify({"success": True, "deleted_entries": count})
+
+
+@app.route("/health")
+def health_check():
+    """Health check endpoint for Render / load balancers."""
+    return jsonify({"status": "ok"}), 200
+
+
+@app.errorhandler(429)
+def rate_limit_error(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "Too many requests. Please slow down."}), 429
+    return "Too many requests. Please wait a moment and try again.", 429
 
 
 @app.errorhandler(500)

@@ -293,8 +293,34 @@ if (publicPagesData) {
     const page = pages[index] || {};
     const title = (page.title || '').trim();
     const content = page.content || '';
-    if (titleEl) titleEl.textContent = title || `Page ${index + 1}`;
-    if (contentEl) contentEl.textContent = content;
+    if (titleEl) {
+      titleEl.textContent = title || `Page ${index + 1}`;
+      if (page.title_style) {
+        try {
+          const style = JSON.parse(page.title_style);
+          titleEl.style.fontWeight = style.bold ? '700' : '400';
+          titleEl.style.fontStyle = style.italic ? 'italic' : 'normal';
+          titleEl.style.textDecoration = style.underline ? 'underline' : 'none';
+          titleEl.style.fontSize = `${style.fontSize || '1.4'}rem`;
+        } catch(e) {}
+      } else {
+        titleEl.style = '';
+      }
+    }
+    if (contentEl) {
+      contentEl.textContent = content;
+      if (page.content_style) {
+        try {
+          const style = JSON.parse(page.content_style);
+          contentEl.style.fontWeight = style.bold ? '700' : '400';
+          contentEl.style.fontStyle = style.italic ? 'italic' : 'normal';
+          contentEl.style.textDecoration = style.underline ? 'underline' : 'none';
+          contentEl.style.fontSize = `${style.fontSize || '1.05'}rem`;
+        } catch(e) {}
+      } else {
+        contentEl.style = '';
+      }
+    }
     if (illustrationWrap && illustrationImg) {
       if (page.image_attached && page.image_url) {
         illustrationImg.src = page.image_url;
