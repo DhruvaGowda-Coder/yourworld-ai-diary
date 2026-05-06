@@ -531,8 +531,14 @@ document.addEventListener('DOMContentLoaded', () => {
   
   toggleBtn.textContent = isPlaying ? '🔊 Sound' : '🔇 Sound';
   
+  if (!window.UserAudio) window.UserAudio = {};
+  try {
+    const stored = JSON.parse(localStorage.getItem('yw_custom_audio') || '{}');
+    Object.assign(window.UserAudio, stored);
+  } catch(e) {}
+
   const getAudioSrc = (theme) => {
-    if (window.UserAudio && window.UserAudio[theme]) {
+    if (window.UserAudio[theme]) {
       return window.UserAudio[theme];
     }
     return `/static/audio/${theme}.wav`;
@@ -541,29 +547,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const loadAndPlay = (theme, seekTo) => {
     const src = getAudioSrc(theme);
     
-    // Explicitly stop and clear before switching to avoid layering or carry-over
     audioPlayer.pause();
-    audioPlayer.src = "";
-    audioPlayer.load();
-    
-    // Set new src
     audioPlayer.src = src;
     
     if (isPlaying) {
-      const onCanPlay = () => {
-        audioPlayer.removeEventListener('canplay', onCanPlay);
-        if (seekTo > 0 && isFinite(audioPlayer.duration) && seekTo < audioPlayer.duration) {
-          audioPlayer.currentTime = seekTo;
-        }
-        audioPlayer.play().catch(e => {
-          console.warn('Autoplay prevented — click Sound to start', e);
-          isPlaying = false;
-          toggleBtn.textContent = '🔇 Sound';
-          toggleBtn.classList.add('pulse-highlight'); // Visual hint
+      const playPromise = audioPlayer.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          if (!isPlaying) {
+            audioPlayer.pause();
+            return;
+          }
+          if (seekTo > 0 && isFinite(audioPlayer.duration) && seekTo < audioPlayer.duration) {
+            audioPlayer.currentTime = seekTo;
+          }
+        }).catch(e => {
+          if (e.name !== 'AbortError') {
+            console.warn('Autoplay prevented — click Sound to start', e);
+            isPlaying = false;
+            toggleBtn.textContent = '🔇 Sound';
+            toggleBtn.classList.add('pulse-highlight');
+          }
         });
-      };
-      audioPlayer.addEventListener('canplay', onCanPlay);
-      audioPlayer.load();
+      }
     }
   };
   
