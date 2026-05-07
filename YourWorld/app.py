@@ -92,6 +92,7 @@ def inject_global_context():
     return g._yw_ctx
 
 @app.route("/health")
+@limiter.exempt
 def health_check():
     return jsonify({"status": "ok"}), 200
 
