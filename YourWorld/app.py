@@ -17,12 +17,17 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # App Security & Config
+is_production = os.environ.get("FLASK_DEBUG", "0") != "1"
 secret_key = os.environ.get("DIARY_SECRET_KEY")
 if not secret_key:
-    secret_key = secrets.token_hex(32)
+    if is_production:
+        raise ValueError("DIARY_SECRET_KEY environment variable is not set")
+    else:
+        print("WARNING: DIARY_SECRET_KEY not set. Using random key — sessions will not persist across restarts.")
+        secret_key = secrets.token_hex(32)
 app.secret_key = secret_key
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get("FLASK_DEBUG", "0") != "1"
+app.config['SESSION_COOKIE_SECURE'] = is_production
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
@@ -36,6 +41,7 @@ app.register_blueprint(api_bp)
 
 @app.before_request
 def enforce_https():
+    g.csp_nonce = secrets.token_urlsafe(16)
     if app.debug: return None
     forwarded_proto = request.headers.get("X-Forwarded-Proto")
     if forwarded_proto != "https":
@@ -46,8 +52,9 @@ def add_security_headers(response):
     if not request.path.startswith('/static/'):
         response.headers['Cache-Control'] = 'no-store' if request.path.startswith('/view') else 'no-cache'
     
+    nonce = g.get('csp_nonce', '')
     csp = (
-        "default-src 'self'; script-src 'self' 'unsafe-inline'; "
+        f"default-src 'self'; script-src 'self' 'nonce-{nonce}'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com data:; "
         "img-src 'self' data: https:; media-src 'self' data: https:; "
@@ -56,6 +63,12 @@ def add_security_headers(response):
     response.headers['Content-Security-Policy'] = csp
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    if not app.debug:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['Cross-Origin-Embedder-Policy'] = 'require-corp'
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
     return response
 
 @app.context_processor
@@ -74,6 +87,7 @@ def inject_global_context():
             "firebase_config": FIREBASE_WEB_CONFIG,
             "site_url": SITE_URL,
             "contact_email": CONTACT_EMAIL,
+            "csp_nonce": g.get("csp_nonce", ""),
         }
     return g._yw_ctx
 

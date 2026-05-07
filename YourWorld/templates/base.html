@@ -170,7 +170,7 @@
   <script id="current-user-data" type="application/json">
     {{ current_user | tojson | safe if current_user else 'null' }}
   </script>
-  <script>
+  <script nonce="{{ csp_nonce }}">
     (function() {
       var themes = ['campfire','water','wind','earth','ice','storm','space','garden','cherry'];
       var user = JSON.parse(document.getElementById('current-user-data').textContent);
@@ -199,12 +199,12 @@
       window.UserAudioLists = serverLists;
     })();
   </script>
-  <script src="{{ url_for('static', filename='js/core.js', v='20260505k') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/animations.js', v='20260505k') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/chat.js', v='20260506k') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/editor.js', v='20260506cc') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/theme.js', v='20260506dd') }}" defer></script>
-  <script>
+  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/core.js', v='20260505k') }}" defer></script>
+  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/animations.js', v='20260505k') }}" defer></script>
+  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/chat.js', v='20260506k') }}" defer></script>
+  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/editor.js', v='20260506cc') }}" defer></script>
+  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/theme.js', v='20260506dd') }}" defer></script>
+  <script nonce="{{ csp_nonce }}">
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
         navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}").catch(function() {});

@@ -9,6 +9,9 @@ from datetime import datetime, timezone, timedelta
 from flask import Blueprint, jsonify, request, session, current_app
 from html import unescape
 from werkzeug.utils import secure_filename
+import re
+
+SHARE_CODE_RE = re.compile(r"^[A-Za-z0-9-]{4,32}$")
 
 import firebase_db
 from extensions import limiter
@@ -104,6 +107,57 @@ def api_entry_delete(entry_id):
         return jsonify({"deleted": True})
     return jsonify({"error": "Not found"}), 404
 
+@api_bp.route("/api/entry/<entry_id>/share", methods=["POST"])
+@login_required
+def api_entry_share(entry_id):
+    data = request.get_json(force=True)
+    mode = data.get("mode")
+    custom_code = data.get("custom_code")
+    can_edit = bool(data.get("can_edit", False))
+    rotate = bool(data.get("rotate", False))
+    
+    entry = firebase_db.get_entry(session["user_id"], entry_id)
+    if not entry:
+        return jsonify({"error": "Not found"}), 404
+    if entry.get("type") != "story":
+        return jsonify({"error": "Only stories can be shared"}), 400
+
+    if mode == "off":
+        firebase_db.update_share_code(session["user_id"], entry_id, None, None, False)
+        return jsonify({"share_code": None, "url": None})
+
+    share_type = mode if mode in ["view", "edit"] else "view"
+    
+    code = None
+    if custom_code:
+        code = normalize_share_code(custom_code)
+        if not SHARE_CODE_RE.match(code):
+            return jsonify({"error": "Invalid custom code format"}), 400
+        existing = firebase_db.get_entry_by_share_code(code)
+        if existing and str(existing.get("id")) != str(entry_id):
+            return jsonify({"error": "Custom code already in use"}), 400
+    else:
+        if rotate or not entry.get("share_code"):
+            code = secrets.token_urlsafe(8).replace("_", "-").replace("~", "")[:8]
+            while firebase_db.get_entry_by_share_code(code):
+                code = secrets.token_urlsafe(8).replace("_", "-").replace("~", "")[:8]
+        else:
+            code = entry.get("share_code")
+            
+    firebase_db.update_share_code(session["user_id"], entry_id, code, share_type, can_edit)
+    url = f"{current_app.config.get('SITE_URL', 'http://localhost:5000')}/view/{code}"
+    return jsonify({"share_code": code, "url": url})
+
+@api_bp.route("/api/entry/<entry_id>/share", methods=["DELETE"])
+@login_required
+def api_entry_share_delete(entry_id):
+    entry = firebase_db.get_entry(session["user_id"], entry_id)
+    if not entry:
+        return jsonify({"error": "Not found"}), 404
+    if firebase_db.update_share_code(session["user_id"], entry_id, None, None, False):
+        return jsonify({"deleted": True})
+    return jsonify({"error": "Update failed"}), 500
+
 @api_bp.route("/api/entry/save", methods=["POST"])
 @login_required
 @limiter.limit("30 per minute")
@@ -130,6 +184,9 @@ def api_entry_save():
         
         data['title'] = title[:150]
         data['content'] = content
+        
+        if len(content.encode("utf-8")) > 100_000:
+            return jsonify({"error": "Content exceeds 100KB limit"}), 400
         
         saved = firebase_db.save_entry(session["user_id"], entry_id, data)
         if not saved: return jsonify({"error": "Not found"}), 404

@@ -7,7 +7,6 @@ from firebase_admin import credentials, firestore, storage
 from google.cloud.firestore_v1 import Increment
 from google.cloud.firestore_v1.base_query import FieldFilter
 from datetime import datetime, timezone, timedelta
-from functools import lru_cache
 
 # ── Simple in-memory cache for user themes (avoids repeated Firestore reads) ──
 _theme_cache = {}  # {user_id: (theme, timestamp)}
@@ -174,11 +173,18 @@ def get_entries(user_id, entry_type="diary", limit=20, last_doc_id=None):
         tuple: (entries_list, has_more)
     """
     db = get_db()
-    docs = (db.collection('entries')
+    query = (db.collection('entries')
             .where(filter=FieldFilter('user_id', '==', str(user_id)))
             .where(filter=FieldFilter('type', '==', entry_type))
-            .limit(2000)
-            .stream())
+            .order_by("created_at")
+            .order_by("__name__"))
+
+    if last_doc_id:
+        last_doc = db.collection('entries').document(last_doc_id).get()
+        if last_doc.exists:
+            query = query.start_after(last_doc)
+
+    docs = query.limit(limit + 1).stream()
 
     entries = []
     for doc in docs:
@@ -186,18 +192,9 @@ def get_entries(user_id, entry_type="diary", limit=20, last_doc_id=None):
         data['id'] = doc.id
         entries.append(data)
 
-    entries.sort(key=lambda x: (x.get('created_at', ''), x.get('id', '')))
-
-    start_index = 0
-    if last_doc_id:
-        for index, entry in enumerate(entries):
-            if entry.get('id') == last_doc_id:
-                start_index = index + 1
-                break
-
-    page = entries[start_index:start_index + limit + 1]
-    has_more = len(page) > limit
-    return page[:limit], has_more
+    has_more = len(entries) > limit
+    page = entries[:limit]
+    return page, has_more
 
 
 def get_entries_all(user_id, entry_type="diary"):
@@ -270,9 +267,21 @@ def save_entry(user_id, entry_id, data):
         if not existing.exists:
             return None
         existing_data = existing.to_dict()
-        if existing_data.get('user_id') != str(user_id) and not existing_data.get('can_edit'):
+        
+        is_owner = existing_data.get('user_id') == str(user_id)
+        if not is_owner and not existing_data.get('can_edit'):
             return None # Not found or unauthorized
-        doc_data['user_id'] = existing_data.get('user_id') # Preserve the original owner
+            
+        if not is_owner:
+            # Trust boundary gap fix: only allow updates to content and title fields for non-owners
+            doc_data = {
+                'title': data.get('title', 'Untitled'),
+                'content': data.get('content', ''),
+                'updated_at': now
+            }
+        else:
+            doc_data['user_id'] = existing_data.get('user_id') # Preserve the original owner
+
         doc_ref.update(doc_data)
         doc_data['id'] = entry_id
         return doc_data
@@ -321,13 +330,14 @@ def get_activity_counts(user_id, days):
     cutoff_date = (datetime.now(timezone.utc).date() - timedelta(days=days)).isoformat()
     docs = (db.collection('activity')
             .where(filter=FieldFilter('user_id', '==', str(user_id)))
+            .where(filter=FieldFilter('day', '>=', cutoff_date))
             .limit(2000)
             .stream())
     counts = {}
     for doc in docs:
         data = doc.to_dict()
         day = data.get('day')
-        if day and day >= cutoff_date:
+        if day:
             counts[day] = data.get('count', 0)
     return counts
 
