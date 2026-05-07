@@ -1231,10 +1231,25 @@ button:active:not(:disabled) {
     scrollbar-width: auto !important;
     scrollbar-color: var(--theme-accent) rgba(0,0,0,0.1) !important;
     
-    /* Ensure background texture flows with content to prevent 'texture breaks' */
-    background-attachment: local !important;
-    background-size: 100% 100% !important;
+    /* Ensure background texture is stable and covers the entire visible area */
+    background-attachment: scroll !important;
+    background-size: cover !important;
     background-repeat: no-repeat !important;
+
+    /* Move important texture layers from ::before to the main background 
+       to prevent them from scrolling and 'breaking' */
+    background-image: 
+      radial-gradient(circle at 14% 12%, rgba(255, 240, 205, 0.44), transparent 28%),
+      radial-gradient(circle at 80% 18%, rgba(134, 84, 40, 0.18), transparent 34%),
+      radial-gradient(circle at 30% 76%, rgba(118, 74, 36, 0.15), transparent 38%),
+      radial-gradient(circle at 12% 82%, rgba(120, 76, 38, 0.12), transparent 30%),
+      radial-gradient(circle at 84% 24%, rgba(126, 78, 40, 0.1), transparent 30%),
+      linear-gradient(180deg, #f0e2c4 0%, #dfc69b 100%) !important;
+  }
+
+  .book::before,
+  .public-story .book::before {
+    display: none !important; /* Prevents the absolute positioned texture from scrolling away */
   }
 
   /* Webkit Scrollbar Styling for Mobile Visibility */
