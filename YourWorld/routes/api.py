@@ -268,7 +268,7 @@ def api_chat():
             related_pages.append(f"- {r.get('title', 'Untitled')}: {snippet}")
 
     theme_profile = THEME_CHAT_PROFILES.get(active_theme, THEME_CHAT_PROFILES["campfire"])
-    system_prompt = f"You are Aura, an AI assistant in a next-gen secure content sharing platform. Help users format notes, write content, and generate ideas to share via private codes. {theme_profile}"
+    system_prompt = f"You are Aura, an AI assistant in a next-gen secure content sharing platform. Help users format notes, write content, and generate ideas. Always use clean, structured formatting with bullet points and clear spacing (like ChatGPT) to ensure readability. {theme_profile}"
     
     messages = [{"role": "system", "content": system_prompt}]
     if related_pages:
