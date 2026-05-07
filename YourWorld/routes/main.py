@@ -101,11 +101,16 @@ def view_story(code):
     if not owner_row:
         return render_template("view_story.html", not_found=True, code=safe_code)
 
-    # Fetch all stories for this user to show the "full canvas"
-    rows = firebase_db.get_story_entries_for_user(owner_row.get("user_id"))
+    share_type = owner_row.get("share_type", "story")
+    
+    if share_type == "single":
+        # Only show the specific entry that matches the share code
+        rows = [owner_row]
+    else:
+        # Fetch all stories for this user to show the "full canvas"
+        rows = firebase_db.get_story_entries_for_user(owner_row.get("user_id"))
 
     if not rows:
-        # Fallback to just the owner row if somehow no other stories are found
         rows = [owner_row]
 
     return render_template(

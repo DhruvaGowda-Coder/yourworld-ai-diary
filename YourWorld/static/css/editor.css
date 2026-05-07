@@ -965,14 +965,31 @@ button:active:not(:disabled) {
 }
 
 .share-mode-btn {
-  padding: 8px 16px;
-  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 10px;
   border: 1px solid var(--theme-accent-soft-2);
   background: var(--theme-accent-soft);
   color: var(--theme-accent);
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.share-mode-btn:hover {
+  background: var(--theme-accent-soft-2);
+}
+
+.chevron-icon {
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+.share-mode-btn[aria-expanded="true"] .chevron-icon {
+  transform: rotate(180deg);
 }
 
 .share-mode-btn:focus {

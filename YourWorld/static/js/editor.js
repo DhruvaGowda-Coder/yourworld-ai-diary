@@ -111,7 +111,11 @@ if (workspace) {
 
   const setShareMode = (value, label) => {
     if (shareModeSelect) shareModeSelect.value = value;
-    if (shareModeBtn) shareModeBtn.textContent = label;
+    if (shareModeBtn) {
+      const span = shareModeBtn.querySelector('span');
+      if (span) span.textContent = label;
+      else shareModeBtn.textContent = label;
+    }
     if (shareModeOptions.length > 0) {
       shareModeOptions.forEach((option) => {
         const isActive = option.dataset.value === value;
