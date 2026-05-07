@@ -22,12 +22,10 @@
     </div>
   {% else %}
     <div class="public-layout">
-      {% if share_type == "story" %}
-        <aside class="public-sidebar">
-          <div class="public-sidebar-title">Pages</div>
-          <div class="public-page-list" id="publicPageList"></div>
-        </aside>
-      {% endif %}
+      <aside class="public-sidebar">
+        <div class="public-sidebar-title">Pages</div>
+        <div class="public-page-list" id="publicPageList"></div>
+      </aside>
       <div class="public-main">
 
         <div class="book public-book" id="publicBook">
@@ -49,7 +47,7 @@
         </div>
         <div class="public-meta" style="color: var(--text-color); margin-top: 20px; text-align: center; font-size: 0.95rem; opacity: 0.9;">
           Shared code: <strong>{{ code }}</strong>
-          <span class="public-mode" style="color: var(--text-color); margin-left: 10px; padding: 4px 8px; background: var(--hover-color); border-radius: 4px; font-size: 0.85rem;">{{ "Full story" if share_type == "story" else "Single page" }}</span>
+          <span class="public-mode" style="color: var(--text-color); margin-left: 10px; padding: 4px 8px; background: var(--hover-color); border-radius: 4px; font-size: 0.85rem;">{{ "Editable" if can_edit else "View Only" }}</span>
         </div>
       </div>
     </div>

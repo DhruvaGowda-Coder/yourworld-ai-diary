@@ -19,7 +19,7 @@ from config import (
     ALLOWED_IMAGE_EXT, ALLOWED_AUDIO_EXT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,
     R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_DEV_URL,
     GROQ_API_KEY, GROQ_CHAT_MODEL, THEME_CHAT_PROFILES,
-    HUGGINGFACE_API_KEY, HUGGINGFACE_IMAGE_MODEL
+    HUGGINGFACE_API_KEY, HUGGINGFACE_IMAGE_MODEL, SITE_URL
 )
 from utils import auth_required, login_required, get_user_theme, strip_html, normalize_share_code
 
@@ -145,7 +145,7 @@ def api_entry_share(entry_id):
             code = entry.get("share_code")
             
     firebase_db.update_share_code(session["user_id"], entry_id, code, share_type, can_edit)
-    url = f"{current_app.config.get('SITE_URL', 'http://localhost:5000')}/view/{code}"
+    url = f"{SITE_URL}/view/{code}"
     return jsonify({"share_code": code, "url": url})
 
 @api_bp.route("/api/entry/<entry_id>/share", methods=["DELETE"])

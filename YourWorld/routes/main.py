@@ -101,11 +101,7 @@ def view_story(code):
     if not owner_row:
         return render_template("view_story.html", not_found=True, code=safe_code)
 
-    share_type = owner_row.get("share_type", "story")
-    if share_type == "single":
-        rows = [owner_row]
-    else:
-        rows = firebase_db.get_story_entries_for_user(owner_row.get("user_id"))
+    rows = firebase_db.get_story_entries_for_user(owner_row.get("user_id"))
 
     if not rows:
         return render_template("view_story.html", not_found=True, code=safe_code)
@@ -129,7 +125,6 @@ def view_story(code):
         ],
         code=safe_code,
         not_found=False,
-        share_type=share_type,
         can_edit=owner_row.get("can_edit", False)
     )
 
