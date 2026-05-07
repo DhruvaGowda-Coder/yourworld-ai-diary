@@ -29,7 +29,8 @@ def get_current_user():
         return None
     return firebase_db.get_current_user_data(user_id)
 
-def login_required(fn):
+def ensure_session(fn):
+    """Ensure a session exists — creates a guest session if none is present."""
     @wraps(fn)
     def wrapper(*args, **kwargs):
         if not session.get("user_id"):
@@ -37,6 +38,9 @@ def login_required(fn):
             session["is_guest"] = True
         return fn(*args, **kwargs)
     return wrapper
+
+# Backward-compatible alias
+login_required = ensure_session
 
 def auth_required(fn):
     @wraps(fn)

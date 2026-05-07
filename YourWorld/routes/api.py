@@ -9,9 +9,6 @@ from datetime import datetime, timezone, timedelta
 from flask import Blueprint, jsonify, request, session, current_app
 from html import unescape
 from werkzeug.utils import secure_filename
-import re
-
-SHARE_CODE_RE = re.compile(r"^[A-Za-z0-9-]{4,32}$")
 
 import firebase_db
 from extensions import limiter
@@ -19,14 +16,30 @@ from config import (
     ALLOWED_IMAGE_EXT, ALLOWED_AUDIO_EXT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,
     R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_DEV_URL,
     GROQ_API_KEY, GROQ_CHAT_MODEL, THEME_CHAT_PROFILES,
-    HUGGINGFACE_API_KEY, HUGGINGFACE_IMAGE_MODEL, SITE_URL
+    HUGGINGFACE_API_KEY, HUGGINGFACE_IMAGE_MODEL, SITE_URL, SHARE_CODE_RE
 )
-from utils import auth_required, login_required, get_user_theme, strip_html, normalize_share_code
+from utils import auth_required, ensure_session, get_user_theme, strip_html, normalize_share_code
 
 api_bp = Blueprint('api', __name__)
 
+# ── Cached R2 client singleton ──
+_r2_client = None
+
+def get_r2_client():
+    """Return a cached boto3 S3 client for Cloudflare R2."""
+    global _r2_client
+    if _r2_client is None:
+        _r2_client = boto3.client(
+            's3',
+            endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+            aws_access_key_id=R2_ACCESS_KEY_ID,
+            aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+            region_name='auto'
+        )
+    return _r2_client
+
 @api_bp.route("/api/upload/<file_type>", methods=["POST"])
-@login_required
+@ensure_session
 def api_upload(file_type):
     if file_type not in ("image", "audio"):
         return jsonify({"error": "Invalid file type"}), 400
@@ -44,7 +57,7 @@ def api_upload(file_type):
         unique_name = f"{secrets.token_hex(8)}_{filename}"
         try:
             if R2_ACCOUNT_ID and R2_BUCKET_NAME and R2_ACCESS_KEY_ID:
-                s3_client = boto3.client('s3', endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com", aws_access_key_id=R2_ACCESS_KEY_ID, aws_secret_access_key=R2_SECRET_ACCESS_KEY, region_name='auto')
+                s3_client = get_r2_client()
                 content_type = file.content_type or 'application/octet-stream'
                 object_name = f"{file_type}/{unique_name}"
                 s3_client.upload_fileobj(file, R2_BUCKET_NAME, object_name, ExtraArgs={'ContentType': content_type})
@@ -138,9 +151,12 @@ def api_entry_share(entry_id):
             return jsonify({"error": "Custom code already in use"}), 400
     else:
         if rotate or not entry.get("share_code"):
-            code = secrets.token_urlsafe(8).replace("_", "-").replace("~", "")[:8]
-            while firebase_db.get_entry_by_share_code(code):
+            for _attempt in range(10):
                 code = secrets.token_urlsafe(8).replace("_", "-").replace("~", "")[:8]
+                if not firebase_db.get_entry_by_share_code(code):
+                    break
+            else:
+                return jsonify({"error": "Could not generate unique code, try again"}), 503
         else:
             code = entry.get("share_code")
             
@@ -193,6 +209,7 @@ def api_entry_save():
         firebase_db.increment_activity(session["user_id"], datetime.now(timezone.utc).date().isoformat())
         return jsonify({"id": saved["id"], "title": saved["title"], "updated_at": saved["updated_at"]})
     except Exception as e:
+        current_app.logger.exception("api_entry_save failed: %s", e)
         return jsonify({"error": "Internal server error"}), 500
 
 @api_bp.route("/api/chat", methods=["POST"])
@@ -267,7 +284,7 @@ def api_story_image():
         
         # R2 Upload Logic (Fixed: No more Base64 bloat)
         if R2_ACCOUNT_ID and R2_BUCKET_NAME:
-            s3 = boto3.client('s3', endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com", aws_access_key_id=R2_ACCESS_KEY_ID, aws_secret_access_key=R2_SECRET_ACCESS_KEY)
+            s3 = get_r2_client()
             obj_name = f"images/ai_{secrets.token_hex(8)}.jpg"
             s3.put_object(Bucket=R2_BUCKET_NAME, Key=obj_name, Body=image_bytes, ContentType='image/jpeg')
             url = f"{R2_PUBLIC_DEV_URL}/{obj_name}" if R2_PUBLIC_DEV_URL else obj_name

@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, sessio
 import os
 from html import unescape
 from config import THEME_ORDER, THEME_DETAILS, SITE_URL, CONTACT_EMAIL, SITEMAP_LASTMOD, APP_DIR
-from utils import login_required, get_user_theme, normalize_theme
+from utils import ensure_session, get_user_theme, normalize_theme
 import firebase_db
 
 main_bp = Blueprint('main', __name__)
@@ -51,17 +51,17 @@ def terms_and_conditions():
     return render_template("legal.html", page="terms")
 
 @main_bp.route("/diary")
-@login_required
+@ensure_session
 def diary():
     return render_template("diary.html")
 
 @main_bp.route("/story")
-@login_required
+@ensure_session
 def story():
     return render_template("story.html")
 
 @main_bp.route("/settings")
-@login_required
+@ensure_session
 def settings():
     user_id = session.get("user_id")
     current_theme = get_user_theme(user_id)
@@ -70,7 +70,7 @@ def settings():
     return render_template("settings.html", themes=themes, current_theme=current_theme, info=info)
 
 @main_bp.route("/settings/theme", methods=["POST"])
-@login_required
+@ensure_session
 def settings_theme():
     selected = normalize_theme(request.form.get("theme"))
     session["theme"] = selected
@@ -78,7 +78,7 @@ def settings_theme():
     return redirect(url_for("main.settings", info="Theme updated."))
 
 @main_bp.route("/profile")
-@login_required
+@ensure_session
 def profile():
     return render_template("profile.html")
 
