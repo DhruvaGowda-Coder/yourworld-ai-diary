@@ -290,8 +290,16 @@ def api_chat():
     if not GROQ_API_KEY: return jsonify({"reply": "AI unavailable.", "fallback": True})
     
     try:
-        r = requests.post("https://api.groq.com/openai/v1/chat/completions", json={"model": GROQ_CHAT_MODEL, "messages": messages, "temperature": 0.7}, headers={"Authorization": f"Bearer {GROQ_API_KEY}"}, timeout=15)
+        # Lower temperature to 0.4 for better instruction following (less rambling)
+        r = requests.post("https://api.groq.com/openai/v1/chat/completions", json={"model": GROQ_CHAT_MODEL, "messages": messages, "temperature": 0.4}, headers={"Authorization": f"Bearer {GROQ_API_KEY}"}, timeout=15)
         reply = r.json()["choices"][0]["message"]["content"]
+        
+        # Backend Safety Filter: If AI gives a list without newlines, force them in.
+        if " * " in reply and "\n" not in reply:
+            reply = reply.replace(" * ", "\n\n* ")
+        if " 1. " in reply and "\n" not in reply:
+            reply = reply.replace(" 1. ", "\n\n1. ")
+            
         return jsonify({"reply": reply.strip(), "theme": active_theme})
     except Exception:
         return jsonify({"reply": "I am here with you. Tell me more.", "fallback": True, "theme": active_theme})
