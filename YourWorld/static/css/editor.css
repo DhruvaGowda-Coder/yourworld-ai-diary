@@ -1242,6 +1242,10 @@ button:active:not(:disabled) {
   .entry-sidebar {
     max-width: 100% !important;
   }
+
+  .resize-handle {
+    display: none !important;
+  }
 }
 
 .resize-handle {
