@@ -174,13 +174,13 @@ def api_entry_share(entry_id):
         else:
             code = entry.get("share_code")
             
-    # Only clear other share codes when a genuinely new code is being created
-    # (not when just toggling edit permission or changing share mode)
-    if is_new_code:
-        all_stories = firebase_db.get_story_entries_for_user(session["user_id"])
-        for s in all_stories:
-            if s.get("share_code") and str(s.get("id")) != str(entry_id):
-                firebase_db.update_share_code(session["user_id"], s["id"], None, None, False)
+    # Enforce "one active code per user" — always clear codes from OTHER entries
+    # This only skips when the exact same code is being kept on the same entry
+    # (e.g., just toggling can_edit or changing share_type)
+    all_stories = firebase_db.get_story_entries_for_user(session["user_id"])
+    for s in all_stories:
+        if s.get("share_code") and str(s.get("id")) != str(entry_id):
+            firebase_db.update_share_code(session["user_id"], s["id"], None, None, False)
 
     firebase_db.update_share_code(session["user_id"], entry_id, code, share_type, can_edit)
     url = f"{SITE_URL}/view/{code}"

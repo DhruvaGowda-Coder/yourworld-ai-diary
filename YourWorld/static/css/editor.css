@@ -1107,7 +1107,7 @@ button:active:not(:disabled) {
   min-height: 62vh;
   max-height: 62vh;
   overflow-y: auto;
-  padding-right: 10px;
+  padding: 8px 14px 8px 4px;
   scrollbar-width: thin;
 }
 
@@ -1219,7 +1219,7 @@ button:active:not(:disabled) {
 @media (max-width: 768px) {
   .book, 
   .public-story .book {
-    padding: 10px !important;
+    padding: 20px 16px !important;
     min-height: auto !important;
     max-width: 100% !important;
     overflow-x: hidden !important; /* Contain the scroll to the page itself */
@@ -1262,9 +1262,8 @@ button:active:not(:disabled) {
 
   .public-controls #publicSaveBtn {
     margin-left: 0 !important;
-    width: 100% !important; /* Make save button full width on mobile for easier tapping */
-    order: -1; /* Put save button at the top of controls */
-    margin-bottom: 8px;
+    width: auto !important;
+    order: 0;
   }
 
   .public-layout {
