@@ -1221,8 +1221,13 @@ button:active:not(:disabled) {
   .public-story .book {
     padding: 5px !important;
     min-height: auto !important;
+    max-height: 70vh !important; /* Move scroll constraint here */
     max-width: 100% !important;
-    overflow-x: hidden !important; /* Strictly clip horizontal overflow here */
+    overflow: auto !important; /* Handle both horizontal and vertical scroll here */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--theme-accent-soft) transparent;
   }
 
   .public-main,
@@ -1234,23 +1239,19 @@ button:active:not(:disabled) {
   .page,
   .public-page {
     width: 100% !important;
-    min-height: 60vh !important;
-    max-height: 60vh !important;
+    height: auto !important; /* Let content determine height */
+    min-height: none !important;
+    max-height: none !important;
     position: relative !important;
-    overflow-x: auto !important; /* Internal horizontal scroll only */
-    overflow-y: auto !important; /* Internal vertical scroll only */
-    -webkit-overflow-scrolling: touch;
+    overflow: visible !important; /* Let parent .book handle scrolling */
     display: block !important;
     padding: 20px 16px !important;
-    scroll-behavior: smooth;
-    scrollbar-width: thin;
-    scrollbar-color: var(--theme-accent-soft) transparent;
   }
   
   .public-content,
   .page-scroll {
     max-width: 100% !important;
-    overflow-x: auto !important; 
+    overflow-x: visible !important; 
     overflow-y: visible !important;
     display: block !important;
   }
