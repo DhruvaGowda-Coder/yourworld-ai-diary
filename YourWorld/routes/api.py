@@ -107,9 +107,21 @@ def api_entry(entry_id):
     row = firebase_db.get_entry(session["user_id"], entry_id)
     if not row: return jsonify({"error": "Not found"}), 404
     return jsonify({
-        "id": row["id"], "title": unescape(row.get("title", "")), "content": unescape(row.get("content", "")),
-        "type": row.get("type", "diary"), "image_url": row.get("image_url"), "image_attached": row.get("image_attached"),
-        "share_code": row.get("share_code"), "share_type": row.get("share_type"), "created_at": row.get("created_at"), "updated_at": row.get("updated_at"),
+        "id": row["id"], 
+        "title": unescape(row.get("title", "")), 
+        "content": unescape(row.get("content", "")),
+        "type": row.get("type", "diary"), 
+        "image_url": row.get("image_url"), 
+        "image_attached": row.get("image_attached"),
+        "image_style": row.get("image_style"),
+        "image_prompt": row.get("image_prompt"),
+        "title_style": row.get("title_style"),
+        "content_style": row.get("content_style"),
+        "share_code": row.get("share_code"), 
+        "share_type": row.get("share_type"), 
+        "can_edit": row.get("can_edit"),
+        "created_at": row.get("created_at"), 
+        "updated_at": row.get("updated_at"),
     })
 
 @api_bp.route("/api/entry/<entry_id>", methods=["DELETE"])
@@ -179,8 +191,13 @@ def api_entry_share_delete(entry_id):
 def api_entry_save():
     try:
         data = request.get_json(force=True)
+        if not data:
+            return jsonify({"error": "Empty request body"}), 400
+            
         entry_id = data.get("id")
         if entry_id in ("", "null", "undefined"): entry_id = None
+        
+        current_app.logger.info("Saving entry %s for user %s", entry_id, session.get("user_id"))
         
         content = data.get("content", "").strip()
         allowed_tags = ['b', 'i', 'u', 'div', 'br', 'span', 'strike', 'strong', 'em', 'p', 'ul', 'ol', 'li']
@@ -205,7 +222,12 @@ def api_entry_save():
         
         saved = firebase_db.save_entry(session["user_id"], entry_id, data)
         if not saved: return jsonify({"error": "Not found"}), 404
-        firebase_db.increment_activity(session["user_id"], datetime.now(timezone.utc).date().isoformat())
+        
+        try:
+            firebase_db.increment_activity(session["user_id"], datetime.now(timezone.utc).date().isoformat())
+        except Exception as e:
+            current_app.logger.warning("Activity increment failed: %s", e)
+            
         return jsonify({"id": saved["id"], "title": saved["title"], "updated_at": saved["updated_at"]})
     except Exception as e:
         current_app.logger.exception("api_entry_save failed: %s", e)

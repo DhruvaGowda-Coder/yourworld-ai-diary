@@ -32,6 +32,7 @@ if not firebase_admin._apps:
         firebase_admin.initialize_app(cred, {
             'storageBucket': STORAGE_BUCKET
         })
+        print("Firebase Admin initialized successfully.")
     except Exception as e:
         print(f"Error initializing Firebase Admin: {e}")
 
@@ -176,8 +177,8 @@ def get_entries(user_id, entry_type="diary", limit=20, last_doc_id=None):
     query = (db.collection('entries')
             .where(filter=FieldFilter('user_id', '==', str(user_id)))
             .where(filter=FieldFilter('type', '==', entry_type))
-            .order_by("created_at")
-            .order_by("__name__"))
+            .order_by("created_at", direction=firestore.Query.DESCENDING)
+            .order_by("__name__", direction=firestore.Query.DESCENDING))
 
     if last_doc_id:
         last_doc = db.collection('entries').document(last_doc_id).get()
@@ -256,15 +257,11 @@ def save_entry(user_id, entry_id, data):
         if not is_owner and not existing_data.get('can_edit'):
             return None # Not found or unauthorized
             
-        if not is_owner:
-            # Trust boundary gap fix: only allow updates to content and title fields for non-owners
-            doc_data = {
-                'title': data.get('title', 'Untitled'),
-                'content': data.get('content', ''),
-                'updated_at': now
-            }
-        else:
-            doc_data['user_id'] = existing_data.get('user_id') # Preserve the original owner
+        # Allow all fields if the user has edit permission or is the owner
+        # We preserve the original owner's user_id and creation date
+        doc_data['user_id'] = existing_data.get('user_id')
+        if existing_data.get('created_at'):
+            doc_data['created_at'] = existing_data.get('created_at')
 
         doc_ref.update(doc_data)
         doc_data['id'] = entry_id

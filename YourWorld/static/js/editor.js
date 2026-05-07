@@ -267,9 +267,16 @@ if (workspace) {
     saveTime.textContent = `${prefix} ${date.toLocaleTimeString()}`;
   };
 
-  /** Compute a simple hash of current editor content to detect real changes. */
+  /** Compute a simple hash of current editor content and styles to detect real changes. */
   const _computeContentHash = () => {
-    const t = (titleInput ? titleInput.value : '') + '||' + (contentInput ? contentInput.value : '');
+    const t = (titleInput ? titleInput.value : '') +
+              '|' + (contentInput ? contentInput.value : '') +
+              '|' + JSON.stringify(titleStyleState) +
+              '|' + JSON.stringify(contentStyleState) +
+              '|' + (imagePrompt ? imagePrompt.value : '') +
+              '|' + (currentImageUrl || '') +
+              '|' + (imageAttached ? '1' : '0') +
+              '|' + JSON.stringify(imageStyleState);
     let h = 0;
     for (let i = 0; i < t.length; i++) { h = ((h << 5) - h + t.charCodeAt(i)) | 0; }
     return String(h);
@@ -624,6 +631,7 @@ if (workspace) {
     updateShareUI();
     updatePageIllustration();
     dirty = false;
+    _lastSavedHash = _computeContentHash();
     setStatus('Ready');
     updatePageCount();
     updateDeleteButton();
@@ -667,6 +675,7 @@ if (workspace) {
     updateShareUI();
     updatePageIllustration();
     dirty = false;
+    _lastSavedHash = _computeContentHash();
     setStatus('New page');
     renderEntries();
     updatePageCount();
@@ -681,16 +690,21 @@ if (workspace) {
     const runSave = async () => {
       isSaving = true;
       setStatus('Saving...');
+      const hashAtStart = _computeContentHash();
       try {
         const contentText = contentInput.value || '';
         const hasTitle = Boolean(titleInput.value.trim());
         const hasContent = Boolean(contentText.trim());
         const allowEmpty = options.allowEmpty === true;
+        
+        // If it's a brand new entry and it's empty, don't bother the server
         if (!currentEntryId && !allowEmpty && !hasTitle && !hasContent) {
           dirty = false;
+          _lastSavedHash = hashAtStart;
           setStatus('Ready');
           return null;
         }
+
         const reuseActiveId = options.reuseActiveId !== false;
         const resolvedEntryId = currentEntryId ?? (reuseActiveId ? getActiveEntryId() : null);
         const payload = {
@@ -707,26 +721,44 @@ if (workspace) {
           payload.image_attached = imageAttached;
           payload.image_style = JSON.stringify(imageStyleState);
         }
+
         const response = await fetch('/api/entry/save', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          headers: { 
+            'Content-Type': 'application/json', 
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || csrfToken || ''
+          },
           body: JSON.stringify(payload),
         });
-        if (!response.ok) throw new Error('Save failed');
+
+        if (!response.ok) {
+          throw new Error('Save failed');
+        }
+
         const data = await response.json();
         currentEntryId = data.id;
-        dirty = false;
-        _lastSavedHash = _computeContentHash();
+
+        // CRITICAL: Only mark as clean if content hasn't changed since we started this save
+        const currentHash = _computeContentHash();
+        if (currentHash === hashAtStart) {
+          dirty = false;
+        }
+        _lastSavedHash = hashAtStart; // Mark what we just saved as the baseline
+
         const statusLabel = options.auto ? 'Autosaved' : 'Saved';
         setStatus(statusLabel);
         if (saveStatus) {
           saveStatus.style.transition = 'color 0.3s, transform 0.3s';
           saveStatus.style.color = 'var(--theme-accent, #5cb85c)';
           saveStatus.style.transform = 'scale(1.05)';
-          setTimeout(() => { saveStatus.style.color = ''; saveStatus.style.transform = ''; }, 1500);
+          setTimeout(() => { 
+            saveStatus.style.color = ''; 
+            saveStatus.style.transform = ''; 
+          }, 1500);
         }
         setTime(data.updated_at, statusLabel);
 
+        // Update local entries list
         const existingIndex = entries.findIndex((entry) => entry.id === currentEntryId);
         if (existingIndex >= 0) {
           entries[existingIndex].title = data.title;
@@ -734,20 +766,24 @@ if (workspace) {
           currentIndex = existingIndex;
           lastActiveIndex = existingIndex;
         } else {
-          entries.push({ id: currentEntryId, title: data.title, updated_at: data.updated_at });
-          currentIndex = entries.length - 1;
+          entries.unshift({ id: currentEntryId, title: data.title, updated_at: data.updated_at });
+          currentIndex = 0;
           lastActiveIndex = currentIndex;
         }
         renderEntries();
         updatePageCount();
         updateDeleteButton();
+        
         return currentEntryId;
       } catch (err) {
+        console.error('Save error:', err);
         setStatus('Offline');
         return null;
       } finally {
         isSaving = false;
         saveInFlight = null;
+        // If content changed while we were saving, trigger another save soon
+        if (dirty) scheduleAutosave();
       }
     };
 
@@ -766,7 +802,7 @@ if (workspace) {
     entries = data.entries || data;  // Support both new paginated and legacy format
     _hasMoreEntries = data.has_more || false;
     if (entries.length > 0) {
-      currentIndex = entries.length - 1;
+      currentIndex = 0; // Load the most recent one (first in DESC list)
       renderEntries();
       await loadEntry(entries[currentIndex].id);
     } else {
