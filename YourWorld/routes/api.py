@@ -279,7 +279,7 @@ def api_chat():
         "cherry": "Voice: gentle, appreciative, and short. Capture the essence quickly.",
     }
     theme_profile = theme_profiles.get(active_theme, theme_profiles["campfire"])
-    system_prompt = f"You are Aura, a professional and highly concise AI assistant. Provide efficient, high-quality content in markdown. Be brief, avoid fluff, and prioritize clarity. {theme_profile}"
+    system_prompt = f"You are Aura, a professional AI assistant. Be concise and efficient for simple queries, but provide rich, detailed, and creative content when the user asks for writing help or complex ideas. Use professional markdown (bullets, bolding). {theme_profile}"
     
     messages = [{"role": "system", "content": system_prompt}]
     if related_pages:
@@ -290,7 +290,7 @@ def api_chat():
     if not GROQ_API_KEY: return jsonify({"reply": "AI unavailable.", "fallback": True})
     
     try:
-        r = requests.post("https://api.groq.com/openai/v1/chat/completions", json={"model": GROQ_CHAT_MODEL, "messages": messages, "temperature": 0.7, "max_tokens": 512}, headers={"Authorization": f"Bearer {GROQ_API_KEY}"}, timeout=15)
+        r = requests.post("https://api.groq.com/openai/v1/chat/completions", json={"model": GROQ_CHAT_MODEL, "messages": messages, "temperature": 0.7}, headers={"Authorization": f"Bearer {GROQ_API_KEY}"}, timeout=15)
         reply = r.json()["choices"][0]["message"]["content"]
         return jsonify({"reply": reply.strip(), "theme": active_theme})
     except Exception:
