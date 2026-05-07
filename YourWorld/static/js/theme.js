@@ -146,7 +146,14 @@ if (activityHeatmap) {
       }
     })
     .catch(() => {
-      activityHeatmap.textContent = 'Activity data unavailable.';
+      activityHeatmap.textContent = '';
+      buildHeatmap({}, 365);
+      const pageCountEl = document.getElementById('profilePageCount');
+      if (pageCountEl) pageCountEl.textContent = '0';
+      const streakEl = document.getElementById('profileStreak');
+      if (streakEl) streakEl.textContent = '0';
+      const activeDaysEl = document.getElementById('profileDaysActive');
+      if (activeDaysEl) activeDaysEl.textContent = '0';
     });
 }
 

@@ -256,8 +256,16 @@ def api_chat():
 @ensure_session
 def api_activity():
     days = max(7, min(int(request.args.get("days", 365)), 730))
-    counts = firebase_db.get_activity_counts(session["user_id"], days)
-    total_pages = firebase_db.get_entry_count(session["user_id"])
+    try:
+        counts = firebase_db.get_activity_counts(session["user_id"], days)
+    except Exception as e:
+        current_app.logger.warning("get_activity_counts failed: %s", e)
+        counts = {}
+    try:
+        total_pages = firebase_db.get_entry_count(session["user_id"])
+    except Exception as e:
+        current_app.logger.warning("get_entry_count failed: %s", e)
+        total_pages = 0
     
     streak = 0
     today = datetime.now(timezone.utc).date()
