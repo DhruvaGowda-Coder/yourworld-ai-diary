@@ -1198,6 +1198,42 @@ button:active:not(:disabled) {
   pointer-events: none;
 }
 
+/* Mobile responsive illustration */
+@media (max-width: 768px) {
+  .page-illustration {
+    max-width: calc(100vw - 40px) !important;
+    height: auto !important;
+    /* Ensure it doesn't get pushed too far right */
+    left: 10px !important;
+    transform: translate(0, 0) !important; /* Reset position for cleaner mobile view */
+    top: 20px !important;
+    position: relative !important; /* Make it flow with content on mobile for better visibility */
+    margin: 10px auto 20px !important;
+    display: block !important;
+    width: 100% !important;
+  }
+  
+  .resize-handle {
+    display: none !important; /* Hide resize handle on mobile as we force width */
+  }
+  
+  .page-scroll,
+  .public-page {
+    max-height: none !important; /* Let content flow on mobile */
+    min-height: auto !important;
+    overflow-y: visible !important;
+  }
+
+  .public-story .book {
+    padding: 20px !important;
+    min-height: auto !important;
+  }
+
+  .public-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 .resize-handle {
   position: absolute;
   bottom: 0px;
