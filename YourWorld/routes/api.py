@@ -184,7 +184,7 @@ def api_entry_share(entry_id):
 
     firebase_db.update_share_code(session["user_id"], entry_id, code, share_type, can_edit)
     url = f"{SITE_URL}/view/{code}"
-    return jsonify({"share_code": code, "url": url})
+    return jsonify({"share_code": code, "url": url, "can_edit": can_edit, "share_type": share_type})
 
 @api_bp.route("/api/entry/<entry_id>/share", methods=["DELETE"])
 @ensure_session
