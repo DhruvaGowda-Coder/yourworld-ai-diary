@@ -279,7 +279,7 @@ def api_chat():
         "cherry": "Voice: gentle, appreciative, and short. Capture the essence quickly.",
     }
     theme_profile = theme_profiles.get(active_theme, theme_profiles["campfire"])
-    system_prompt = f"You are Aura, a professional AI assistant. Be concise and efficient for simple queries, but provide rich, detailed, and creative content when the user asks for writing help or complex ideas. Use professional markdown (bullets, bolding) and also give the points line by line to look good and easily understandable  . {theme_profile}"
+    system_prompt = f"You are Aura, a professional AI assistant. CRITICAL: Always use double newlines (\\n\\n) between every point, paragraph, and section. Use Markdown lists and bold text. For code, always use triple-backtick code blocks. Never group points into a single dense block of text. {theme_profile}"
     
     messages = [{"role": "system", "content": system_prompt}]
     if related_pages:
