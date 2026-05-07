@@ -1198,27 +1198,27 @@ button:active:not(:disabled) {
   pointer-events: none;
 }
 
-/* Mobile responsive illustration - Restricts scroll only to the book container */
+/* Mobile responsive illustration - Restores original responsive text while allowing image overflow via bottom scroll */
 @media (max-width: 768px) {
   .book, 
   .public-story .book {
-    padding: 15px !important;
+    padding: 10px !important;
     min-height: auto !important;
-    max-width: 100% !important; /* Lock the book to the screen width */
-    overflow-x: auto !important; /* Allow the book to scroll horizontally */
-    overflow-y: visible !important;
-    -webkit-overflow-scrolling: touch;
-    display: block !important;
-    position: relative !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important; /* Contain the scroll to the page itself */
   }
 
   .page,
   .public-page {
-    width: 850px !important; /* Force desktop width inside the scrollable book */
-    min-height: 400px !important;
+    width: 100% !important; /* Restore responsive text wrapping */
+    min-height: 500px !important; /* Ensure enough height for floating images */
     max-height: none !important;
     position: relative !important;
-    overflow: visible !important; /* Let the book handle the scroll */
+    overflow-x: auto !important; /* Horizontal scroll bar at the bottom of the page */
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+    display: block !important;
+    padding-bottom: 20px !important;
   }
 
   .page-scroll {
@@ -1232,14 +1232,12 @@ button:active:not(:disabled) {
   .page-illustration {
     display: block !important;
     z-index: 20;
-    /* Keeps its absolute position and size from desktop, 
-       triggering horizontal scroll on .page if it's too wide */
   }
 
   .public-layout {
     grid-template-columns: 1fr !important;
   }
-  
+
   .entry-sidebar {
     max-width: 100% !important;
   }
