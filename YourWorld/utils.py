@@ -65,7 +65,8 @@ def strip_html(text: str) -> str:
 def normalize_share_code(raw_code: str | None) -> str | None:
     if not raw_code:
         return None
-    code = re.sub(r"\s+", "-", raw_code.strip()).upper()
+    # Preserve case but replace multiple spaces with a single dash
+    code = re.sub(r"\s+", "-", raw_code.strip())
     if not SHARE_CODE_RE.fullmatch(code):
         return None
     return code
