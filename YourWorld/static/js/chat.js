@@ -2,7 +2,11 @@ function addMessage(text, who = 'user') {
   if (!chatMessages) return;
   const bubble = document.createElement('div');
   bubble.className = `chat-bubble ${who}`;
-  bubble.textContent = text;
+  if (who === 'bot' && typeof marked !== 'undefined') {
+    bubble.innerHTML = marked.parse(text);
+  } else {
+    bubble.textContent = text;
+  }
   chatMessages.appendChild(bubble);
   chatMessages.scrollTop = chatMessages.scrollHeight;
   return bubble;
@@ -216,14 +220,22 @@ if (chatForm && chatText) {
         }
         const reply = (data && data.reply) ? data.reply : null;
         if (!reply) throw new Error('No reply');
-        typingBubble.textContent = reply;
+        if (typeof marked !== 'undefined') {
+          typingBubble.innerHTML = marked.parse(reply);
+        } else {
+          typingBubble.textContent = reply;
+        }
         chatHistory.push({ role: 'user', content: text });
         chatHistory.push({ role: 'assistant', content: reply });
       })
       .catch(() => {
         const fallbackOptions = getThemeMeta(activeTheme).fallback;
         const fallback = fallbackOptions[Math.floor(Math.random() * fallbackOptions.length)];
-        typingBubble.textContent = fallback;
+        if (typeof marked !== 'undefined') {
+          typingBubble.innerHTML = marked.parse(fallback);
+        } else {
+          typingBubble.textContent = fallback;
+        }
         chatHistory.push({ role: 'user', content: text });
         chatHistory.push({ role: 'assistant', content: fallback });
       });

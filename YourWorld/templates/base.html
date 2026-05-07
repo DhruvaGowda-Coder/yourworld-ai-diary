@@ -199,6 +199,7 @@
       window.UserAudioLists = serverLists;
     })();
   </script>
+  <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/core.js', v='20260505k') }}" defer></script>
   <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/animations.js', v='20260505k') }}" defer></script>
   <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/chat.js', v='20260506k') }}" defer></script>
