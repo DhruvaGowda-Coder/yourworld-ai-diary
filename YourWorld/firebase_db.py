@@ -197,31 +197,15 @@ def get_entries(user_id, entry_type="diary", limit=20, last_doc_id=None):
     return page, has_more
 
 
-def get_entries_all(user_id, entry_type="diary"):
-    """Legacy: fetch ALL entries (used by chat context, activity). Use sparingly."""
-    db = get_db()
-    docs = db.collection('entries').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('type', '==', entry_type)).limit(2000).stream()
-    result = []
-    for doc in docs:
-        data = doc.to_dict()
-        data['id'] = doc.id
-        result.append(data)
-    result.sort(key=lambda x: x.get('created_at', ''))
-    return result
-
-
 def get_entry_count(user_id):
-    """Lightweight count of all entries for a user (diary + story) without fetching full documents."""
+    """Native count aggregation of all entries for a user."""
     db = get_db()
     count = 0
     for entry_type in ('diary', 'story'):
-        docs = (db.collection('entries')
+        query = (db.collection('entries')
                 .where(filter=FieldFilter('user_id', '==', str(user_id)))
-                .where(filter=FieldFilter('type', '==', entry_type))
-                .select([])
-                .limit(2000)
-                .stream())
-        count += sum(1 for _ in docs)
+                .where(filter=FieldFilter('type', '==', entry_type)))
+        count += query.count().get()[0][0].value
     return count
 
 
