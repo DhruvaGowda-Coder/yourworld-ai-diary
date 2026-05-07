@@ -55,7 +55,7 @@ body {
   color: #fbeedc;
   background: var(--theme-bg);
   position: relative;
-  overflow-x: hidden;
+  overflow-x: clip; /* Modern way to strictly prevent screen-wide horizontal scrolling */
   isolation: isolate;
 }
 
