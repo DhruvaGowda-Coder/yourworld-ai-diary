@@ -766,8 +766,8 @@ if (workspace) {
           currentIndex = existingIndex;
           lastActiveIndex = existingIndex;
         } else {
-          entries.unshift({ id: currentEntryId, title: data.title, updated_at: data.updated_at });
-          currentIndex = 0;
+          entries.push({ id: currentEntryId, title: data.title, updated_at: data.updated_at });
+          currentIndex = entries.length - 1;
           lastActiveIndex = currentIndex;
         }
         renderEntries();
@@ -802,7 +802,7 @@ if (workspace) {
     entries = data.entries || data;  // Support both new paginated and legacy format
     _hasMoreEntries = data.has_more || false;
     if (entries.length > 0) {
-      currentIndex = 0; // Load the most recent one (first in DESC list)
+      currentIndex = entries.length - 1;
       renderEntries();
       await loadEntry(entries[currentIndex].id);
     } else {

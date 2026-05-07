@@ -177,8 +177,8 @@ def get_entries(user_id, entry_type="diary", limit=20, last_doc_id=None):
     query = (db.collection('entries')
             .where(filter=FieldFilter('user_id', '==', str(user_id)))
             .where(filter=FieldFilter('type', '==', entry_type))
-            .order_by("created_at", direction=firestore.Query.DESCENDING)
-            .order_by("__name__", direction=firestore.Query.DESCENDING))
+            .order_by("created_at")
+            .order_by("__name__"))
 
     if last_doc_id:
         last_doc = db.collection('entries').document(last_doc_id).get()
