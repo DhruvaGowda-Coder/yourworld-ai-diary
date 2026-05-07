@@ -1218,7 +1218,10 @@ button:active:not(:disabled) {
     overflow-y: visible !important;
     -webkit-overflow-scrolling: touch;
     display: block !important;
-    padding-bottom: 20px !important;
+    padding-bottom: 24px !important;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--theme-accent-soft) transparent;
   }
 
   .page-scroll {
@@ -1230,8 +1233,21 @@ button:active:not(:disabled) {
   }
 
   .page-illustration {
-    display: block !important;
     z-index: 20;
+    /* Removed display: block !important to allow JS to hide it when no image is present */
+  }
+
+  .public-controls {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 8px !important;
+  }
+
+  .public-controls #publicSaveBtn {
+    margin-left: 0 !important;
+    width: 100% !important; /* Make save button full width on mobile for easier tapping */
+    order: -1; /* Put save button at the top of controls */
+    margin-bottom: 8px;
   }
 
   .public-layout {
