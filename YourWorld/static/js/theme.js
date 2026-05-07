@@ -144,6 +144,15 @@ if (activityHeatmap) {
       if (activeDaysEl && data.active_days !== undefined) {
         activeDaysEl.textContent = data.active_days;
       }
+    })
+    .catch(() => {
+      buildHeatmap({}, 365);
+      const pageCountEl = document.getElementById('profilePageCount');
+      if (pageCountEl) pageCountEl.textContent = '0';
+      const streakEl = document.getElementById('profileStreak');
+      if (streakEl) streakEl.textContent = '0';
+      const activeDaysEl = document.getElementById('profileDaysActive');
+      if (activeDaysEl) activeDaysEl.textContent = '0';
     });
 
   // Real-time sync: Listen for activity updates from other tabs

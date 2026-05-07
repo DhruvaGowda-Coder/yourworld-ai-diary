@@ -150,16 +150,18 @@ def api_entry_share(entry_id):
         firebase_db.update_share_code(session["user_id"], entry_id, None, None, False)
         return jsonify({"share_code": None, "url": None})
 
-    share_type = mode if mode in ["view", "edit"] else "view"
+    share_type = mode if mode in ["story", "single"] else "story"
     
     code = None
+    is_new_code = False
     if custom_code:
         code = normalize_share_code(custom_code)
-        if not SHARE_CODE_RE.match(code):
-            return jsonify({"error": "Invalid custom code format"}), 400
+        if not code:
+            return jsonify({"error": "code_unavailable", "message": "Invalid custom code format. Use 4-32 letters, numbers, or hyphens."}), 400
         existing = firebase_db.get_entry_by_share_code(code)
         if existing and str(existing.get("id")) != str(entry_id):
-            return jsonify({"error": "Custom code already in use"}), 400
+            return jsonify({"error": "code_unavailable", "message": "This code already exists. Please choose another code."}), 400
+        is_new_code = (code != entry.get("share_code"))
     else:
         if rotate or not entry.get("share_code"):
             for _attempt in range(10):
@@ -168,15 +170,17 @@ def api_entry_share(entry_id):
                     break
             else:
                 return jsonify({"error": "Could not generate unique code, try again"}), 503
+            is_new_code = True
         else:
             code = entry.get("share_code")
             
-    # NEW RULE: Clear any existing share codes for this user's stories 
-    # to ensure "each share canvas there will be only one code"
-    all_stories = firebase_db.get_story_entries_for_user(session["user_id"])
-    for s in all_stories:
-        if s.get("share_code") and str(s.get("id")) != str(entry_id):
-            firebase_db.update_share_code(session["user_id"], s["id"], None, None, False)
+    # Only clear other share codes when a genuinely new code is being created
+    # (not when just toggling edit permission or changing share mode)
+    if is_new_code:
+        all_stories = firebase_db.get_story_entries_for_user(session["user_id"])
+        for s in all_stories:
+            if s.get("share_code") and str(s.get("id")) != str(entry_id):
+                firebase_db.update_share_code(session["user_id"], s["id"], None, None, False)
 
     firebase_db.update_share_code(session["user_id"], entry_id, code, share_type, can_edit)
     url = f"{SITE_URL}/view/{code}"
