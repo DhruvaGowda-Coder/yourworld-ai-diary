@@ -36,19 +36,43 @@ if (workspace) {
     .replace(/\s+/g, '-')
     .slice(0, 32);
 
-  // Helper to reliably bind click/tap events on both desktop and mobile
   const bindTap = (btn, handler) => {
     if (!btn) return;
+    let startX = 0;
+    let startY = 0;
     let isTouching = false;
-    btn.addEventListener('touchstart', () => { isTouching = true; }, { passive: true });
-    btn.addEventListener('touchcancel', () => { isTouching = false; }, { passive: true });
+    
+    btn.addEventListener('touchstart', (e) => {
+      isTouching = true;
+      if (e.touches && e.touches[0]) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+    
+    btn.addEventListener('touchcancel', () => {
+      isTouching = false;
+    }, { passive: true });
+    
     btn.addEventListener('touchend', (e) => {
       if (isTouching) {
-        if (e.cancelable) { e.preventDefault(); } // Prevent ghost clicks only if cancelable
-        handler(e);
+        let dist = 0;
+        if (e.changedTouches && e.changedTouches[0]) {
+          const endX = e.changedTouches[0].clientX;
+          const endY = e.changedTouches[0].clientY;
+          dist = Math.sqrt((endX - startX)**2 + (endY - startY)**2);
+        }
+        
+        // If movement is less than 15px, it's a tap, not a scroll
+        if (dist < 15) {
+          if (e.cancelable) { e.preventDefault(); }
+          handler(e);
+        }
+        
         setTimeout(() => { isTouching = false; }, 300);
       }
     });
+    
     btn.addEventListener('click', (e) => {
       if (!isTouching) handler(e);
     });

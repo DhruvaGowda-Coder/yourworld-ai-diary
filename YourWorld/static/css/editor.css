@@ -1198,39 +1198,43 @@ button:active:not(:disabled) {
   pointer-events: none;
 }
 
-/* Mobile responsive illustration */
+/* Mobile responsive illustration - Reverted to allow desktop-like layout with x-scroll */
 @media (max-width: 768px) {
-  .page-illustration {
-    max-width: calc(100vw - 40px) !important;
-    height: auto !important;
-    /* Ensure it doesn't get pushed too far right */
-    left: 10px !important;
-    transform: translate(0, 0) !important; /* Reset position for cleaner mobile view */
-    top: 20px !important;
-    position: relative !important; /* Make it flow with content on mobile for better visibility */
-    margin: 10px auto 20px !important;
-    display: block !important;
-    width: 100% !important;
-  }
-  
-  .resize-handle {
-    display: none !important; /* Hide resize handle on mobile as we force width */
-  }
-  
-  .page-scroll,
-  .public-page {
-    max-height: none !important; /* Let content flow on mobile */
-    min-height: auto !important;
+  .book, 
+  .public-story .book {
+    overflow-x: auto !important;
     overflow-y: visible !important;
+    padding: 15px !important;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .public-story .book {
-    padding: 20px !important;
+  .page,
+  .public-page {
+    width: 850px !important; /* Force desktop-like width to preserve layout */
+    min-height: 400px !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: relative !important;
+  }
+
+  .page-illustration {
+    display: block !important;
+    z-index: 20;
+    /* We don't force width: 100% anymore, let it be what it was */
+  }
+
+  .page-scroll,
+  .public-page {
+    max-height: none !important;
     min-height: auto !important;
   }
 
   .public-layout {
     grid-template-columns: 1fr !important;
+  }
+  
+  .entry-sidebar {
+    max-width: 100% !important;
   }
 }
 
