@@ -1222,7 +1222,13 @@ button:active:not(:disabled) {
     padding: 5px !important;
     min-height: auto !important;
     max-width: 100% !important;
-    overflow-x: hidden !important; /* Contain the scroll to the page itself */
+    overflow-x: hidden !important; /* Strictly clip horizontal overflow here */
+  }
+
+  .public-main,
+  .public-layout {
+    max-width: 100% !important;
+    overflow-x: hidden !important; /* Prevent the entire layout from swiping */
   }
 
   .page,
@@ -1244,7 +1250,9 @@ button:active:not(:disabled) {
   .public-content,
   .page-scroll {
     max-width: 100% !important;
-    overflow-x: auto !important; /* Ensure content itself can scroll if too wide */
+    overflow-x: auto !important; 
+    overflow-y: visible !important;
+    display: block !important;
   }
 
   .page-scroll {
