@@ -267,8 +267,19 @@ def api_chat():
             snippet = strip_html(r.get("content") or "").replace("\n", " ")[:170]
             related_pages.append(f"- {r.get('title', 'Untitled')}: {snippet}")
 
-    theme_profile = THEME_CHAT_PROFILES.get(active_theme, THEME_CHAT_PROFILES["campfire"])
-    system_prompt = f"You are Aura, an AI assistant in a next-gen secure content sharing platform. Help users format notes, write content, and generate ideas. Always use clean, structured formatting with bullet points and clear spacing (like ChatGPT) to ensure readability. {theme_profile}"
+    theme_profiles = {
+        "campfire": "Voice: warm, reflective, and extremely concise. Encourage the user briefly.",
+        "water": "Voice: calm, patient, and brief. Use minimal, high-impact wording.",
+        "wind": "Voice: quick, curious, and very short. Use bullet points primarily.",
+        "earth": "Voice: grounded, practical, and direct. Provide clear, short steps.",
+        "ice": "Voice: sharp, clear, and precise. Avoid any unnecessary words.",
+        "storm": "Voice: bold, energetic, and rapid. Use short, punchy sentences.",
+        "space": "Voice: expansive yet concise. Connect ideas with minimal chatter.",
+        "garden": "Voice: nurturing and brief. Focus on the very next step only.",
+        "cherry": "Voice: gentle, appreciative, and short. Capture the essence quickly.",
+    }
+    theme_profile = theme_profiles.get(active_theme, theme_profiles["campfire"])
+    system_prompt = f"You are Aura, a professional and highly concise AI assistant. Provide efficient, high-quality content in markdown. Be brief, avoid fluff, and prioritize clarity. {theme_profile}"
     
     messages = [{"role": "system", "content": system_prompt}]
     if related_pages:
@@ -279,7 +290,7 @@ def api_chat():
     if not GROQ_API_KEY: return jsonify({"reply": "AI unavailable.", "fallback": True})
     
     try:
-        r = requests.post("https://api.groq.com/openai/v1/chat/completions", json={"model": GROQ_CHAT_MODEL, "messages": messages, "temperature": 0.7}, headers={"Authorization": f"Bearer {GROQ_API_KEY}"}, timeout=15)
+        r = requests.post("https://api.groq.com/openai/v1/chat/completions", json={"model": GROQ_CHAT_MODEL, "messages": messages, "temperature": 0.7, "max_tokens": 512}, headers={"Authorization": f"Bearer {GROQ_API_KEY}"}, timeout=15)
         reply = r.json()["choices"][0]["message"]["content"]
         return jsonify({"reply": reply.strip(), "theme": active_theme})
     except Exception:
