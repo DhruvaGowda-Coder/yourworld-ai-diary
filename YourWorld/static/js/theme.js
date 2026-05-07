@@ -144,8 +144,7 @@ if (activityHeatmap) {
       if (activeDaysEl && data.active_days !== undefined) {
         activeDaysEl.textContent = data.active_days;
       }
-    })
-  });
+    });
 
   // Real-time sync: Listen for activity updates from other tabs
   window.addEventListener('storage', (event) => {
