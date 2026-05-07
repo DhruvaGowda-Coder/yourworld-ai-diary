@@ -1,7 +1,6 @@
 import base64
 import os
 import secrets
-import string
 import requests
 import boto3
 import bleach
@@ -73,7 +72,7 @@ def api_upload(file_type):
     return jsonify({"error": "File upload failed"}), 400
 
 @api_bp.route("/api/settings/audio", methods=["POST"])
-@login_required
+@ensure_session
 def api_settings_audio():
     data = request.get_json()
     if not data or "theme" not in data or "url" not in data:
@@ -82,7 +81,7 @@ def api_settings_audio():
     return jsonify({"success": True})
 
 @api_bp.route("/api/settings/audio/delete", methods=["POST"])
-@login_required
+@ensure_session
 def api_settings_audio_delete():
     data = request.get_json()
     if not data or "theme" not in data or "url" not in data:
@@ -91,7 +90,7 @@ def api_settings_audio_delete():
     return jsonify({"success": True})
 
 @api_bp.route("/api/entries")
-@login_required
+@ensure_session
 def api_entries():
     entry_type = request.args.get("type", "diary")
     limit = min(int(request.args.get("limit", 20)), 100)
@@ -103,7 +102,7 @@ def api_entries():
     })
 
 @api_bp.route("/api/entry/<entry_id>")
-@login_required
+@ensure_session
 def api_entry(entry_id):
     row = firebase_db.get_entry(session["user_id"], entry_id)
     if not row: return jsonify({"error": "Not found"}), 404
@@ -114,14 +113,14 @@ def api_entry(entry_id):
     })
 
 @api_bp.route("/api/entry/<entry_id>", methods=["DELETE"])
-@login_required
+@ensure_session
 def api_entry_delete(entry_id):
     if firebase_db.delete_entry(session["user_id"], entry_id):
         return jsonify({"deleted": True})
     return jsonify({"error": "Not found"}), 404
 
 @api_bp.route("/api/entry/<entry_id>/share", methods=["POST"])
-@login_required
+@ensure_session
 def api_entry_share(entry_id):
     data = request.get_json(force=True)
     mode = data.get("mode")
@@ -165,7 +164,7 @@ def api_entry_share(entry_id):
     return jsonify({"share_code": code, "url": url})
 
 @api_bp.route("/api/entry/<entry_id>/share", methods=["DELETE"])
-@login_required
+@ensure_session
 def api_entry_share_delete(entry_id):
     entry = firebase_db.get_entry(session["user_id"], entry_id)
     if not entry:
@@ -175,7 +174,7 @@ def api_entry_share_delete(entry_id):
     return jsonify({"error": "Update failed"}), 500
 
 @api_bp.route("/api/entry/save", methods=["POST"])
-@login_required
+@ensure_session
 @limiter.limit("30 per minute")
 def api_entry_save():
     try:
@@ -254,7 +253,7 @@ def api_chat():
         return jsonify({"reply": "I am here with you. Tell me more.", "fallback": True, "theme": active_theme})
 
 @api_bp.route("/api/activity")
-@login_required
+@ensure_session
 def api_activity():
     days = max(7, min(int(request.args.get("days", 365)), 730))
     counts = firebase_db.get_activity_counts(session["user_id"], days)
