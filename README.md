@@ -1,6 +1,6 @@
-# 📖 YourWorld — AI Diary & Story Platform
+# 📖 YourWorld — Next-Gen Secure Content Sharing Platform
 
-Immersive AI-powered journaling and storytelling platform that transforms writing into an interactive, emotional, and visually rich experience.
+An immersive, AI-powered content sharing and collaboration platform that transforms note-taking and sharing into an interactive, visually rich experience using private access codes.
 
 ---
 
@@ -12,63 +12,37 @@ Immersive AI-powered journaling and storytelling platform that transforms writin
 
 ## 🎯 Problem Solved
 
-Traditional note-taking apps are functional but lack emotional depth, creativity, and engagement, making writing feel repetitive and uninspiring.
+Traditional pasting and sharing tools (like Pastebin or Dontpad) are highly functional but lack creativity, privacy controls, rich media, and AI assistance.
 
 ---
 
 ## 💡 Solution
 
-YourWorld creates a personalized writing environment using dynamic themes, AI assistance, and visual storytelling — turning journaling into an immersive and expressive experience.
+YourWorld creates a personalized, secure workspace where users can write private notes or create rich shared canvases with AI-generated visuals, securely sharing them via private codes.
 
 ---
 
 ## ✨ Key Features
 
-* 📝 Dual writing modes: **Diary** and **Story Mode**
+* 📝 Dual writing modes: **Private Notes** and **Shared Canvas**
 * ⚡ Real-time autosave with **900ms debounce**
 * 🎨 9 immersive elemental themes (visual + audio experience)
 * 🤖 AI-powered writing assistant (Groq – LLaMA 3.1)
-* 🖼️ AI-generated story illustrations (Hugging Face FLUX)
-* 🔗 Share stories using secure **read-only links**
+* 🖼️ AI-generated illustrations securely stored in **Cloudflare R2** (Hugging Face FLUX)
+* 🔗 Share content securely using **unique private codes**
 * 📊 Writing activity heatmap for consistency tracking
 * 🌐 Offline-capable PWA experience
 
 ---
 
-## 🧠 How It Works
-
-User Input → Autosave System → Theme Engine → AI Context Processing → Enhanced Writing Output → Shareable Story
-
----
-
 ## 🏗️ Tech Stack
 
-* **Backend**: Python, Flask, Firebase (Firestore + Storage)
-* **Frontend**: Jinja Templates, JavaScript, CSS
+* **Backend**: Python, Flask (Modular Blueprints architecture)
+* **Database**: Firebase Admin (Firestore)
+* **Storage**: Cloudflare R2 (S3 Boto3 Integration)
+* **Frontend**: Jinja Templates, Vanilla JavaScript, CSS
 * **AI (Chat)**: Groq API (LLaMA 3.1)
 * **AI (Images)**: Hugging Face FLUX
-* **Storage**: Firebase + Local fallback
-
----
-
-## 🧩 Architecture
-
-```id="ywarch"
-Frontend (Flask Templates) → User Input → Autosave Engine → Firebase Storage  
-                                      ↓  
-                            AI Processing (Groq + HuggingFace)  
-                                      ↓  
-                              Enhanced Content Output
-```
-
----
-
-## 📊 Performance & Behavior
-
-* Autosave triggered every **~900ms after input**
-* Guest-first onboarding (no login required)
-* Works offline with cached assets (PWA support)
-* AI features degrade gracefully if API keys are missing
 
 ---
 
@@ -76,11 +50,17 @@ Frontend (Flask Templates) → User Input → Autosave Engine → Firebase Stora
 
 ```text id="ywstruct"
 YourWorld/
-├── app.py
-├── static/
-├── templates/
-├── data/
-└── requirements.txt
+├── app.py             # Main entry point
+├── config.py          # Centralized configuration
+├── extensions.py      # Flask extensions (Limiter, CSRF)
+├── firebase_db.py     # Database interactions
+├── utils.py           # Helper functions & decorators
+├── routes/            # Blueprint Modules
+│   ├── api.py         # AI, R2 Storage, & Data endpoints
+│   ├── auth.py        # Google OAuth
+│   └── main.py        # UI page rendering
+├── static/            # CSS, JS, Images, Audio
+└── templates/         # HTML templates
 ```
 
 ---
@@ -107,29 +87,29 @@ Open:
 ```bash id="yw2"
 DIARY_SECRET_KEY=your-secret
 FIREBASE_ADMIN_CREDENTIALS_JSON=your-json
-FIREBASE_STORAGE_BUCKET=your-bucket
 
+# Cloudflare R2 for Image Storage
+R2_ACCOUNT_ID=your-account-id
+R2_ACCESS_KEY_ID=your-access-key
+R2_SECRET_ACCESS_KEY=your-secret
+R2_BUCKET_NAME=your-bucket
+R2_PUBLIC_DEV_URL=your-public-url
+
+# AI Integration
 GROQ_API_KEY=your-key
 HUGGINGFACE_API_KEY=your-key
 ```
 
 ---
 
-## 🔐 Security & Design
+## 🔐 Security & Architecture
 
-* Guest-first architecture with session-based identity
-* Private-by-default writing model
+* Strict Flask Blueprints structure for robust backend maintenance
+* Flask-Limiter for API rate-limiting against AI abuse
+* XSS prevention using bleach sanitization
 * Secure sharing via generated codes
 * CSRF protection on all API endpoints
 
 ---
 
-## 🎯 Impact
-
-* Encourages consistent writing habits through immersive design
-* Enhances creativity with AI-assisted storytelling
-* Demonstrates full-stack AI integration with real-time interaction
-
----
-
-*Built for creativity. Designed for immersion. Powered by AI.*
+*Built for privacy. Designed for immersion. Powered by AI.*
