@@ -3,10 +3,10 @@
 <section class="workspace" data-entry-type="story">
   <aside class="entry-sidebar">
     <div class="sidebar-header">
-      <h3>Story Pages</h3>
+      <h3>Shared Canvas</h3>
       <div class="sidebar-actions">
-        <button class="btn ghost" id="newEntryBtn" type="button" title="Add Page (Ctrl+N)">Add Page</button>
-        <button class="btn ghost" id="deleteEntryBtn" type="button" title="Delete Page (Ctrl+D)">Delete</button>
+        <button class="btn ghost" id="newEntryBtn" type="button" title="New Canvas (Ctrl+N)">New Canvas</button>
+        <button class="btn ghost" id="deleteEntryBtn" type="button" title="Delete Canvas (Ctrl+D)">Delete</button>
       </div>
     </div>
     <div class="entry-list" id="entryList"></div>
@@ -46,7 +46,7 @@
         <div class="share-permission-row">
           <label class="share-checkbox-label">
             <input type="checkbox" id="shareCanEdit" />
-            Allow code holders to edit this story
+            Allow code holders to edit this canvas
           </label>
         </div>
         <div class="share-actions">
@@ -56,7 +56,7 @@
             </button>
             <div id="shareModeMenu" class="share-mode-menu" role="listbox" aria-label="Share mode">
               <button type="button" class="share-mode-option is-active" data-value="story" role="option" aria-selected="true">
-                Full story
+                Full canvas
               </button>
               <button type="button" class="share-mode-option" data-value="single" role="option" aria-selected="false">
                 Single page
@@ -111,9 +111,9 @@
     </div>
     <div class="book" id="book">
       <div class="page" id="page">
-        <input id="entryTitle" class="page-title" placeholder="Story title..." />
+        <input id="entryTitle" class="page-title" placeholder="Canvas title..." />
         <div class="page-scroll">
-          <textarea id="entryContent" class="page-content" placeholder="Write your story..."></textarea>
+          <textarea id="entryContent" class="page-content" placeholder="Start typing your shared content..."></textarea>
         </div>
         <div class="page-illustration" id="pageIllustration">
           <img id="pageIllustrationImg" alt="Story illustration" />
@@ -123,8 +123,8 @@
       <div class="page-turn" id="pageTurn"></div>
     </div>
     <div class="page-controls">
-      <button class="btn ghost" id="prevEntryBtn" type="button" title="Previous Page (Ctrl+Left)">Previous</button>
-      <button class="btn ghost" id="nextEntryBtn" type="button" title="Next Page (Ctrl+Right)">Next</button>
+      <button class="btn ghost" id="prevEntryBtn" type="button" title="Previous Canvas (Ctrl+Left)">Previous</button>
+      <button class="btn ghost" id="nextEntryBtn" type="button" title="Next Canvas (Ctrl+Right)">Next</button>
     </div>
   </div>
 </section>

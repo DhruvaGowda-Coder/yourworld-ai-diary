@@ -65,8 +65,8 @@
         <button class="btn ghost" type="submit">Open content</button>
       </form>
       <a href="{{ url_for('main.index') }}" class="nav-link" data-page="home">Home</a>
-      <a href="{{ url_for('main.story') }}" class="nav-link" data-page="story">Create</a>
-      <a href="{{ url_for('main.diary') }}" class="nav-link" data-page="diary">Diary</a>
+      <a href="{{ url_for('main.story') }}" class="nav-link" data-page="story">Shared Canvas</a>
+      <a href="{{ url_for('main.diary') }}" class="nav-link" data-page="diary">Private Notes</a>
       <a href="{{ url_for('main.settings') }}" class="nav-link" data-page="settings">Settings</a>
       {% if current_user %}
         <a href="{{ url_for('main.profile') }}" class="nav-link" data-page="profile">Profile</a>
@@ -92,8 +92,8 @@
     </div>
     <div class="mobile-drawer-links">
       <a href="{{ url_for('main.index') }}" class="mobile-nav-link">Home</a>
-      <a href="{{ url_for('main.story') }}" class="mobile-nav-link">Create</a>
-      <a href="{{ url_for('main.diary') }}" class="mobile-nav-link">Diary</a>
+      <a href="{{ url_for('main.story') }}" class="mobile-nav-link">Shared Canvas</a>
+      <a href="{{ url_for('main.diary') }}" class="mobile-nav-link">Private Notes</a>
       <a href="{{ url_for('main.profile') }}" class="mobile-nav-link">Profile</a>
       <a href="{{ url_for('main.settings') }}" class="mobile-nav-link">Settings</a>
       <div class="mobile-drawer-divider"></div>

@@ -3,10 +3,10 @@
 <section class="workspace" data-entry-type="diary">
   <aside class="entry-sidebar">
     <div class="sidebar-header">
-      <h3>My Pages</h3>
+      <h3>Private Notes</h3>
       <div class="sidebar-actions">
-        <button class="btn ghost" id="newEntryBtn" type="button" title="Add Page (Ctrl+N)">Add Page</button>
-        <button class="btn ghost" id="deleteEntryBtn" type="button" title="Delete Page (Ctrl+D)">Delete</button>
+        <button class="btn ghost" id="newEntryBtn" type="button" title="New Note (Ctrl+N)">New Note</button>
+        <button class="btn ghost" id="deleteEntryBtn" type="button" title="Delete Note (Ctrl+D)">Delete</button>
       </div>
     </div>
     <div class="entry-list" id="entryList"></div>
@@ -43,7 +43,7 @@
     </div>
     <div class="book" id="book">
       <div class="page" id="page">
-        <input id="entryTitle" class="page-title" placeholder="Title your page..." />
+        <input id="entryTitle" class="page-title" placeholder="Note title..." />
         <div class="page-scroll">
           <textarea id="entryContent" class="page-content" placeholder="Start writing..."></textarea>
         </div>
@@ -51,8 +51,8 @@
       <div class="page-turn" id="pageTurn"></div>
     </div>
     <div class="page-controls">
-      <button class="btn ghost" id="prevEntryBtn" type="button" title="Previous Page (Ctrl+Left)">Previous</button>
-      <button class="btn ghost" id="nextEntryBtn" type="button" title="Next Page (Ctrl+Right)">Next</button>
+      <button class="btn ghost" id="prevEntryBtn" type="button" title="Previous Note (Ctrl+Left)">Previous</button>
+      <button class="btn ghost" id="nextEntryBtn" type="button" title="Next Note (Ctrl+Right)">Next</button>
     </div>
   </div>
 </section>
