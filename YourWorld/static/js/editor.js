@@ -288,7 +288,7 @@ if (workspace) {
         return;
       }
       saveEntry({ auto: true });
-    }, 2500);
+    }, 800);
   };
 
   const markDirty = () => {
