@@ -101,24 +101,30 @@ def view_story(code):
     if not owner_row:
         return render_template("view_story.html", not_found=True, code=safe_code)
 
-    # Change: Only show the specific entry that matches the share code
-    # instead of fetching all stories for the user.
-    pages = [{
-        "id": owner_row.get("id"),
-        "title": unescape(owner_row.get("title", "")),
-        "content": unescape(owner_row.get("content", "")),
-        "image_url": owner_row.get("image_url"),
-        "image_attached": bool(owner_row.get("image_attached")),
-        "image_style": owner_row.get("image_style"),
-        "title_style": owner_row.get("title_style"),
-        "content_style": owner_row.get("content_style"),
-        "updated_at": owner_row.get("updated_at"),
-        "created_at": owner_row.get("created_at"),
-    }]
+    # Fetch all stories for this user to show the "full canvas"
+    rows = firebase_db.get_story_entries_for_user(owner_row.get("user_id"))
+
+    if not rows:
+        # Fallback to just the owner row if somehow no other stories are found
+        rows = [owner_row]
 
     return render_template(
         "view_story.html",
-        pages=pages,
+        pages=[
+            {
+                "id": r.get("id"),
+                "title": unescape(r.get("title", "")),
+                "content": unescape(r.get("content", "")),
+                "image_url": r.get("image_url"),
+                "image_attached": bool(r.get("image_attached")),
+                "image_style": r.get("image_style"),
+                "title_style": r.get("title_style"),
+                "content_style": r.get("content_style"),
+                "updated_at": r.get("updated_at"),
+                "created_at": r.get("created_at"),
+            }
+            for r in rows
+        ],
         code=safe_code,
         not_found=False,
         can_edit=owner_row.get("can_edit", False)
