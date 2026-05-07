@@ -45,7 +45,7 @@
     <p>
       Create and share content using a unique code.
     </p>
-    <form class="home-code-form" action="/view" method="get" aria-label="Open shared content by code">
+    <form class="home-code-form" action="{{ url_for('main.view_by_code') }}" method="get" aria-label="Open shared content by code">
       <label for="homeShareCode">Open content with a share code</label>
       <div class="home-code-row">
         <input id="homeShareCode" type="text" name="code" placeholder="Enter the private content code" autocomplete="off" inputmode="text" maxlength="32" pattern="[A-Za-z0-9-]{4,32}" aria-describedby="homeCodeHelp" />
@@ -53,7 +53,7 @@
       </div>
     </form>
     <div class="hero-actions">
-      <a class="btn ghost" href="/story">Create and share code</a>
+      <a class="btn ghost" href="{{ url_for('main.story') }}">Create and share code</a>
     </div>
   </div>
   <div class="hero-visual">
