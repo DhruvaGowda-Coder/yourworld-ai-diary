@@ -802,6 +802,8 @@ if (workspace) {
         updatePageCount();
         updateDeleteButton();
         
+        // Broadcast activity update for other tabs (e.g., Profile page)
+        localStorage.setItem('yw_activity_updated', Date.now());
         return currentEntryId;
       } catch (err) {
         console.error('Save error:', err);

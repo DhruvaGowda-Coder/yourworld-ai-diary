@@ -145,16 +145,30 @@ if (activityHeatmap) {
         activeDaysEl.textContent = data.active_days;
       }
     })
-    .catch(() => {
-      activityHeatmap.textContent = '';
-      buildHeatmap({}, 365);
-      const pageCountEl = document.getElementById('profilePageCount');
-      if (pageCountEl) pageCountEl.textContent = '0';
-      const streakEl = document.getElementById('profileStreak');
-      if (streakEl) streakEl.textContent = '0';
-      const activeDaysEl = document.getElementById('profileDaysActive');
-      if (activeDaysEl) activeDaysEl.textContent = '0';
-    });
+  });
+
+  // Real-time sync: Listen for activity updates from other tabs
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'yw_activity_updated') {
+      fetch('/api/activity?days=365')
+        .then((response) => response.json())
+        .then((data) => {
+          buildHeatmap(data.counts || {}, data.days || 365);
+          
+          const els = {
+            profilePageCount: data.total_pages,
+            profileStreak: data.streak,
+            profileDaysActive: data.active_days
+          };
+          
+          for (const [id, val] of Object.entries(els)) {
+            const el = document.getElementById(id);
+            if (el && val !== undefined) el.textContent = val;
+          }
+        })
+        .catch(() => {});
+    }
+  });
 }
 
 const handleResendButton = (btnId) => {
