@@ -1226,8 +1226,36 @@ button:active:not(:disabled) {
     overflow: auto !important; /* Handle both horizontal and vertical scroll here */
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: var(--theme-accent-soft) transparent;
+    
+    /* Force visible scrollbars on mobile */
+    scrollbar-width: auto !important;
+    scrollbar-color: var(--theme-accent) rgba(0,0,0,0.1) !important;
+    
+    /* Ensure background texture flows with content to prevent 'texture breaks' */
+    background-attachment: local !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+  }
+
+  /* Webkit Scrollbar Styling for Mobile Visibility */
+  .book::-webkit-scrollbar, 
+  .public-story .book::-webkit-scrollbar {
+    width: 8px !important; /* Slightly wider for touch */
+    height: 8px !important;
+    display: block !important;
+  }
+  .book::-webkit-scrollbar-track,
+  .public-story .book::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.08) !important;
+    border-radius: 10px !important;
+    margin: 10px !important;
+  }
+  .book::-webkit-scrollbar-thumb,
+  .public-story .book::-webkit-scrollbar-thumb {
+    background: var(--theme-accent) !important;
+    border-radius: 10px !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2) !important;
   }
 
   .public-main,
