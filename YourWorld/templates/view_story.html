@@ -449,7 +449,7 @@
         <div class="page public-page" id="publicPage" style="display: flex; flex-direction: column; position: relative;">
           <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none;" value="{{ pages[0].title if pages else 'Untitled' }}" />
           <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
-            <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;">{{ pages[0].content | safe if pages else '' }}</div>
+            <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;">{{ pages[0].content | e if pages else '' }}</div>
           </div>
           <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
             <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: auto; object-fit: cover; display: block; border-radius: 24px;" />
@@ -682,7 +682,7 @@
             };
 
             window.addEventListener('mousemove', handleMove);
-            window.addEventListener('touchmove', handleMove, { passive: true });
+            window.addEventListener('touchmove', handleMove, { passive: false });
 
             const handleEnd = () => {
               isTouchActive = false;
@@ -762,8 +762,10 @@
             el.style.transform = 'none';
             el.style.width = '100%';
             el.style.maxWidth = '100%';
-            el.style.height = 'auto';
+            el.style.setProperty('height', 'auto', 'important');
             el.style.margin = '16px 0';
+            const img = el.querySelector('img');
+            if (img) { img.style.height = 'auto'; img.style.width = '100%'; }
             return;
           }
 
@@ -812,17 +814,9 @@
         function render() {
           if (!pages.length) return;
           const p = pages[currentIndex];
-
           if (titleEl) titleEl.value = p.title || 'Untitled';
           if (contentEl) {
-            contentEl.innerHTML = p.content || '';
-            // Fix images in content: ensure crossorigin attribute
-            contentEl.querySelectorAll('img').forEach(img => {
-              img.setAttribute('crossorigin', 'anonymous');
-              img.setAttribute('loading', 'lazy');
-              img.style.maxWidth = '100%';
-              img.style.borderRadius = '12px';
-            });
+            contentEl.textContent = p.content || '';
           }
           
           const pageScroll = document.querySelector('.page-scroll');
@@ -842,6 +836,7 @@
             } catch(e) {}
           };
 
+          // Apply styles AFTER setting content
           applyStyles(titleEl, p.title_style);
           applyStyles(contentEl, p.content_style);
 
@@ -914,7 +909,7 @@
                 body: JSON.stringify({
                   id: p.id,
                   title: titleEl.value,
-                  content: contentEl.innerHTML,
+                  content: contentEl.textContent,
                   type: 'story',
                   title_style: p.title_style,
                   content_style: p.content_style,
@@ -944,7 +939,7 @@
               });
               if (r.ok) {
                 p.title = titleEl.value;
-                p.content = contentEl.innerHTML;
+                p.content = contentEl.textContent;
                 saveBtn.textContent = 'Saved!';
                 
                 const sidebarItem = document.querySelector(`.public-page-item[data-index="${currentIndex}"]`);

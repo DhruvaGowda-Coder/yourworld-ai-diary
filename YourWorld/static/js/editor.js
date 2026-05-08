@@ -463,12 +463,14 @@ if (workspace) {
 
   const applyImageStyle = () => {
     if (!pageIllustration) return;
+    const isMobile = window.innerWidth <= 900;
     if (imageStyleState.width) {
       pageIllustration.style.width = `${imageStyleState.width}px`;
     } else {
       pageIllustration.style.width = '250px';
     }
-    if (imageStyleState.height) {
+    // On mobile, never force an explicit height — let it be natural
+    if (!isMobile && imageStyleState.height) {
       pageIllustration.style.height = `${imageStyleState.height}px`;
     } else {
       pageIllustration.style.height = 'auto';
@@ -612,10 +614,9 @@ if (workspace) {
       const container = entryList;
       const itemTop = activeItem.offsetTop;
       const itemBottom = itemTop + activeItem.offsetHeight;
-      const containerScrollTop = container.scrollTop;
-      const containerBottom = containerScrollTop + container.clientHeight;
-      const isVisible = itemTop >= containerScrollTop && itemBottom <= containerBottom;
-      if (!isVisible) {
+      const scrollTop = container.scrollTop;
+      const scrollBottom = scrollTop + container.clientHeight;
+      if (itemTop < scrollTop || itemBottom > scrollBottom) {
         activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     }
@@ -797,18 +798,16 @@ if (workspace) {
         // Update local entries list
         const existingIndex = entries.findIndex((entry) => entry.id === currentEntryId);
         if (existingIndex >= 0) {
+          const titleChanged = entries[existingIndex].title !== data.title;
           entries[existingIndex].title = data.title;
           entries[existingIndex].updated_at = data.updated_at;
           currentIndex = existingIndex;
           lastActiveIndex = existingIndex;
+          if (titleChanged) renderEntries(); // Only re-render if title changed
         } else {
           entries.push({ id: currentEntryId, title: data.title, updated_at: data.updated_at });
           currentIndex = entries.length - 1;
           lastActiveIndex = currentIndex;
-        }
-        // Only re-render entry list if title changed (sidebar only shows titles)
-        const titleChanged = entries[existingIndex]?.title !== data.title;
-        if (titleChanged || existingIndex < 0) {
           renderEntries();
         }
         updatePageCount();
@@ -1158,6 +1157,7 @@ if (workspace) {
       if (!currentImageUrl) return;
       if (pageIllustrationImg && pageIllustrationImg.naturalWidth > 0) {
         imageModalImg.src = currentImageUrl;
+        imageModalImg.style.display = 'block';
         imageModal.classList.add('open');
         imageModal.setAttribute('aria-hidden', 'false');
       }
@@ -1168,6 +1168,10 @@ if (workspace) {
     const closeModal = () => {
       imageModal.classList.remove('open');
       imageModal.setAttribute('aria-hidden', 'true');
+      if (imageModalImg) {
+        imageModalImg.style.display = 'none';
+        imageModalImg.src = '';
+      }
     };
     imageModalClose.addEventListener('click', closeModal);
     imageModal.addEventListener('click', (event) => {
