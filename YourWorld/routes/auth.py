@@ -82,6 +82,7 @@ def auth_google_callback():
     
     firebase_db.create_or_update_user(uid, email, name, picture)
     
+    session.permanent = True
     session["user_id"] = uid
     session["is_guest"] = False
     session.pop("theme", None)

@@ -1,3 +1,59 @@
+// ── Chat History Persistence ─────────────────────────────────────────────────
+const CHAT_STORAGE_KEY = 'yw_chat_history';
+const CHAT_DISPLAY_KEY = 'yw_chat_display';
+const MAX_STORED_DISPLAY = 30;
+
+function _saveChatHistory() {
+  try {
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatHistory.slice(-MAX_CHAT_HISTORY)));
+  } catch(e) {}
+}
+
+function _saveDisplayMessages() {
+  if (!chatMessages) return;
+  try {
+    const items = [];
+    chatMessages.querySelectorAll('.chat-bubble').forEach(el => {
+      items.push({ who: el.classList.contains('bot') ? 'bot' : 'user', html: el.innerHTML });
+    });
+    localStorage.setItem(CHAT_DISPLAY_KEY, JSON.stringify(items.slice(-MAX_STORED_DISPLAY)));
+  } catch(e) {}
+}
+
+function _loadStoredChat() {
+  try {
+    const storedHistory = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
+    if (Array.isArray(storedHistory) && storedHistory.length > 0) {
+      chatHistory.push(...storedHistory);
+    }
+  } catch(e) {}
+
+  if (!chatMessages) return;
+  try {
+    const storedDisplay = JSON.parse(localStorage.getItem(CHAT_DISPLAY_KEY) || '[]');
+    if (Array.isArray(storedDisplay) && storedDisplay.length > 0) {
+      storedDisplay.forEach(({ who, html }) => {
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble ${who}`;
+        bubble.innerHTML = html;
+        chatMessages.appendChild(bubble);
+      });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  } catch(e) {}
+}
+
+function _clearChatHistory() {
+  try {
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+    localStorage.removeItem(CHAT_DISPLAY_KEY);
+  } catch(e) {}
+  chatHistory.length = 0;
+  if (chatMessages) chatMessages.innerHTML = '';
+  ensureGreeting();
+}
+
+// ── Core message renderer ────────────────────────────────────────────────────
 function addMessage(text, who = 'user') {
   if (!chatMessages) return;
   const bubble = document.createElement('div');
@@ -17,8 +73,31 @@ function ensureGreeting() {
   const greeting = getThemeMeta(activeTheme).greeting;
   addMessage(greeting, 'bot');
   chatHistory.push({ role: 'assistant', content: greeting });
+  _saveChatHistory();
+  _saveDisplayMessages();
 }
 
+// ── Inject Clear History button into chat header ──────────────────────────────
+(function injectClearBtn() {
+  const actions = document.querySelector('.chat-actions');
+  if (!actions) return;
+  const clearBtn = document.createElement('button');
+  clearBtn.id = 'chatClearBtn';
+  clearBtn.className = 'chat-clear-btn';
+  clearBtn.title = 'Clear chat history';
+  clearBtn.setAttribute('aria-label', 'Clear chat history');
+  clearBtn.textContent = '🗑';
+  clearBtn.style.cssText = 'background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:0.9rem;cursor:pointer;padding:2px 4px;border-radius:6px;transition:color 0.2s;line-height:1;';
+  clearBtn.addEventListener('mouseenter', () => { clearBtn.style.color = '#f3cda2'; });
+  clearBtn.addEventListener('mouseleave', () => { clearBtn.style.color = 'rgba(255,255,255,0.4)'; });
+  clearBtn.addEventListener('click', () => { _clearChatHistory(); });
+  // Insert before the close button
+  const closeBtn = document.getElementById('chatClose');
+  if (closeBtn) actions.insertBefore(clearBtn, closeBtn);
+  else actions.appendChild(clearBtn);
+})();
+
+// ── Chat panel open / close ──────────────────────────────────────────────────
 if (chatLaunch && chatPanel) {
   chatLaunch.addEventListener('click', () => {
     chatPanel.classList.add('open');
@@ -34,6 +113,7 @@ if (chatClose && chatPanel) {
   });
 }
 
+// ── Resize handle ────────────────────────────────────────────────────────────
 if (chatResizeHandle && chatPanel) {
   let startX = 0;
   let startY = 0;
@@ -132,6 +212,7 @@ if (chatResizeHandle && chatPanel) {
   chatResizeHandle.addEventListener('pointerdown', startResize);
 }
 
+// ── Drag handle ──────────────────────────────────────────────────────────────
 if (chatDragHandle && chatPanel) {
   let dragStartX = 0;
   let dragStartY = 0;
@@ -191,6 +272,7 @@ if (chatDragHandle && chatPanel) {
   chatDragHandle.addEventListener('touchstart', startDragging, { passive: false });
 }
 
+// ── Form submit / AI call ────────────────────────────────────────────────────
 if (chatForm && chatText) {
   chatForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -212,6 +294,8 @@ if (chatForm && chatText) {
           typingBubble.innerHTML = 'AI chat requires a free account. <a href="/login/google" class="chat-login-link">Sign in here</a> - it only takes a second.';
           chatHistory.push({ role: 'user', content: text });
           chatHistory.push({ role: 'assistant', content: 'AI chat requires a free account. Sign in to continue.' });
+          _saveChatHistory();
+          _saveDisplayMessages();
           return;
         }
         if (data && data.theme) {
@@ -227,6 +311,8 @@ if (chatForm && chatText) {
         }
         chatHistory.push({ role: 'user', content: text });
         chatHistory.push({ role: 'assistant', content: reply });
+        _saveChatHistory();
+        _saveDisplayMessages();
       })
       .catch(() => {
         const fallbackOptions = getThemeMeta(activeTheme).fallback;
@@ -238,7 +324,13 @@ if (chatForm && chatText) {
         }
         chatHistory.push({ role: 'user', content: text });
         chatHistory.push({ role: 'assistant', content: fallback });
+        _saveChatHistory();
+        _saveDisplayMessages();
       });
   });
 }
 
+// ── Restore history on page load ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  _loadStoredChat();
+});

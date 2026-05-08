@@ -654,7 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
       isPlaying = false;
       localStorage.setItem('yw_sound_enabled', 'false');
       localStorage.setItem('yw_sound_time', '0');
-      toggleBtn.textContent = '🔇 Sound';
+      toggleBtn.textContent = '\uD83D\uDD07 Sound';
     } else {
       // If no src is loaded yet, load the current theme
       if (!audioPlayer.src || audioPlayer.src === window.location.href || audioPlayer.src === '') {
@@ -666,14 +666,24 @@ document.addEventListener('DOMContentLoaded', () => {
         audioPlayer.play().then(() => {
           isPlaying = true;
           localStorage.setItem('yw_sound_enabled', 'true');
-          toggleBtn.textContent = '🔊 Sound';
+          toggleBtn.textContent = '\uD83D\uDD0A Sound';
           toggleBtn.classList.remove('pulse-highlight');
         }).catch(err => {
           console.warn('Playback failed:', err);
-          toggleBtn.classList.add('pulse-highlight');
-          // Try to load and play again if it was a source issue
-          audioPlayer.load();
-          audioPlayer.play().catch(() => {});
+          // If custom audio failed, fall back to default before giving up
+          const curTheme = typeof activeTheme !== 'undefined' ? activeTheme : 'campfire';
+          const defaultSrc = `/static/audio/${curTheme}.wav`;
+          if (audioPlayer.src !== defaultSrc && !audioPlayer.src.includes('/static/audio/')) {
+            audioPlayer.src = defaultSrc;
+            audioPlayer.play().then(() => {
+              isPlaying = true;
+              localStorage.setItem('yw_sound_enabled', 'true');
+              toggleBtn.textContent = '\uD83D\uDD0A Sound';
+              toggleBtn.classList.remove('pulse-highlight');
+            }).catch(() => { toggleBtn.classList.add('pulse-highlight'); });
+          } else {
+            toggleBtn.classList.add('pulse-highlight');
+          }
         });
       };
 
@@ -682,12 +692,29 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   toggleBtn.addEventListener('click', toggleAudio);
-  toggleBtn.addEventListener('touchstart', (e) => {
-    // Only trigger if not already handled by click (to avoid double toggle)
-    // Actually, on most mobile browsers click is fine, but touchstart is faster.
-    // To be safe, we'll just use click but ensure it's not blocked.
-    // However, some mobile Safari versions prefer user interaction to be very direct.
-  }, { passive: true });
+
+  // Mobile: touchend gives a direct user-gesture for audio unlock on iOS/Android.
+  // preventDefault() stops the browser from also firing a click (which would double-toggle).
+  toggleBtn.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    toggleAudio(e);
+  }, { passive: false });
+
+  // Audio error recovery: if custom audio fails to load, silently fall back to default.
+  audioPlayer.addEventListener('error', () => {
+    const src = audioPlayer.src || '';
+    if (src && !src.includes('/static/audio/')) {
+      console.warn('Custom audio failed, falling back to default ambient track.');
+      const curTheme = typeof activeTheme !== 'undefined' ? activeTheme : 'campfire';
+      audioPlayer.src = `/static/audio/${curTheme}.wav`;
+      if (isPlaying) audioPlayer.play().catch(() => {});
+    } else if (isPlaying) {
+      isPlaying = false;
+      localStorage.setItem('yw_sound_enabled', 'false');
+      toggleBtn.textContent = '\uD83D\uDD07 Sound';
+      toggleBtn.classList.add('pulse-highlight');
+    }
+  });
 
   // Theme observer
   window.addEventListener('yw:themechange', (event) => {

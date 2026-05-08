@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 import secrets
 from flask import Flask, g, session, request, redirect, jsonify, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -30,6 +31,8 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.config['SESSION_COOKIE_SECURE'] = is_production
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+app.config['SESSION_PERMANENT'] = True
 
 csrf.init_app(app)
 limiter.init_app(app)
@@ -67,7 +70,6 @@ def add_security_headers(response):
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
     response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    response.headers['Cross-Origin-Embedder-Policy'] = 'require-corp'
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
     return response
 
