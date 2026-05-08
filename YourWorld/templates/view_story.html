@@ -179,10 +179,20 @@
     z-index: 10 !important;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    max-width: calc(100% - 40px) !important; /* Prevent overflow */
-    overflow: visible !important; /* Remove internal scrollbars */
-    touch-action: none !important; /* PREVENT browser scroll during drag */
+    max-width: calc(100% - 40px) !important;
+    overflow: visible !important;
     user-select: none !important;
+    /* touch-action is handled by JS during drag only, not statically */
+  }
+
+  /* Only block touch scroll when edit mode is active */
+  .public-story[data-can-edit="true"] #publicIllustration {
+    touch-action: none !important;
+  }
+
+  .public-story[data-can-edit="false"] #publicIllustration {
+    touch-action: auto !important;
+    pointer-events: none !important;
   }
 
   .resize-handle {
@@ -222,13 +232,29 @@
   }
 
   #publicIllustrationImg,
-  .page-illustration img,
-  .page-content img {
+  .page-illustration img {
     border-radius: 24px !important;
     display: block;
     width: 100%;
-    height: 100%;
+    /* Use natural aspect ratio unless explicit height is on the container */
+    height: auto;
     object-fit: cover;
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
+    mask-image: -webkit-radial-gradient(white, black);
+  }
+
+  /* When the container has an explicit height (user resized), fill it */
+  .page-illustration[style*="height:"] img,
+  .page-illustration[style*="height:"] #publicIllustrationImg {
+    height: 100%;
+  }
+
+  .page-content img {
+    border-radius: 24px !important;
+    max-width: 100%;
+    height: auto;
+    margin: 20px 0;
+    display: block;
   }
 
   .page-content img {
@@ -338,7 +364,7 @@
       height: auto !important;
       min-height: auto !important; 
       max-height: 70vh !important;
-      overflow-x: auto !important;
+      overflow-x: hidden !important;
       overflow-y: auto !important;
       -webkit-overflow-scrolling: touch;
       display: block !important;
@@ -415,7 +441,7 @@
             <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;">{{ pages[0].content if pages else '' }}</div>
           </div>
           <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-            <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+            <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: auto; object-fit: cover; display: block; border-radius: 24px;" />
             {% if can_edit %}
             <div class="resize-handle" id="publicResizeHandle"></div>
             <button type="button" id="publicDeleteIllBtn" style="position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.5); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 31; backdrop-filter: blur(4px); transition: all 0.2s;">&times;</button>
@@ -627,6 +653,17 @@
 
             window.addEventListener('mouseup', handleEnd);
             window.addEventListener('touchend', handleEnd);
+            window.addEventListener('touchcancel', () => {
+              isTouchActive = false;
+              if (touchTimer) clearTimeout(touchTimer);
+              isDragging = false;
+              isResizing = false;
+              document.body.style.overflow = '';
+              if (illEl) {
+                illEl.style.cursor = 'grab';
+                illEl.classList.remove('is-dragging');
+              }
+            });
           }
         } else {
           if (titleEl) titleEl.style.pointerEvents = 'none';
@@ -658,20 +695,45 @@
           if (!el) return;
           try {
             const s = styleStr ? JSON.parse(styleStr) : { x: 0, y: 0, width: 250, height: null };
+            
+            // Get the page container width for clamping
+            const page = document.getElementById('publicPage');
+            const pageW = page ? page.offsetWidth : 500;
+            const isMobile = window.innerWidth <= 900;
+            
             el.style.position = 'absolute';
-            el.style.left = '20px'; // Match editor default
-            el.style.top = '60px'; // Match editor default
-            el.style.transform = `translate(${s.x || 0}px, ${s.y || 0}px)`;
-            el.style.width = s.width ? `${s.width}px` : '250px';
+            el.style.left = '20px';
+            el.style.top = '60px';
+            
+            // Clamp width to fit within the page on mobile/small screens
+            let rawWidth = s.width || 250;
+            const maxAllowedWidth = Math.max(80, pageW - 40);
+            // On mobile, additionally cap at 65% of page width for better readability
+            const capWidth = isMobile ? Math.min(maxAllowedWidth, Math.floor(pageW * 0.65)) : maxAllowedWidth;
+            const clampedWidth = Math.min(rawWidth, capWidth);
+            el.style.width = clampedWidth + 'px';
             el.style.maxWidth = 'calc(100% - 40px)';
+            
+            // Clamp x offset so the image stays within the page (allow slight overflow on purpose for design)
+            const rawX = s.x || 0;
+            // Max x: right edge of page minus image width minus 20px margin
+            const maxX = pageW - clampedWidth - 40;
+            // Min x: allow small negative offset (e.g. -10px) but no more
+            const minX = isMobile ? 0 : -10;
+            const clampedX = Math.max(minX, Math.min(rawX, Math.max(0, maxX)));
+            
+            el.style.transform = `translate(${clampedX}px, ${s.y || 0}px)`;
+            
             if (s.height) el.style.height = `${s.height}px`;
             else el.style.height = 'auto';
+            
           } catch(e) {
             el.style.position = 'absolute';
             el.style.top = '60px';
             el.style.left = '20px';
             el.style.width = '250px';
             el.style.maxWidth = 'calc(100% - 40px)';
+            el.style.transform = 'translate(0px, 0px)';
           }
         }
 
@@ -720,8 +782,13 @@
           if (nextIndex < 0 || nextIndex >= pages.length) return;
           currentIndex = nextIndex;
           render();
+          // Only scroll the book into view if it is NOT already visible
           if (bookEl) {
-            bookEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            const rect = bookEl.getBoundingClientRect();
+            const inView = rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+            if (!inView) {
+              bookEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
           }
         }
 
@@ -736,8 +803,13 @@
           item.addEventListener('click', () => {
             currentIndex = parseInt(item.dataset.index);
             render();
+            // Only scroll if book is outside viewport
             if (bookEl) {
-              bookEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
+              const rect = bookEl.getBoundingClientRect();
+              const inView = rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+              if (!inView) {
+                bookEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              }
             }
           });
         });
@@ -807,6 +879,20 @@
         }
 
         render();
+
+        // Re-apply image positioning on resize (handles orientation changes)
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(() => {
+            if (pages.length && pages[currentIndex]) {
+              const p = pages[currentIndex];
+              if (p.image_url && p.image_attached && illEl) {
+                applyImageStyle(illEl, p.image_style);
+              }
+            }
+          }, 150);
+        });
       })();
     </script>
   {% endif %}

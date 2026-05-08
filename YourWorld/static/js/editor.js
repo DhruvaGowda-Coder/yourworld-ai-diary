@@ -1,4 +1,4 @@
-const workspace = document.querySelector('.workspace');
+const workspace = document.querySelector('.workspace:not(.public-story)');
 if (workspace) {
   const entryType = workspace.dataset.entryType || 'diary';
   const entryList = document.getElementById('entryList');
@@ -1093,7 +1093,7 @@ if (workspace) {
     });
     
     imageUploadInput.addEventListener('change', async (e) => {
-      const file = e.target.files[ file ];
+      const file = e.target.files[0];
       if (!file) return;
       
       const formData = new FormData();
@@ -1504,14 +1504,30 @@ if (workspace) {
       if (isDragging) {
         const dx = clientX - startX;
         const dy = clientY - startY;
-        imageStyleState.x = startTX + dx;
-        imageStyleState.y = startTY + dy;
+        
+        const rawX = startTX + dx;
+        const rawY = startTY + dy;
+        
+        // Boundary Clamping (Ensure image stays within visible page bounds)
+        const page = document.getElementById('pageContent') || document.querySelector('.page');
+        const pageW = page ? page.offsetWidth : 500;
+        const imgW = pageIllustration.offsetWidth;
+        
+        // Allow slight overflow for artistic effect, but keep core within bounds
+        imageStyleState.x = Math.max(-20, Math.min(rawX, pageW - imgW + 20));
+        imageStyleState.y = Math.max(-100, Math.min(rawY, 1200)); // Reasonable vertical limit
+        
         applyImageStyle();
         markDirty();
       } else if (isResizing) {
         const dx = clientX - startX;
         const dy = clientY - startY;
-        imageStyleState.width = Math.max(50, startW + dx);
+        
+        const page = document.getElementById('pageContent') || document.querySelector('.page');
+        const pageW = page ? page.offsetWidth : 500;
+        const maxW = Math.max(100, pageW - 40);
+        
+        imageStyleState.width = Math.max(50, Math.min(startW + dx, maxW));
         imageStyleState.height = Math.max(50, startH + dy);
         applyImageStyle();
         markDirty();
@@ -1535,6 +1551,14 @@ if (workspace) {
 
     window.addEventListener('mouseup', handleEnd);
     window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', () => {
+      isTouchActive = false;
+      if (touchTimer) clearTimeout(touchTimer);
+      isDragging = false;
+      isResizing = false;
+      pageIllustration.style.cursor = 'grab';
+      pageIllustration.classList.remove('is-dragging');
+    });
   }
 
   applyEditorStyle();

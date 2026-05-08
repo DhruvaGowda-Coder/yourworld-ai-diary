@@ -293,8 +293,14 @@
       let newLeft = startLeft + dx;
       let newTop = startTop + dy;
       
-      newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - panel.offsetWidth));
-      newTop = Math.max(0, Math.min(newTop, window.innerHeight - panel.offsetHeight));
+      const panelW = panel.offsetWidth;
+      const panelH = panel.offsetHeight;
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+
+      // Boundary Clamping
+      newLeft = Math.max(0, Math.min(newLeft, winW - panelW));
+      newTop = Math.max(0, Math.min(newTop, winH - panelH));
       
       panel.style.left = newLeft + 'px';
       panel.style.top = newTop + 'px';
