@@ -1104,6 +1104,7 @@ button:active:not(:disabled) {
 .public-story .book {
   padding: 42px;
   min-height: 70vh;
+  scroll-margin-top: 96px;
 }
 
 .public-page {
@@ -1133,6 +1134,26 @@ button:active:not(:disabled) {
   align-items: center;
   gap: 12px;
   color: rgba(255, 255, 255, 0.86);
+}
+
+.public-view-controls {
+  flex-wrap: wrap;
+}
+
+.public-view-controls .public-page-count {
+  flex: 0 0 auto;
+  margin: 0;
+  min-width: 52px;
+  text-align: center;
+}
+
+.public-view-controls .btn {
+  min-width: 120px;
+}
+
+.public-view-controls .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .public-controls.is-hidden {

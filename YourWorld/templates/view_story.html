@@ -2,6 +2,7 @@
 {% block title %}{{ pages[0].title if pages else 'Story Not Found' }} - YourWorld{% endblock %}
 {% block robots %}noindex, nofollow{% endblock %}
 {% block description %}Shared YourWorld content opened by a private code. Only people with the code can access this page.{% endblock %}
+{% block body_class %}public-view-body{% endblock %}
 {% block meta %}
 {% if pages %}
 <meta property="og:title" content="{{ pages[0].title }}">
@@ -35,12 +36,12 @@
       </div>
     </div>
 
-    <div class="page-controls" id="publicControls" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 30px;">
-      <button class="btn ghost" id="publicPrevBtn" type="button">Previous</button>
+    <div class="page-controls public-view-controls" id="publicControls" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 30px;">
+      <button class="btn ghost" id="publicPrevBtn" type="button" aria-label="Previous page">Previous</button>
       <span class="public-page-count" id="publicPageCount" style="font-family: var(--ui-font); font-size: 0.9rem; opacity: 0.8; color: #fff;">
         {% if pages %}1 / {{ pages|length }}{% endif %}
       </span>
-      <button class="btn ghost" id="publicNextBtn" type="button">Next</button>
+      <button class="btn ghost" id="publicNextBtn" type="button" aria-label="Next page">Next</button>
       {% if can_edit %}
         <button class="btn primary" id="publicSaveBtn" type="button">Save Changes</button>
       {% endif %}
@@ -51,10 +52,13 @@
       <span class="public-mode" style="margin-left: 10px; padding: 4px 10px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 0.8rem;">
         {% if can_edit %}Editable{% else %}View Only{% endif %}
       </span>
+      {% if can_edit %}
+        <div class="public-edit-warning" style="margin-top: 10px; font-size: 0.82rem;">Anyone with this code can save changes to this shared canvas.</div>
+      {% endif %}
     </div>
 
     <script id="publicPagesData" type="application/json">{{ pages | tojson }}</script>
-    <script>
+    <script nonce="{{ csp_nonce }}">
       (function() {
         let pages = [];
         try {
@@ -72,6 +76,7 @@
         const prevBtn = document.getElementById('publicPrevBtn');
         const nextBtn = document.getElementById('publicNextBtn');
         const saveBtn = document.getElementById('publicSaveBtn');
+        const bookEl = document.getElementById('publicBook');
 
         if (canEdit) {
           titleEl.readOnly = false;
@@ -83,12 +88,22 @@
           contentEl.style.pointerEvents = 'none';
         }
 
+        function updateButtonState() {
+          const atStart = currentIndex === 0;
+          const atEnd = currentIndex >= pages.length - 1;
+          prevBtn.disabled = atStart;
+          nextBtn.disabled = atEnd;
+          prevBtn.setAttribute('aria-disabled', String(atStart));
+          nextBtn.setAttribute('aria-disabled', String(atEnd));
+        }
+
         function render() {
           if (!pages.length) return;
           const p = pages[currentIndex];
 
           titleEl.value = p.title || 'Untitled';
           contentEl.value = p.content || '';
+          contentEl.scrollTop = 0;
           
           const applyStyles = (el, styleStr) => {
             if (!el || !styleStr) return;
@@ -112,12 +127,25 @@
           }
 
           countEl.textContent = (currentIndex + 1) + " / " + pages.length;
-          prevBtn.disabled = (currentIndex === 0);
-          nextBtn.disabled = (currentIndex === pages.length - 1);
+          updateButtonState();
         }
 
-        prevBtn.onclick = function() { if (currentIndex > 0) { currentIndex--; render(); } };
-        nextBtn.onclick = function() { if (currentIndex < pages.length - 1) { currentIndex++; render(); } };
+        function navigate(delta) {
+          const nextIndex = currentIndex + delta;
+          if (nextIndex < 0 || nextIndex >= pages.length) return;
+          currentIndex = nextIndex;
+          render();
+          if (bookEl) {
+            bookEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          }
+        }
+
+        prevBtn.addEventListener('click', function() {
+          navigate(-1);
+        });
+        nextBtn.addEventListener('click', function() {
+          navigate(1);
+        });
 
         if (saveBtn) {
           saveBtn.onclick = async function() {

@@ -48,7 +48,7 @@
     <form class="home-code-form" action="{{ url_for('main.view_by_code') }}" method="get" aria-label="Open shared content by code">
       <label for="homeShareCode">Open content with a share code</label>
       <div class="home-code-row">
-        <input id="homeShareCode" type="text" name="code" placeholder="Enter the private content code" autocomplete="off" inputmode="text" maxlength="32" pattern="[A-Za-z0-9-]{4,32}" aria-describedby="homeCodeHelp" />
+        <input id="homeShareCode" type="text" name="code" placeholder="Enter the private content code" autocomplete="off" inputmode="text" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9_.~-]{3,31}" aria-describedby="homeCodeHelp" />
         <button class="btn primary" type="submit">Open content</button>
       </div>
     </form>

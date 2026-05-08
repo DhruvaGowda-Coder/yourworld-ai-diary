@@ -29,9 +29,9 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=20260505k" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}?v=20260505k" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}?v=20260505k" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/editor.css') }}?v=20260506m" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/editor.css') }}?v=20260508n" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=20260508b" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}?v=20260505k" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}?v=20260508n" />
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='img/favicon-192x192.png') }}">
@@ -39,7 +39,7 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
   {% block structured_data %}{% endblock %}
 </head>
-<body data-theme="{{ current_theme or 'campfire' }}" data-cycle="day">
+<body class="{% block body_class %}{% endblock %}" data-theme="{{ current_theme or 'campfire' }}" data-cycle="day">
   <div class="ambient-bg"></div>
   <div class="theme-motion theme-motion-a" aria-hidden="true"></div>
   <div class="theme-motion theme-motion-b" aria-hidden="true"></div>
@@ -61,7 +61,7 @@
     <nav class="nav-links" id="navLinks">
       <form class="share-header" action="{{ url_for('main.view_by_code') }}" method="get">
         <label class="sr-only" for="headerShareCode">Enter a content sharing code</label>
-        <input id="headerShareCode" type="text" name="code" placeholder="Enter share code" aria-label="Content sharing code" autocomplete="off" inputmode="text" maxlength="32" pattern="[A-Za-z0-9-]{4,32}" />
+        <input id="headerShareCode" type="text" name="code" placeholder="Enter share code" aria-label="Content sharing code" autocomplete="off" inputmode="text" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9_.~-]{3,31}" />
         <button class="btn ghost" type="submit">Open content</button>
       </form>
       <a href="{{ url_for('main.index') }}" class="nav-link" data-page="home">Home</a>
@@ -99,7 +99,7 @@
       <div class="mobile-drawer-divider"></div>
       <form class="mobile-share-form" action="{{ url_for('main.view_by_code') }}" method="get">
         <label class="mobile-share-hint" for="mobileShareCode">Only users with the code can open shared content.</label>
-        <input id="mobileShareCode" type="text" name="code" placeholder="Content share code" aria-label="Content sharing code" autocomplete="off" inputmode="text" maxlength="32" pattern="[A-Za-z0-9-]{4,32}" />
+        <input id="mobileShareCode" type="text" name="code" placeholder="Content share code" aria-label="Content sharing code" autocomplete="off" inputmode="text" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9_.~-]{3,31}" />
         <button class="btn primary" type="submit">Open</button>
       </form>
       <div class="mobile-drawer-divider"></div>
@@ -205,10 +205,11 @@
     })();
   </script>
   <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/dompurify@3.2.5/dist/purify.min.js"></script>
   <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/core.js', v='20260508z') }}" defer></script>
   <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/animations.js', v='20260505z') }}" defer></script>
-  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/chat.js', v='20260508z') }}" defer></script>
-  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/editor.js', v='20260506z') }}" defer></script>
+  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/chat.js', v='20260508p') }}" defer></script>
+  <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/editor.js', v='20260508p') }}" defer></script>
   <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/theme.js', v='20260508z') }}" defer></script>
   <script nonce="{{ csp_nonce }}">
     if ('serviceWorker' in navigator) {

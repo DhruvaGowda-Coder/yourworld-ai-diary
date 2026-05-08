@@ -33,7 +33,7 @@
         if (contentEl) {
           items.push({ 
             who: el.classList.contains('bot') ? 'bot' : 'user', 
-            html: contentEl.innerHTML 
+            text: contentEl.textContent || ''
           });
         }
       });
@@ -41,20 +41,49 @@
     } catch(e) {}
   }
 
-  function addMessage(text, who = 'user', isHtml = false) {
+  function _plainTextFromHtml(html) {
+    const el = document.createElement('div');
+    el.innerHTML = html || '';
+    return el.textContent || '';
+  }
+
+  function _escapeHtml(value) {
+    const el = document.createElement('div');
+    el.textContent = value || '';
+    return el.innerHTML;
+  }
+
+  function _sanitizeHtml(html) {
+    if (typeof DOMPurify === 'undefined') return null;
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'hr'],
+      ALLOWED_ATTR: ['href', 'target', 'rel'],
+    });
+  }
+
+  function _renderMessageContent(content, text, who = 'user') {
+    if (who === 'bot' && typeof marked !== 'undefined') {
+      const sanitized = _sanitizeHtml(marked.parse(text || ''));
+      if (sanitized !== null) {
+        content.innerHTML = sanitized;
+        content.querySelectorAll('a[href]').forEach((link) => {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener noreferrer');
+        });
+        return;
+      }
+    }
+    content.textContent = text || '';
+  }
+
+  function addMessage(text, who = 'user') {
     const msgs = document.getElementById('chatMessages');
     if (!msgs) return;
     const bubble = document.createElement('div');
     bubble.className = `chat-bubble ${who}`;
     const content = document.createElement('div');
     content.className = 'bubble-content';
-    if (who === 'bot' && typeof marked !== 'undefined' && !isHtml) {
-      content.innerHTML = marked.parse(text);
-    } else if (isHtml) {
-      content.innerHTML = text;
-    } else {
-      content.textContent = text;
-    }
+    _renderMessageContent(content, text, who);
     const del = document.createElement('button');
     del.className = 'chat-msg-delete';
     del.innerHTML = '&times;';
@@ -181,8 +210,8 @@
               item.innerHTML = `
                 <div class="history-item-icon">📜</div>
                 <div class="history-item-content">
-                  <div class="history-title">${s.title}</div>
-                  <div class="history-date">${new Date(s.updated_at).toLocaleDateString()}</div>
+                  <div class="history-title">${_escapeHtml(s.title || 'New Chat')}</div>
+                  <div class="history-date">${_escapeHtml(s.updated_at ? new Date(s.updated_at).toLocaleDateString() : '')}</div>
                 </div>
                 <button class="history-item-delete" title="Delete Chat">&times;</button>
               `;
@@ -219,7 +248,9 @@
             historyList.innerHTML += '<div style="padding:40px;text-align:center;opacity:0.5;font-size:0.85rem;">No history found.<br>Send a message to start a backup.</div>';
           }
         } catch(e) { 
-          historyList.innerHTML = '<div style="padding:40px;text-align:center;color:#ff8888;font-size:0.85rem;">Failed to load history.<br><button onclick="location.reload()" class="chat-retry-btn">Retry</button></div>';
+          historyList.innerHTML = '<div style="padding:40px;text-align:center;color:#ff8888;font-size:0.85rem;">Failed to load history.<br><button type="button" class="chat-retry-btn">Retry</button></div>';
+          const retry = historyList.querySelector('.chat-retry-btn');
+          if (retry) retry.addEventListener('click', () => location.reload());
         }
       }
     };
@@ -353,7 +384,7 @@
       .then(data => {
         if (data.session_id) currentSessionId = data.session_id;
         const reply = data.reply || '...';
-        typing.querySelector('.bubble-content').innerHTML = typeof marked !== 'undefined' ? marked.parse(reply) : reply;
+        _renderMessageContent(typing.querySelector('.bubble-content'), reply, 'bot');
         chatHistory.push({ role: 'user', content: text }, { role: 'assistant', content: reply });
         _saveLocalState();
         _saveDisplayMessages();
@@ -369,7 +400,7 @@
       const stored = JSON.parse(localStorage.getItem(CHAT_DISPLAY_KEY) || '[]');
       if (stored.length) {
         msgs.innerHTML = '';
-        stored.forEach(m => addMessage(m.html, m.who, true));
+        stored.forEach(m => addMessage(m.text || _plainTextFromHtml(m.html || ''), m.who));
       }
       chatHistory = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
     } catch(e) {}

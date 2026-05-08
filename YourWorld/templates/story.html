@@ -37,17 +37,18 @@
             <button class="btn ghost" id="shareCopyBtn" type="button" disabled>Copy</button>
           </div>
           <div class="share-row share-custom-row">
-            <input id="shareCustomCode" type="text" placeholder="Type custom code" autocomplete="off" maxlength="32" pattern="[A-Za-z0-9-]{4,32}" aria-describedby="shareCodeHelp" />
+            <input id="shareCustomCode" type="text" placeholder="Type custom code" autocomplete="off" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9_.~-]{3,31}" aria-describedby="shareCodeHelp" />
             <button class="btn ghost" id="shareGenerateBtn" type="button">Use Code</button>
           </div>
           <p class="field-help share-custom-hint" id="shareCustomHint" aria-live="polite"></p>
-          <p class="field-help" id="shareCodeHelp">Use 4-32 letters, numbers, or hyphens.</p>
+          <p class="field-help" id="shareCodeHelp">Use 4-32 letters, numbers, hyphens, dots, underscores, or tildes.</p>
         </div>
         <div class="share-permission-row">
           <label class="share-checkbox-label">
             <input type="checkbox" id="shareCanEdit" />
             Allow code holders to edit this canvas
           </label>
+          <p class="field-help">Editable codes let anyone with the code save changes to this canvas.</p>
         </div>
         <div class="share-actions">
           <div class="share-mode-wrap">

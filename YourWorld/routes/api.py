@@ -4,23 +4,33 @@ import secrets
 import requests
 import boto3
 import bleach
+from botocore.exceptions import BotoCoreError, ClientError
 from datetime import datetime, timezone, timedelta
 from flask import Blueprint, jsonify, request, session, current_app
 from html import unescape
 from werkzeug.utils import secure_filename
 
 import firebase_db
-from extensions import limiter
+from extensions import csrf, limiter
 from config import (
     ALLOWED_IMAGE_EXT, ALLOWED_AUDIO_EXT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,
     R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_DEV_URL,
     GROQ_API_KEY, GROQ_CHAT_MODEL, THEME_CHAT_PROFILES,
     HUGGINGFACE_API_KEY, HUGGINGFACE_IMAGE_MODEL, SITE_URL, SHARE_CODE_RE
 )
-from utils import auth_required, ensure_session, get_user_theme, strip_html, normalize_share_code
+from utils import auth_required, ensure_session, get_user_theme, normalize_theme, strip_html, normalize_share_code
 from firebase_db import save_chat_history, get_chat_history
 
 api_bp = Blueprint('api', __name__)
+
+MAX_UPLOAD_BYTES = {
+    "image": 5 * 1024 * 1024,
+    "audio": 20 * 1024 * 1024,
+}
+ALLOWED_MIME_TYPES = {
+    "image": {"image/png", "image/jpeg", "image/gif", "image/webp"},
+    "audio": {"audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/mp4", "audio/m4a", "audio/flac", "audio/x-flac"},
+}
 
 # ── Cached R2 client singleton ──
 _r2_client = None
@@ -28,6 +38,8 @@ _r2_client = None
 def get_r2_client():
     """Return a cached boto3 S3 client for Cloudflare R2."""
     global _r2_client
+    if not all([R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME]):
+        raise RuntimeError("R2 storage is not fully configured")
     if _r2_client is None:
         _r2_client = boto3.client(
             's3',
@@ -38,8 +50,66 @@ def get_r2_client():
         )
     return _r2_client
 
+def _safe_int(value, minimum, maximum):
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return None
+    return max(minimum, min(parsed, maximum))
+
+def _stream_size(file):
+    try:
+        pos = file.stream.tell()
+        file.stream.seek(0, os.SEEK_END)
+        size = file.stream.tell()
+        file.stream.seek(pos)
+        return size
+    except (OSError, AttributeError):
+        return request.content_length or 0
+
+def _file_signature_matches(file_type, header):
+    if file_type == "image":
+        return (
+            header.startswith(b"\x89PNG\r\n\x1a\n")
+            or header.startswith(b"\xff\xd8\xff")
+            or header.startswith(b"GIF87a")
+            or header.startswith(b"GIF89a")
+            or (header.startswith(b"RIFF") and header[8:12] == b"WEBP")
+        )
+    return (
+        header.startswith(b"ID3")
+        or header[:2] in {b"\xff\xfb", b"\xff\xf3", b"\xff\xf2"}
+        or (header.startswith(b"RIFF") and header[8:12] == b"WAVE")
+        or header.startswith(b"OggS")
+        or header.startswith(b"fLaC")
+        or header[4:8] == b"ftyp"
+    )
+
+def _validate_upload(file_type, file):
+    filename = secure_filename(file.filename or "")
+    if not filename:
+        return None, None, "No selected file"
+    ext = os.path.splitext(filename)[1].lower()
+    allowed_ext = ALLOWED_IMAGE_EXT if file_type == "image" else ALLOWED_AUDIO_EXT
+    if ext not in allowed_ext:
+        return None, None, f"File type {ext} not allowed"
+    size = _stream_size(file)
+    if size <= 0:
+        return None, None, "Empty file"
+    if size > MAX_UPLOAD_BYTES[file_type]:
+        return None, None, f"File exceeds {MAX_UPLOAD_BYTES[file_type] // (1024 * 1024)}MB limit"
+    content_type = (file.mimetype or file.content_type or "").split(";")[0].lower()
+    if content_type not in ALLOWED_MIME_TYPES[file_type]:
+        return None, None, "File content type is not allowed"
+    header = file.stream.read(16)
+    file.stream.seek(0)
+    if not _file_signature_matches(file_type, header):
+        return None, None, "File content does not match the selected type"
+    return filename, content_type, None
+
 @api_bp.route("/api/upload/<file_type>", methods=["POST"])
-@ensure_session
+@auth_required
+@limiter.limit("20 per hour")
 def api_upload(file_type):
     if file_type not in ("image", "audio"):
         return jsonify({"error": "Invalid file type"}), 400
@@ -49,16 +119,13 @@ def api_upload(file_type):
     if file.filename == "":
         return jsonify({"error": "No selected file"}), 400
     if file:
-        filename = secure_filename(file.filename)
-        ext = os.path.splitext(filename)[1].lower()
-        allowed = ALLOWED_IMAGE_EXT if file_type == "image" else ALLOWED_AUDIO_EXT
-        if ext not in allowed:
-            return jsonify({"error": f"File type {ext} not allowed"}), 400
+        filename, content_type, validation_error = _validate_upload(file_type, file)
+        if validation_error:
+            return jsonify({"error": validation_error}), 400
         unique_name = f"{secrets.token_hex(8)}_{filename}"
         try:
-            if R2_ACCOUNT_ID and R2_BUCKET_NAME and R2_ACCESS_KEY_ID:
+            if all([R2_ACCOUNT_ID, R2_BUCKET_NAME, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY]):
                 s3_client = get_r2_client()
-                content_type = file.content_type or 'application/octet-stream'
                 object_name = f"{file_type}/{unique_name}"
                 s3_client.upload_fileobj(file, R2_BUCKET_NAME, object_name, ExtraArgs={'ContentType': content_type})
                 file_url = f"{R2_PUBLIC_DEV_URL}/{object_name}" if R2_PUBLIC_DEV_URL else f"https://{R2_BUCKET_NAME}.{R2_ACCOUNT_ID}.r2.cloudflarestorage.com/{object_name}"
@@ -68,8 +135,9 @@ def api_upload(file_type):
             os.makedirs(upload_dir, exist_ok=True)
             file.save(os.path.join(upload_dir, unique_name))
             return jsonify({"url": f"/static/uploads/{file_type}/{unique_name}", "name": filename})
-        except Exception as e:
-            return jsonify({"error": f"Failed to save file: {str(e)}"}), 502
+        except (BotoCoreError, ClientError, OSError, RuntimeError) as e:
+            current_app.logger.exception("Upload failed for %s: %s", file_type, e)
+            return jsonify({"error": "Failed to save file"}), 502
     return jsonify({"error": "File upload failed"}), 400
 
 @api_bp.route("/api/settings/audio", methods=["POST"])
@@ -78,7 +146,8 @@ def api_settings_audio():
     data = request.get_json()
     if not data or "theme" not in data or "url" not in data:
         return jsonify({"error": "Bad request"}), 400
-    firebase_db.set_user_custom_audio(session["user_id"], data["theme"], data["url"], data.get("name"))
+    theme = normalize_theme(data.get("theme"))
+    firebase_db.set_user_custom_audio(session["user_id"], theme, str(data["url"])[:2048], data.get("name"))
     return jsonify({"success": True})
 
 @api_bp.route("/api/settings/audio/delete", methods=["POST"])
@@ -87,14 +156,17 @@ def api_settings_audio_delete():
     data = request.get_json()
     if not data or "theme" not in data or "url" not in data:
         return jsonify({"error": "Bad request"}), 400
-    firebase_db.remove_custom_song(session["user_id"], data["theme"], data["url"])
+    theme = normalize_theme(data.get("theme"))
+    firebase_db.remove_custom_song(session["user_id"], theme, str(data["url"])[:2048])
     return jsonify({"success": True})
 
 @api_bp.route("/api/entries")
 @ensure_session
 def api_entries():
     entry_type = request.args.get("type", "diary")
-    limit = min(int(request.args.get("limit", 20)), 100)
+    limit = _safe_int(request.args.get("limit", 20), 1, 100)
+    if limit is None:
+        return jsonify({"error": "Invalid limit"}), 400
     last_doc_id = request.args.get("after")
     rows, has_more = firebase_db.get_entries(session["user_id"], entry_type, limit=limit, last_doc_id=last_doc_id or None)
     return jsonify({
@@ -254,6 +326,7 @@ def api_chat():
     history = data.get("history") or []
     session_id = data.get("session_id")
     context_data = data.get("context") or {}
+    user_id = session.get("user_id")
     
     # Sync-only support for when we just want to save the history
     if not message and data.get("sync_only"):
@@ -264,7 +337,6 @@ def api_chat():
 
     if not message: return jsonify({"error": "Message required"}), 400
 
-    user_id = session.get("user_id")
     active_theme = get_user_theme(user_id)
     
     # Context Optimization (Pagination fix)
@@ -303,6 +375,7 @@ def api_chat():
     try:
         # Lower temperature to 0.4 for better instruction following (less rambling)
         r = requests.post("https://api.groq.com/openai/v1/chat/completions", json={"model": GROQ_CHAT_MODEL, "messages": messages, "temperature": 0.4}, headers={"Authorization": f"Bearer {GROQ_API_KEY}"}, timeout=15)
+        r.raise_for_status()
         reply = r.json()["choices"][0]["message"]["content"]
         
         # Backend Safety Filter: If AI gives a list without newlines, force them in.
@@ -318,8 +391,8 @@ def api_chat():
             return jsonify({"reply": reply, "session_id": new_id})
             
         return jsonify({"reply": reply})
-    except Exception as e:
-        print(f"Chat error: {e}")
+    except (requests.RequestException, KeyError, IndexError, ValueError) as e:
+        current_app.logger.exception("Chat request failed: %s", e)
         return jsonify({"error": "Failed to reach AI"}), 502
 
 @api_bp.route("/api/chat/sync", methods=["GET"])
@@ -363,7 +436,9 @@ def api_chat_clear():
 @api_bp.route("/api/activity")
 @ensure_session
 def api_activity():
-    days = max(7, min(int(request.args.get("days", 365)), 730))
+    days = _safe_int(request.args.get("days", 365), 7, 730)
+    if days is None:
+        return jsonify({"error": "Invalid days"}), 400
     try:
         counts = firebase_db.get_activity_counts(session["user_id"], days)
     except Exception as e:
@@ -395,22 +470,34 @@ def api_story_image():
     
     try:
         r = requests.post(f"https://router.huggingface.co/hf-inference/models/{HUGGINGFACE_IMAGE_MODEL}", json={"inputs": prompt}, headers={"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}, timeout=25)
+        if not r.ok:
+            current_app.logger.warning("Image generation failed with status %s: %s", r.status_code, r.text[:300])
+            return jsonify({"error": "Image generation failed"}), 502
+        content_type = (r.headers.get("Content-Type") or "").split(";")[0].lower()
+        if not content_type.startswith("image/"):
+            current_app.logger.warning("Image generation returned non-image content type: %s", content_type)
+            return jsonify({"error": "Image provider returned an invalid response"}), 502
         image_bytes = r.content
+        if not image_bytes or len(image_bytes) > 8 * 1024 * 1024:
+            return jsonify({"error": "Image response size is invalid"}), 502
         
         # R2 Upload Logic (Fixed: No more Base64 bloat)
-        if R2_ACCOUNT_ID and R2_BUCKET_NAME:
+        if all([R2_ACCOUNT_ID, R2_BUCKET_NAME, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY]):
             s3 = get_r2_client()
             obj_name = f"images/ai_{secrets.token_hex(8)}.jpg"
-            s3.put_object(Bucket=R2_BUCKET_NAME, Key=obj_name, Body=image_bytes, ContentType='image/jpeg')
+            s3.put_object(Bucket=R2_BUCKET_NAME, Key=obj_name, Body=image_bytes, ContentType=content_type)
             url = f"{R2_PUBLIC_DEV_URL}/{obj_name}" if R2_PUBLIC_DEV_URL else obj_name
             return jsonify({"image_url": url, "ai": True})
             
         return jsonify({"image_url": f"data:image/jpeg;base64,{base64.b64encode(image_bytes).decode()}", "ai": True})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 502
+    except (requests.RequestException, BotoCoreError, ClientError, RuntimeError) as e:
+        current_app.logger.exception("Image generation failed: %s", e)
+        return jsonify({"error": "Image generation failed"}), 502
 
 @api_bp.route("/api/system/cleanup", methods=["POST"])
+@csrf.exempt
 def api_system_cleanup():
-    if request.headers.get("Authorization") != f"Bearer {os.environ.get('CRON_SECRET')}":
+    cron_secret = os.environ.get("CRON_SECRET")
+    if not cron_secret or request.headers.get("Authorization") != f"Bearer {cron_secret}":
         return jsonify({"error": "Unauthorized"}), 401
     return jsonify({"success": True, "deleted": firebase_db.cleanup_guest_data()})

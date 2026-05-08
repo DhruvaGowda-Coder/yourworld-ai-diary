@@ -198,6 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function triggerUpload(themeId) {
+    if (isGuestUser) {
+      audioUploadStatus.textContent = 'Sign in to upload custom audio.';
+      return;
+    }
     targetThemeForUpload = themeId;
     audioUploadInput.click();
   }

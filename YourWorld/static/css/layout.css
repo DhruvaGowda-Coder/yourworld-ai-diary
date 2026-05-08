@@ -1294,6 +1294,37 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
     text-align: center;
   }
 
+  .public-view-controls {
+    display: grid !important;
+    grid-template-columns: minmax(104px, 1fr) 56px minmax(104px, 1fr);
+    gap: 10px !important;
+    align-items: center;
+    justify-items: center;
+  }
+
+  .public-view-controls .btn {
+    width: 100%;
+    flex: none;
+    min-width: 104px;
+  }
+
+  .public-view-controls .public-page-count {
+    width: 56px;
+    flex: none;
+    margin: 0;
+  }
+
+  .public-view-controls #publicSaveBtn {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: min(220px, 100%);
+  }
+
+  .public-view-body .chat-launch,
+  .public-view-body .chat-panel {
+    display: none;
+  }
+
   .book {
     min-height: 420px;
     padding: 20px;

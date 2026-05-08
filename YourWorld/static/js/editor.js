@@ -1112,6 +1112,15 @@ if (workspace) {
         });
         const data = await response.json();
         
+        if (response.status === 401 && data.error === 'login_required') {
+          setStatus('Sign in to upload images.');
+          showLoginPromptModal({
+            title: 'Sign In Required',
+            message: "Image uploads are available to signed-in users. It's completely free.",
+          });
+          return;
+        }
+
         if (!response.ok) {
           setStatus(`Upload failed: ${data.error || 'Unknown error'}`);
           return;
