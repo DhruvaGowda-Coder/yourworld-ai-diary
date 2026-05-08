@@ -1375,7 +1375,16 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
 
 .nav-link.active {
   color: var(--theme-accent) !important;
-  border-bottom: 2px solid var(--theme-accent);
-  background: var(--theme-accent-soft);
-  border-radius: 8px 8px 0 0;
+  font-weight: 600;
+  position: relative;
+}
+.nav-link.active::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: var(--theme-accent);
+  border-radius: 2px;
 }
