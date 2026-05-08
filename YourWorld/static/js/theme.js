@@ -587,15 +587,8 @@ document.addEventListener('DOMContentLoaded', () => {
   toggleBtn.textContent = isPlaying ? '🔊 Sound' : '🔇 Sound';
   
   if (!window.UserAudio) window.UserAudio = {};
-  try {
-    const stored = JSON.parse(localStorage.getItem('yw_custom_audio') || '{}');
-    Object.keys(stored).forEach(key => {
-      if (stored[key] && stored[key].startsWith('blob:')) {
-        delete stored[key];
-      }
-    });
-    Object.assign(window.UserAudio, stored);
-  } catch(e) {}
+  // Skip redundant localStorage merge here as base.html already handles it correctly
+  // by prioritizing server data for logged-in users and only using localStorage for guests.
 
   const getAudioSrc = (theme) => {
     if (window.UserAudio[theme]) {
@@ -618,6 +611,9 @@ document.addEventListener('DOMContentLoaded', () => {
             audioPlayer.pause();
             return;
           }
+          toggleBtn.textContent = '🔊 Sound';
+          toggleBtn.classList.add('is-active');
+          toggleBtn.classList.remove('pulse-highlight');
           if (seekTo > 0 && isFinite(audioPlayer.duration) && seekTo < audioPlayer.duration) {
             audioPlayer.currentTime = seekTo;
           }
@@ -626,10 +622,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('Autoplay prevented — click Sound to start', e);
             isPlaying = false;
             toggleBtn.textContent = '🔇 Sound';
+            toggleBtn.classList.remove('is-active');
             toggleBtn.classList.add('pulse-highlight');
           }
         });
       }
+    } else {
+      toggleBtn.textContent = '🔇 Sound';
+      toggleBtn.classList.remove('is-active');
     }
   };
   
@@ -646,15 +646,15 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem('yw_sound_time', String(audioPlayer.currentTime));
     }
   });
-  
   const toggleAudio = (e) => {
-    if (e) e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (isPlaying) {
       audioPlayer.pause();
       isPlaying = false;
       localStorage.setItem('yw_sound_enabled', 'false');
       localStorage.setItem('yw_sound_time', '0');
-      toggleBtn.textContent = '\uD83D\uDD07 Sound';
+      toggleBtn.textContent = '🔇 Sound';
+      toggleBtn.classList.remove('is-active');
     } else {
       // If no src is loaded yet, load the current theme
       if (!audioPlayer.src || audioPlayer.src === window.location.href || audioPlayer.src === '') {
@@ -666,7 +666,8 @@ document.addEventListener('DOMContentLoaded', () => {
         audioPlayer.play().then(() => {
           isPlaying = true;
           localStorage.setItem('yw_sound_enabled', 'true');
-          toggleBtn.textContent = '\uD83D\uDD0A Sound';
+          toggleBtn.textContent = '🔊 Sound';
+          toggleBtn.classList.add('is-active');
           toggleBtn.classList.remove('pulse-highlight');
         }).catch(err => {
           console.warn('Playback failed:', err);
@@ -678,11 +679,16 @@ document.addEventListener('DOMContentLoaded', () => {
             audioPlayer.play().then(() => {
               isPlaying = true;
               localStorage.setItem('yw_sound_enabled', 'true');
-              toggleBtn.textContent = '\uD83D\uDD0A Sound';
+              toggleBtn.textContent = '🔊 Sound';
+              toggleBtn.classList.add('is-active');
               toggleBtn.classList.remove('pulse-highlight');
-            }).catch(() => { toggleBtn.classList.add('pulse-highlight'); });
+            }).catch(() => { 
+              toggleBtn.classList.add('pulse-highlight');
+              toggleBtn.classList.remove('is-active');
+            });
           } else {
             toggleBtn.classList.add('pulse-highlight');
+            toggleBtn.classList.remove('is-active');
           }
         });
       };
@@ -711,7 +717,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (isPlaying) {
       isPlaying = false;
       localStorage.setItem('yw_sound_enabled', 'false');
-      toggleBtn.textContent = '\uD83D\uDD07 Sound';
+      toggleBtn.textContent = '🔇 Sound';
+      toggleBtn.classList.remove('is-active');
       toggleBtn.classList.add('pulse-highlight');
     }
   });
@@ -738,6 +745,7 @@ document.addEventListener('DOMContentLoaded', () => {
     isPlaying = true;
     localStorage.setItem('yw_sound_enabled', 'true');
     toggleBtn.textContent = '🔊 Sound';
+    toggleBtn.classList.add('is-active');
     loadAndPlay(theme, 0);
   };
 

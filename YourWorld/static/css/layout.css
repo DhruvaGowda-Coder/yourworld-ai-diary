@@ -1338,6 +1338,16 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
   }
 
   /* Drag handle — much bigger on mobile */
+
+  /* Resize handle — much bigger on mobile */
+  .chat-resize-handle {
+    width: 28px;
+    height: 28px;
+    right: 4px;
+    bottom: 4px;
+  }
+
+  /* Drag handle — much bigger on mobile */
   .chat-drag-handle {
     width: 26px;
     height: 26px;
@@ -1346,4 +1356,11 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
   .sidebar-actions .btn {
     padding: 12px 14px;
   }
+}
+
+#audioToggleBtn.is-active {
+  background: var(--theme-accent-soft) !important;
+  border-color: var(--theme-accent) !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px var(--theme-accent-soft-2);
 }
