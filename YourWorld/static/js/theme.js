@@ -13,13 +13,18 @@
     return `/static/audio/${theme}.wav`;
   };
 
+  let playPromise = null;
+
   const loadAndPlay = async () => {
     const theme = typeof activeTheme !== 'undefined' ? activeTheme : (document.body.dataset.theme || 'campfire');
     const src = getAudioSrc(theme);
     if (!src) return;
 
     const targetUrl = new URL(src, window.location.origin).href;
+    
+    // 1. Explicitly stop and reset before loading a new source to prevent overlaps
     if (ambientAudio.src !== targetUrl) {
+      ambientAudio.pause();
       console.log('Audio: Loading source:', src);
       ambientAudio.src = src;
       ambientAudio.load();
@@ -28,13 +33,24 @@
 
     if (isPlaying) {
       try {
-        await ambientAudio.play();
-        toggleBtn.textContent = '🔊 Sound';
-        toggleBtn.classList.add('is-active');
-        console.log('Audio: Playing success');
+        // 2. Prevent concurrent play() requests which can cause race conditions/overlapping
+        if (playPromise) await playPromise;
+        
+        if (ambientAudio.paused) {
+          playPromise = ambientAudio.play();
+          await playPromise;
+          playPromise = null;
+          
+          toggleBtn.textContent = '🔊 Sound';
+          toggleBtn.classList.add('is-active');
+          console.log('Audio: Playing', theme);
+        }
       } catch (err) {
-        console.warn('Audio: Playback blocked/failed:', err.name, err.message);
-        toggleBtn.textContent = '🔇 Sound';
+        playPromise = null;
+        if (err.name !== 'AbortError') {
+          console.warn('Audio: Playback blocked or failed:', err.name);
+          toggleBtn.textContent = '🔇 Sound';
+        }
       }
     } else {
       ambientAudio.pause();
@@ -48,11 +64,10 @@
     isPlaying = !isPlaying;
     localStorage.setItem('yw_sound_enabled', isPlaying ? 'true' : 'false');
     
-    // Hard re-sync before playing
-    const theme = typeof activeTheme !== 'undefined' ? activeTheme : 'campfire';
-    const src = getAudioSrc(theme);
-    ambientAudio.src = src;
-    ambientAudio.load();
+    // Stop current immediately on toggle off
+    if (!isPlaying) {
+      ambientAudio.pause();
+    }
     
     await loadAndPlay();
   };
@@ -68,8 +83,8 @@
   toggleBtn.addEventListener('click', toggleAudio);
 
   window.addEventListener('load', () => {
-    // Small delay to ensure UserAudio is fully ready
-    setTimeout(loadAndPlay, 100);
+    // Small delay to ensure state is ready
+    setTimeout(loadAndPlay, 150);
   });
 
   const unlockAudio = () => {
@@ -94,13 +109,15 @@
 
   window.reloadThemeAudio = (theme, url) => {
     if (window.UserAudio) window.UserAudio[theme] = url;
-    if (isPlaying && (typeof activeTheme !== 'undefined' ? activeTheme : 'campfire') === theme) {
+    const current = typeof activeTheme !== 'undefined' ? activeTheme : 'campfire';
+    if (isPlaying && current === theme) {
       loadAndPlay();
     }
   };
   window.removeThemeAudio = (theme) => {
     if (window.UserAudio) window.UserAudio[theme] = "";
-    if (isPlaying && (typeof activeTheme !== 'undefined' ? activeTheme : 'campfire') === theme) {
+    const current = typeof activeTheme !== 'undefined' ? activeTheme : 'campfire';
+    if (isPlaying && current === theme) {
       loadAndPlay();
     }
   };
