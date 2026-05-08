@@ -184,8 +184,35 @@
                   <div class="history-title">${s.title}</div>
                   <div class="history-date">${new Date(s.updated_at).toLocaleDateString()}</div>
                 </div>
+                <button class="history-item-delete" title="Delete Chat">&times;</button>
               `;
-              item.onclick = () => loadSession(s.id);
+              item.onclick = (e) => {
+                if (e.target.classList.contains('history-item-delete')) return;
+                loadSession(s.id);
+              };
+              const delBtn = item.querySelector('.history-item-delete');
+              delBtn.onclick = async (e) => {
+                e.stopPropagation();
+                if (!confirm('Delete this conversation history?')) return;
+                try {
+                  const dr = await fetch(`/api/chat/session/${s.id}`, { 
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': _getCsrfToken() }
+                  });
+                  if (dr.ok) {
+                    item.remove();
+                    if (currentSessionId === s.id) {
+                      currentSessionId = null;
+                      chatHistory = [];
+                      msgs.innerHTML = '';
+                      localStorage.removeItem(CHAT_STORAGE_KEY);
+                      localStorage.removeItem(CHAT_DISPLAY_KEY);
+                      localStorage.removeItem(CHAT_SESSION_KEY);
+                      ensureGreeting();
+                    }
+                  }
+                } catch(err) { console.error('Delete failed:', err); }
+              };
               historyList.appendChild(item);
             });
           } else {

@@ -58,6 +58,125 @@
         <div class="public-content">{{ page.content | striptags }}</div>
       {% endfor %}
     </noscript>
+    <script>
+      (function() {
+        const pages = JSON.parse(document.getElementById('publicPagesData').textContent || '[]');
+        let currentIndex = 0;
+        const canEdit = document.querySelector('.public-story').dataset.canEdit === 'true';
+
+        const titleEl = document.getElementById('publicTitle');
+        const contentEl = document.getElementById('publicContent');
+        const illEl = document.getElementById('publicIllustration');
+        const illImg = document.getElementById('publicIllustrationImg');
+        const countEl = document.getElementById('publicPageCount');
+        const prevBtn = document.getElementById('publicPrevBtn');
+        const nextBtn = document.getElementById('publicNextBtn');
+        const sidebarList = document.getElementById('publicPageList');
+        const saveBtn = document.getElementById('publicSaveBtn');
+
+        function render() {
+          if (!pages.length) return;
+          const p = pages[currentIndex];
+          titleEl.textContent = p.title || 'Untitled';
+          contentEl.textContent = p.content || '';
+          
+          if (p.image_url && p.image_attached) {
+            illImg.src = p.image_url;
+            illEl.style.display = 'block';
+            if (p.image_style) {
+              try {
+                const s = JSON.parse(p.image_style);
+                illEl.style.width = s.width ? s.width + 'px' : '250px';
+                illEl.style.height = s.height ? s.height + 'px' : 'auto';
+                illEl.style.transform = `translate(${s.x || 0}px, ${s.y || 0}px)`;
+              } catch(e) {}
+            }
+          } else {
+            illEl.style.display = 'none';
+          }
+
+          countEl.textContent = `Page ${currentIndex + 1} of ${pages.length}`;
+          prevBtn.disabled = currentIndex === 0;
+          nextBtn.disabled = currentIndex === pages.length - 1;
+
+          // Update sidebar active state
+          document.querySelectorAll('.public-page-item').forEach((el, idx) => {
+            el.classList.toggle('active', idx === currentIndex);
+          });
+          
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function initSidebar() {
+          sidebarList.innerHTML = '';
+          pages.forEach((p, i) => {
+            const item = document.createElement('div');
+            item.className = 'public-page-item';
+            item.textContent = p.title || 'Untitled';
+            item.onclick = () => {
+              currentIndex = i;
+              render();
+            };
+            sidebarList.appendChild(item);
+          });
+        }
+
+        prevBtn.onclick = () => { if (currentIndex > 0) { currentIndex--; render(); } };
+        nextBtn.onclick = () => { if (currentIndex < pages.length - 1) { currentIndex++; render(); } };
+
+        if (saveBtn) {
+          saveBtn.onclick = async () => {
+            const p = pages[currentIndex];
+            const newTitle = titleEl.textContent;
+            const newContent = contentEl.textContent;
+            
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            
+            try {
+              const r = await fetch('/api/entry/save', {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                  id: p.id,
+                  title: newTitle,
+                  content: newContent,
+                  type: 'story',
+                  // Preserve existing styles/images for now
+                  title_style: p.title_style,
+                  content_style: p.content_style,
+                  image_url: p.image_url,
+                  image_attached: p.image_attached,
+                  image_style: p.image_style
+                })
+              });
+              if (r.ok) {
+                const data = await r.json();
+                p.title = newTitle;
+                p.content = newContent;
+                p.updated_at = data.updated_at;
+                initSidebar();
+                render();
+                saveBtn.textContent = 'Saved!';
+                setTimeout(() => { saveBtn.textContent = 'Save Changes'; saveBtn.disabled = false; }, 2000);
+              } else {
+                throw new Error('Save failed');
+              }
+            } catch(e) {
+              alert('Failed to save changes.');
+              saveBtn.textContent = 'Save Changes';
+              saveBtn.disabled = false;
+            }
+          };
+        }
+
+        initSidebar();
+        render();
+      })();
+    </script>
   {% endif %}
 </section>
 {% endblock %}
