@@ -1428,14 +1428,27 @@ if (workspace) {
       e.preventDefault();
     });
 
-    // Touch support for dragging
+    let touchTimer = null;
+    let isTouchActive = false;
+
+    // Touch support for dragging with hold-to-drag prevention
     pageIllustration.addEventListener('touchstart', (e) => {
       if (e.target.id === 'resizeHandle' || e.target.id === 'deleteIllustrationBtn') return;
-      isDragging = true;
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
       startTX = imageStyleState.x || 0;
       startTY = imageStyleState.y || 0;
+      isTouchActive = true;
+
+      if (touchTimer) clearTimeout(touchTimer);
+      touchTimer = setTimeout(() => {
+        if (isTouchActive) {
+          isDragging = true;
+          pageIllustration.classList.add('is-dragging');
+          if (navigator.vibrate) navigator.vibrate(5); // Subtle haptic feedback
+        }
+      }, 200);
     }, { passive: false });
 
     const resizeH = document.getElementById('resizeHandle');
@@ -1475,6 +1488,15 @@ if (workspace) {
     }
 
     const handleMove = (e) => {
+      if (e.touches && !isDragging && isTouchActive) {
+        const dx = Math.abs(e.touches[0].clientX - startX);
+        const dy = Math.abs(e.touches[0].clientY - startY);
+        if (dx > 10 || dy > 10) {
+          isTouchActive = false;
+          clearTimeout(touchTimer);
+        }
+      }
+
       if (!isDragging && !isResizing) return;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -1501,10 +1523,13 @@ if (workspace) {
     window.addEventListener('touchmove', handleMove, { passive: false });
 
     const handleEnd = () => {
+      isTouchActive = false;
+      if (touchTimer) clearTimeout(touchTimer);
       if (isDragging || isResizing) {
         isDragging = false;
         isResizing = false;
         pageIllustration.style.cursor = 'grab';
+        pageIllustration.classList.remove('is-dragging');
       }
     };
 

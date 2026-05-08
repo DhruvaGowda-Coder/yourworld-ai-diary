@@ -288,6 +288,13 @@
     background: rgba(0,0,0,0.7);
     transform: scale(1.1);
   }
+
+  .is-dragging {
+    opacity: 0.8;
+    filter: brightness(1.1);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
 </style>
 
 <section class="public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}" style="max-width: 1400px; margin: 0 auto; padding: 28px var(--gutter, 24px) 80px;">
@@ -416,12 +423,15 @@
               e.preventDefault();
             });
 
-            // Touch support for dragging
+            let touchTimer = null;
+            let isTouchActive = false;
+
+            // Touch support for dragging with hold-to-drag prevention
             illEl.addEventListener('touchstart', (e) => {
               if (e.target.id === 'publicResizeHandle' || e.target.id === 'publicDeleteIllBtn') return;
-              isDragging = true;
-              startX = e.touches[0].clientX;
-              startY = e.touches[0].clientY;
+              const touch = e.touches[0];
+              startX = touch.clientX;
+              startY = touch.clientY;
               const style = window.getComputedStyle(illEl);
               const transform = style.transform;
               if (transform && transform !== 'none') {
@@ -432,6 +442,16 @@
                   startTY = parseFloat(values[5]);
                 } else { startTX = 0; startTY = 0; }
               } else { startTX = 0; startTY = 0; }
+              
+              isTouchActive = true;
+              if (touchTimer) clearTimeout(touchTimer);
+              touchTimer = setTimeout(() => {
+                if (isTouchActive) {
+                  isDragging = true;
+                  illEl.classList.add('is-dragging');
+                  if (navigator.vibrate) navigator.vibrate(5);
+                }
+              }, 200);
             }, { passive: false });
 
             const resizeH = document.getElementById('publicResizeHandle');
@@ -469,6 +489,15 @@
             }
 
             const handleMove = (e) => {
+              if (e.touches && !isDragging && isTouchActive) {
+                const dx = Math.abs(e.touches[0].clientX - startX);
+                const dy = Math.abs(e.touches[0].clientY - startY);
+                if (dx > 10 || dy > 10) {
+                  isTouchActive = false;
+                  clearTimeout(touchTimer);
+                }
+              }
+
               if (!isDragging && !isResizing) return;
               const clientX = e.touches ? e.touches[0].clientX : e.clientX;
               const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -492,10 +521,15 @@
             window.addEventListener('touchmove', handleMove, { passive: false });
 
             const handleEnd = () => {
+              isTouchActive = false;
+              if (touchTimer) clearTimeout(touchTimer);
               if (isDragging || isResizing) {
                 isDragging = false;
                 isResizing = false;
-                if (illEl) illEl.style.cursor = 'grab';
+                if (illEl) {
+                  illEl.style.cursor = 'grab';
+                  illEl.classList.remove('is-dragging');
+                }
               }
             };
 
