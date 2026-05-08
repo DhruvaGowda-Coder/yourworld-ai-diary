@@ -7,34 +7,35 @@
 {% if pages %}
 <meta property="og:title" content="{{ pages[0].title }}">
 <meta property="og:description" content="{{ (pages[0].content | striptags)[:150] }}...">
-<meta property="og:type" content="article">
-{% if pages[0].image_url %}
-<meta property="og:image" content="{{ pages[0].image_url }}">
-{% endif %}
-{% endif %}
-{% endblock %}
-{% block content %}
-<section class="public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}" style="max-width: 900px; margin: 0 auto; padding: 20px;">
-  {% if not_found %}
-    <div class="public-notice" style="text-align: center; padding: 100px 20px;">
-      <h2 style="font-family: var(--ui-font); margin-bottom: 20px;">Story not found</h2>
-      <p style="opacity: 0.8; margin-bottom: 30px;">The code <strong>{{ code }}</strong> does not match any shared story.</p>
       <a class="btn ghost" href="/">Back to Home</a>
     </div>
   {% else %}
-    <div class="book-area">
-      <div class="book" id="publicBook">
-        <div class="page" id="publicPage">
-          <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important;" value="{{ pages[0].title if pages else 'Untitled' }}" />
-          <div class="page-scroll">
-            <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; min-height: 450px;">{{ pages[0].content if pages else '' }}</textarea>
-          </div>
-          <div class="page-illustration" id="publicIllustration" style="display: none; margin-top: 20px;">
-            <img id="publicIllustrationImg" alt="Story illustration" style="max-width: 100%; border-radius: 8px;" />
+    <div class="public-layout">
+      <aside class="public-sidebar">
+        <h3 class="public-sidebar-title">Story Pages</h3>
+        <div class="public-page-list" id="publicPageList">
+          {% for p in pages %}
+            <div class="public-page-item {% if loop.first %}is-active{% endif %}" data-index="{{ loop.index0 }}">
+              {{ p.title or 'Untitled Page' }}
+            </div>
+          {% endfor %}
+        </div>
+      </aside>
+
+      <main class="public-main">
+        <div class="book-area">
+          <div class="book" id="publicBook">
+            <div class="page public-page" id="publicPage">
+              <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important;" value="{{ pages[0].title if pages else 'Untitled' }}" />
+              <div class="page-scroll" style="overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--theme-accent) transparent;">
+                <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; min-height: 450px; overflow: visible;">{{ pages[0].content if pages else '' }}</textarea>
+              </div>
+              <div class="page-illustration" id="publicIllustration" style="display: none;">
+                <img id="publicIllustrationImg" alt="Story illustration" style="border-radius: 8px; width: 100%; height: 100%; object-fit: cover;" />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
     <div class="page-controls public-view-controls" id="publicControls" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 30px;">
       <button class="btn ghost" id="publicPrevBtn" type="button" aria-label="Previous page">Previous</button>
@@ -45,6 +46,9 @@
       {% if can_edit %}
         <button class="btn primary" id="publicSaveBtn" type="button">Save Changes</button>
       {% endif %}
+    </div>
+
+      </main>
     </div>
 
     <div class="public-meta" style="color: #fff; margin-top: 40px; text-align: center; font-size: 0.95rem; opacity: 0.7; font-family: var(--ui-font);">
@@ -77,6 +81,7 @@
         const nextBtn = document.getElementById('publicNextBtn');
         const saveBtn = document.getElementById('publicSaveBtn');
         const bookEl = document.getElementById('publicBook');
+        const pageListItems = document.querySelectorAll('.public-page-item');
 
         if (canEdit) {
           titleEl.readOnly = false;
@@ -95,6 +100,31 @@
           nextBtn.disabled = atEnd;
           prevBtn.setAttribute('aria-disabled', String(atStart));
           nextBtn.setAttribute('aria-disabled', String(atEnd));
+          
+          pageListItems.forEach((item, idx) => {
+            item.classList.toggle('is-active', idx === currentIndex);
+          });
+        }
+
+        function applyImageStyle(el, styleStr) {
+          if (!el) return;
+          try {
+            const s = styleStr ? JSON.parse(styleStr) : { x: 0, y: 0, width: 250, height: null };
+            el.style.position = 'absolute';
+            el.style.left = '0px';
+            el.style.top = '0px';
+            el.style.transform = `translate(${s.x || 0}px, ${s.y || 0}px)`;
+            el.style.width = s.width ? `${s.width}px` : '250px';
+            el.style.maxWidth = '100%'; // Prevent overflow on mobile
+            if (s.height) el.style.height = `${s.height}px`;
+            else el.style.height = 'auto';
+          } catch(e) {
+            el.style.position = 'absolute';
+            el.style.top = '60px';
+            el.style.left = '20px';
+            el.style.width = '250px';
+            el.style.maxWidth = '100%';
+          }
         }
 
         function render() {
@@ -103,7 +133,12 @@
 
           titleEl.value = p.title || 'Untitled';
           contentEl.value = p.content || '';
-          contentEl.scrollTop = 0;
+          
+          // Reset scroll
+          const pageScroll = document.querySelector('.page-scroll');
+          if (pageScroll) pageScroll.scrollTop = 0;
+          const publicPage = document.getElementById('publicPage');
+          if (publicPage) publicPage.scrollTop = 0;
           
           const applyStyles = (el, styleStr) => {
             if (!el || !styleStr) return;
@@ -122,6 +157,7 @@
           if (p.image_url && p.image_attached) {
             illImg.src = p.image_url;
             illEl.style.display = 'block';
+            applyImageStyle(illEl, p.image_style);
           } else {
             illEl.style.display = 'none';
           }
@@ -145,6 +181,16 @@
         });
         nextBtn.addEventListener('click', function() {
           navigate(1);
+        });
+        
+        pageListItems.forEach(item => {
+          item.addEventListener('click', () => {
+            currentIndex = parseInt(item.dataset.index);
+            render();
+            if (bookEl) {
+              bookEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            }
+          });
         });
 
         if (saveBtn) {
@@ -175,6 +221,11 @@
                 p.title = titleEl.value;
                 p.content = contentEl.value;
                 saveBtn.textContent = 'Saved!';
+                
+                // Update sidebar title
+                const sidebarItem = document.querySelector(`.public-page-item[data-index="${currentIndex}"]`);
+                if (sidebarItem) sidebarItem.textContent = titleEl.value || 'Untitled Page';
+                
                 setTimeout(() => { saveBtn.textContent = 'Save Changes'; saveBtn.disabled = false; }, 2000);
               }
             } catch(e) {
