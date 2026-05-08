@@ -15,7 +15,21 @@
 {% endblock %}
 
 {% block content %}
-<style>
+  .public-page-list {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+  }
+  
+  .public-page-list::-webkit-scrollbar {
+    height: 4px;
+    display: block;
+  }
+  
+  .public-page-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+  }
+
   @media (max-width: 768px) {
     .public-layout {
       display: flex !important;
@@ -31,17 +45,7 @@
       overflow-x: auto !important;
       overflow-y: hidden !important;
       gap: 10px !important;
-      padding-bottom: 12px !important; /* Space for scrollbar */
-      scrollbar-width: thin;
-      scrollbar-color: var(--theme-accent) transparent;
-    }
-    .public-page-list::-webkit-scrollbar {
-      display: block !important;
-      height: 4px !important;
-    }
-    .public-page-list::-webkit-scrollbar-thumb {
-      background: var(--theme-accent) !important;
-      border-radius: 10px;
+      padding-bottom: 12px !important;
     }
     .public-page-item {
       flex: 0 0 auto;
@@ -53,40 +57,39 @@
       width: 100% !important;
     }
     .book, .public-story .book {
-      max-height: 75vh !important;
+      max-height: 80vh !important;
+      overflow: hidden !important; /* Remove the extra border scrollbar on mobile */
     }
   }
 
-  /* Shared Canvas Scrollbar Style */
+  /* Match Editor Scrollbar Style (White/Subtle) */
   .public-page {
     overflow: hidden !important;
   }
   
   .page-scroll {
     scrollbar-width: thin;
-    scrollbar-color: var(--theme-accent) rgba(0, 0, 0, 0.1);
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
   }
 
   .page-scroll::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
   .page-scroll::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.08);
-    border-radius: 10px;
+    background: transparent;
   }
   .page-scroll::-webkit-scrollbar-thumb {
-    background: var(--theme-accent);
+    background: rgba(255, 255, 255, 0.25);
     border-radius: 10px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
   .page-scroll::-webkit-scrollbar-thumb:hover {
-    filter: brightness(1.1);
+    background: rgba(255, 255, 255, 0.4);
   }
 </style>
 
-<section class="public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+<section class="public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}" style="max-width: 1400px; margin: 0 auto; padding: 20px;">
   {% if not_found %}
     <div class="public-notice" style="text-align: center; padding: 100px 20px;">
       <h2 style="font-family: var(--ui-font); margin-bottom: 20px;">Story not found</h2>
@@ -94,7 +97,7 @@
       <a class="btn ghost" href="/">Back to Home</a>
     </div>
   {% else %}
-    <div class="public-layout">
+    <div class="public-layout" style="display: grid; grid-template-columns: 280px 1fr; gap: 30px;">
       <aside class="public-sidebar">
         <h3 class="public-sidebar-title">Story Pages</h3>
         <div class="public-page-list" id="publicPageList">
