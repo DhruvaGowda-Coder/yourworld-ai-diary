@@ -84,18 +84,27 @@
     }
     .book, .public-story .book {
       height: auto !important;
-      min-height: auto !important; /* Allow book to shrink to fit content */
+      min-height: auto !important; 
       max-height: 85vh !important;
-      overflow-x: hidden !important;
+      overflow-x: auto !important;
       overflow-y: auto !important;
       -webkit-overflow-scrolling: touch;
       display: block !important;
-      padding: 20px 20px 40px !important;
+      padding: 12px 10px !important; /* EXACT match with editor.css:1247 */
       scroll-behavior: smooth;
+      width: 100% !important;
+      background-attachment: scroll !important;
       
       /* Matching Shared Canvas Scrollbar Style */
-      scrollbar-width: thin !important;
-      scrollbar-color: rgba(0, 0, 0, 0.35) rgba(255, 255, 255, 0.92);
+      scrollbar-width: auto !important;
+      scrollbar-color: var(--theme-accent, #ff7e5f) rgba(0,0,0,0.1) !important;
+    }
+
+    .public-page {
+      width: 100% !important;
+      min-width: 600px !important; /* Force width for horizontal panning and better image fit */
+      padding: 24px !important;
+      position: relative;
     }
     
     .book::-webkit-scrollbar, 
@@ -262,6 +271,31 @@
     height: auto;
     margin: 20px 0;
   }
+
+  .delete-ill-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    z-index: 31;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s;
+  }
+
+  .delete-ill-btn:hover {
+    background: rgba(0,0,0,0.7);
+    transform: scale(1.1);
+  }
 </style>
 
 <section class="public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}" style="max-width: 1400px; margin: 0 auto; padding: 20px;">
@@ -376,8 +410,6 @@
               isDragging = true;
               startX = e.clientX;
               startY = e.clientY;
-              
-              // More robust transform parsing
               const style = window.getComputedStyle(illEl);
               const transform = style.transform;
               if (transform && transform !== 'none') {
@@ -386,16 +418,29 @@
                   const values = matrix[1].split(', ');
                   startTX = parseFloat(values[4]);
                   startTY = parseFloat(values[5]);
-                } else {
-                  startTX = 0; startTY = 0;
-                }
-              } else {
-                startTX = 0; startTY = 0;
-              }
-              
+                } else { startTX = 0; startTY = 0; }
+              } else { startTX = 0; startTY = 0; }
               illEl.style.cursor = 'grabbing';
               e.preventDefault();
             });
+
+            // Touch support for dragging
+            illEl.addEventListener('touchstart', (e) => {
+              if (e.target.id === 'publicResizeHandle' || e.target.id === 'publicDeleteIllBtn') return;
+              isDragging = true;
+              startX = e.touches[0].clientX;
+              startY = e.touches[0].clientY;
+              const style = window.getComputedStyle(illEl);
+              const transform = style.transform;
+              if (transform && transform !== 'none') {
+                const matrix = transform.match(/matrix.*\((.+)\)/);
+                if (matrix) {
+                  const values = matrix[1].split(', ');
+                  startTX = parseFloat(values[4]);
+                  startTY = parseFloat(values[5]);
+                } else { startTX = 0; startTY = 0; }
+              } else { startTX = 0; startTY = 0; }
+            }, { passive: false });
 
             const resizeH = document.getElementById('publicResizeHandle');
             if (resizeH) {
@@ -408,6 +453,15 @@
                 e.preventDefault();
                 e.stopPropagation();
               });
+              // Touch support for resizing
+              resizeH.addEventListener('touchstart', (e) => {
+                isResizing = true;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                startW = illEl.offsetWidth;
+                startH = illEl.offsetHeight;
+                e.stopPropagation();
+              }, { passive: false });
             }
 
             const delIllBtn = document.getElementById('publicDeleteIllBtn');
@@ -422,26 +476,39 @@
               });
             }
 
-            window.addEventListener('mousemove', (e) => {
+            const handleMove = (e) => {
+              if (!isDragging && !isResizing) return;
+              const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+              const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+              
               if (isDragging) {
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
+                const dx = clientX - startX;
+                const dy = clientY - startY;
                 currentX = startTX + dx;
                 currentY = startTY + dy;
                 illEl.style.transform = `translate(${currentX}px, ${currentY}px)`;
               } else if (isResizing) {
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
+                const dx = clientX - startX;
+                const dy = clientY - startY;
                 illEl.style.width = Math.max(50, startW + dx) + 'px';
                 illEl.style.height = Math.max(50, startH + dy) + 'px';
               }
-            });
+              if (e.cancelable && (isDragging || isResizing)) e.preventDefault();
+            };
 
-            window.addEventListener('mouseup', () => {
-              isDragging = false;
-              isResizing = false;
-              if (illEl) illEl.style.cursor = 'grab';
-            });
+            window.addEventListener('mousemove', handleMove);
+            window.addEventListener('touchmove', handleMove, { passive: false });
+
+            const handleEnd = () => {
+              if (isDragging || isResizing) {
+                isDragging = false;
+                isResizing = false;
+                if (illEl) illEl.style.cursor = 'grab';
+              }
+            };
+
+            window.addEventListener('mouseup', handleEnd);
+            window.addEventListener('touchend', handleEnd);
           }
         } else {
           if (titleEl) titleEl.style.pointerEvents = 'none';
