@@ -382,3 +382,72 @@ def get_chat_history(user_id):
     if doc.exists:
         return doc.to_dict().get('chat_history', [])
     return []
+
+# ── Multi-Session Chat History ──
+
+def get_chat_sessions(user_id, limit=20):
+    """List recent chat sessions for a user."""
+    if not user_id or str(user_id).startswith("guest_"): return []
+    db = get_db()
+    docs = (db.collection('chat_sessions')
+            .where(filter=FieldFilter('user_id', '==', str(user_id)))
+            .order_by('updated_at', direction=firestore.Query.DESCENDING)
+            .limit(limit)
+            .stream())
+    
+    sessions = []
+    for doc in docs:
+        d = doc.to_dict()
+        sessions.append({
+            'id': doc.id,
+            'title': d.get('title', 'New Chat'),
+            'updated_at': d.get('updated_at')
+        })
+    return sessions
+
+def get_chat_session(user_id, session_id):
+    """Get full message history for a specific session."""
+    db = get_db()
+    doc = db.collection('chat_sessions').document(str(session_id)).get()
+    if doc.exists:
+        data = doc.to_dict()
+        if data.get('user_id') == str(user_id):
+            return data.get('messages', [])
+    return None
+
+def save_chat_session(user_id, session_id, messages, title=None):
+    """Save or update a chat session."""
+    if not user_id or str(user_id).startswith("guest_"): return session_id
+    db = get_db()
+    now = utc_now_iso()
+    
+    data = {
+        'user_id': str(user_id),
+        'messages': messages,
+        'updated_at': now
+    }
+    if title: data['title'] = title[:50]
+    
+    if session_id:
+        db.collection('chat_sessions').document(str(session_id)).set(data, merge=True)
+        return session_id
+    else:
+        data['created_at'] = now
+        if not title and messages:
+            # Auto-title from first user message
+            first_msg = next((m['content'] for m in messages if m['role'] == 'user'), "New Chat")
+            data['title'] = first_msg[:40] + ("..." if len(first_msg) > 40 else "")
+        
+        new_ref = db.collection('chat_sessions').document()
+        new_ref.set(data)
+        return new_ref.id
+
+def delete_chat_session(user_id, session_id):
+    """Delete a specific chat session."""
+    db = get_db()
+    doc_ref = db.collection('chat_sessions').document(str(session_id))
+    doc = doc_ref.get()
+    if doc.exists and doc.to_dict().get('user_id') == str(user_id):
+        doc_ref.delete()
+        return True
+    return False

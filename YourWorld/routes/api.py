@@ -252,7 +252,16 @@ def api_chat():
     data = request.get_json(force=True)
     message = (data.get("message") or "").strip()
     history = data.get("history") or []
+    session_id = data.get("session_id")
     context_data = data.get("context") or {}
+    
+    # Sync-only support for when we just want to save the history
+    if not message and data.get("sync_only"):
+        if user_id and not str(user_id).startswith("guest_"):
+            new_id = firebase_db.save_chat_session(user_id, session_id, history)
+            return jsonify({"success": True, "session_id": new_id})
+        return jsonify({"success": True})
+
     if not message: return jsonify({"error": "Message required"}), 400
 
     user_id = session.get("user_id")
@@ -305,7 +314,8 @@ def api_chat():
         # Update Cloud History for cross-device sync
         if user_id and not str(user_id).startswith("guest_"):
             new_history = history + [{"role": "user", "content": message}, {"role": "assistant", "content": reply}]
-            save_chat_history(user_id, new_history[-50:])
+            new_id = firebase_db.save_chat_session(user_id, session_id, new_history[-50:])
+            return jsonify({"reply": reply, "session_id": new_id})
             
         return jsonify({"reply": reply})
     except Exception as e:
@@ -319,10 +329,34 @@ def api_chat_sync():
     history = get_chat_history(user_id)
     return jsonify({"history": history})
 
+@api_bp.route("/api/chat/sessions", methods=["GET"])
+@auth_required
+def api_chat_sessions():
+    user_id = session.get("user_id")
+    sessions = firebase_db.get_chat_sessions(user_id)
+    return jsonify({"sessions": sessions})
+
+@api_bp.route("/api/chat/session/<session_id>", methods=["GET"])
+@auth_required
+def api_chat_session(session_id):
+    user_id = session.get("user_id")
+    messages = firebase_db.get_chat_session(user_id, session_id)
+    if messages is None: return jsonify({"error": "Not found"}), 404
+    return jsonify({"messages": messages})
+
+@api_bp.route("/api/chat/session/<session_id>", methods=["DELETE"])
+@auth_required
+def api_chat_session_delete(session_id):
+    user_id = session.get("user_id")
+    if firebase_db.delete_chat_session(user_id, session_id):
+        return jsonify({"success": True})
+    return jsonify({"error": "Failed"}), 404
+
 @api_bp.route("/api/chat/clear", methods=["POST"])
 @auth_required
 def api_chat_clear():
     user_id = session.get("user_id")
+    # This now just clears the legacy history field
     save_chat_history(user_id, [])
     return jsonify({"success": True})
 
