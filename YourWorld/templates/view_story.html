@@ -137,12 +137,18 @@
       display: none !important;
     }
 
-    #publicIllustration {
+    /* Enforce rounding for ALL images on mobile */
+    #publicIllustration, .page-illustration, .page-content img {
       box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
       border-radius: 24px !important;
       overflow: hidden !important;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
       mask-image: -webkit-radial-gradient(white, black);
+    }
+    .page-content img {
+      max-width: 100% !important;
+      height: auto !important;
+      margin: 15px 0 !important;
     }
   }
 
@@ -211,19 +217,34 @@
     background: rgba(255, 255, 255, 0.4);
   }
 
-  #publicIllustration {
+  /* Ensure ALL images (illustrations or inline) have rounded corners */
+  #publicIllustration, 
+  .page-illustration,
+  .page-content img {
     border-radius: 24px !important;
     overflow: hidden !important;
     -webkit-mask-image: -webkit-radial-gradient(white, black);
     mask-image: -webkit-radial-gradient(white, black);
   }
 
-  #publicIllustrationImg {
+  #publicIllustrationImg,
+  .page-illustration img,
+  .page-content img {
     border-radius: 24px !important;
     display: block;
+  }
+
+  #publicIllustrationImg,
+  .page-illustration img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  .page-content img {
+    max-width: 100%;
+    height: auto;
+    margin: 20px 0;
   }
 </style>
 
