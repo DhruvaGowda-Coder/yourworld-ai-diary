@@ -20,18 +20,12 @@ function _saveDisplayMessages() {
   } catch(e) {}
 }
 
-function _loadStoredChat() {
-  try {
-    const storedHistory = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
-    if (Array.isArray(storedHistory) && storedHistory.length > 0) {
-      chatHistory.push(...storedHistory);
-    }
-  } catch(e) {}
-
-  if (!chatMessages) return;
+async function _loadStoredChat() {
+  // 1. Try Local Storage first for instant UI
   try {
     const storedDisplay = JSON.parse(localStorage.getItem(CHAT_DISPLAY_KEY) || '[]');
     if (Array.isArray(storedDisplay) && storedDisplay.length > 0) {
+      if (chatMessages) chatMessages.innerHTML = '';
       storedDisplay.forEach(({ who, html }) => {
         const bubble = document.createElement('div');
         bubble.className = `chat-bubble ${who}`;
@@ -40,7 +34,41 @@ function _loadStoredChat() {
       });
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
+    
+    const storedHistory = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
+    if (Array.isArray(storedHistory)) {
+      chatHistory.push(...storedHistory);
+    }
   } catch(e) {}
+
+  // 2. If logged in, sync with Cloud (Firebase) to handle cross-device
+  if (typeof userId !== 'undefined' && userId && !userId.startsWith('guest_')) {
+    try {
+      const response = await fetch('/api/chat/sync');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.history && data.history.length > 0) {
+          // Update in-memory history
+          chatHistory.length = 0;
+          chatHistory.push(...data.history);
+          _saveChatHistory();
+
+          // Refresh UI with Cloud history if local was empty or outdated
+          if (chatMessages) {
+            chatMessages.innerHTML = '';
+            data.history.forEach(msg => {
+              addMessage(msg.content, msg.role === 'assistant' ? 'bot' : 'user');
+            });
+          }
+          _saveDisplayMessages();
+        }
+      }
+    } catch(e) {
+      console.warn('Cloud chat sync failed, using local copy.', e);
+    }
+  }
+
+  ensureGreeting();
 }
 
 function _clearChatHistory() {
@@ -91,7 +119,7 @@ function ensureGreeting() {
   clearBtn.addEventListener('mouseenter', () => { clearBtn.style.color = '#f3cda2'; });
   clearBtn.addEventListener('mouseleave', () => { clearBtn.style.color = 'rgba(255,255,255,0.4)'; });
   clearBtn.addEventListener('click', () => { _clearChatHistory(); });
-  // Insert before the close button
+  
   const closeBtn = document.getElementById('chatClose');
   if (closeBtn) actions.insertBefore(clearBtn, closeBtn);
   else actions.appendChild(clearBtn);

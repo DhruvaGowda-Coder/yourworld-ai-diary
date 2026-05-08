@@ -18,6 +18,7 @@ from config import (
     HUGGINGFACE_API_KEY, HUGGINGFACE_IMAGE_MODEL, SITE_URL, SHARE_CODE_RE
 )
 from utils import auth_required, ensure_session, get_user_theme, strip_html, normalize_share_code
+from firebase_db import save_chat_history, get_chat_history
 
 api_bp = Blueprint('api', __name__)
 
@@ -300,9 +301,22 @@ def api_chat():
         if " 1. " in reply and "\n" not in reply:
             reply = reply.replace(" 1. ", "\n\n1. ")
             
-        return jsonify({"reply": reply.strip(), "theme": active_theme})
-    except Exception:
-        return jsonify({"reply": "I am here with you. Tell me more.", "fallback": True, "theme": active_theme})
+        # Update Cloud History for cross-device sync
+        if user_id and not str(user_id).startswith("guest_"):
+            new_history = history + [{"role": "user", "content": message}, {"role": "assistant", "content": reply}]
+            save_chat_history(user_id, new_history[-10:])
+            
+        return jsonify({"reply": reply})
+    except Exception as e:
+        print(f"Chat error: {e}")
+        return jsonify({"error": "Failed to reach AI"}), 502
+
+@api_bp.route("/api/chat/sync", methods=["GET"])
+@auth_required
+def api_chat_sync():
+    user_id = session.get("user_id")
+    history = get_chat_history(user_id)
+    return jsonify({"history": history})
 
 @api_bp.route("/api/activity")
 @ensure_session

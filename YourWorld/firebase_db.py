@@ -364,3 +364,21 @@ def cleanup_guest_data():
             db.collection('activity').document(doc.id).delete()
             
     return deleted_count
+
+def save_chat_history(user_id, messages):
+    """Save the last 10 messages of AI chat history for a user."""
+    if not user_id or str(user_id).startswith("guest_"): return
+    db = get_db()
+    # Store history in a sub-document for efficiency
+    db.collection('users').document(str(user_id)).set({
+        'chat_history': messages,
+        'chat_updated_at': utc_now_iso()
+    }, merge=True)
+
+def get_chat_history(user_id):
+    """Retrieve stored AI chat history for a user."""
+    if not user_id or str(user_id).startswith("guest_"): return []
+    doc = get_db().collection('users').document(str(user_id)).get()
+    if doc.exists:
+        return doc.to_dict().get('chat_history', [])
+    return []
