@@ -397,6 +397,7 @@
       overflow-y: visible !important;
       height: auto !important;
       max-height: none !important;
+      min-height: 0 !important;
     }
 
     .public-view-controls {
@@ -417,11 +418,31 @@
       touch-action: auto !important;
     }
 
-    /* Edit mode on mobile: allow JS to control positioning */
+    /* Edit mode on mobile: constrain image within book bounds */
     .public-story[data-can-edit="true"] #publicIllustration {
-      position: absolute !important;
+      position: relative !important;
+      inset: auto !important;
+      transform: none !important;
       touch-action: none !important;
-      /* width/transform/left/top are fully controlled by JS */
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      margin: 16px 0 !important;
+    }
+
+    .public-story[data-can-edit="true"] .resize-handle {
+      display: flex !important;
+      width: 36px !important;
+      height: 36px !important;
+      bottom: -12px !important;
+      right: -12px !important;
+    }
+
+    .public-story[data-can-edit="true"] #publicDeleteIllBtn {
+      display: flex !important;
+      width: 32px !important;
+      height: 32px !important;
+      font-size: 20px !important;
     }
   }
 </style>
@@ -574,6 +595,8 @@
             // Touch support for dragging with hold-to-drag prevention
             illEl.addEventListener('touchstart', (e) => {
               if (e.target.id === 'publicResizeHandle' || e.target.id === 'publicDeleteIllBtn') return;
+              // On mobile, image is inline (position:relative) — dragging is disabled, only resize works
+              if (window.innerWidth <= 900) return;
               const touch = e.touches[0];
               startX = touch.clientX;
               startY = touch.clientY;
@@ -759,7 +782,8 @@
           if (!el) return;
           const isMobile = window.innerWidth <= 900;
           // On mobile in view-only mode, image is inline — skip all positioning
-          if (isMobile && !canEdit) {
+          if (isMobile) {
+            // On mobile, always flow image inline — never use absolute positioning
             el.style.position = 'relative';
             el.style.inset = 'auto';
             el.style.transform = 'none';

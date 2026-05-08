@@ -1342,7 +1342,7 @@ button:active:not(:disabled) {
   .public-story .book {
     padding: 12px 10px !important;
     min-height: auto !important;
-    max-height: 70vh !important; /* Move scroll constraint here */
+    max-height: none !important; /* Move scroll constraint here */
     max-width: 100% !important;
     overflow-x: hidden !important; /* No horizontal scroll — image is clamped */
     overflow-y: auto !important;
@@ -1454,7 +1454,8 @@ button:active:not(:disabled) {
     max-width: 100% !important;
   }
 
-  .resize-handle {
+  /* Hide resize in private editor on mobile, but keep it in shared canvas editable mode */
+  .page #resizeHandle {
     display: none !important;
   }
 }
