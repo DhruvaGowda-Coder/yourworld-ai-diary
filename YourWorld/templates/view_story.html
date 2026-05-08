@@ -99,15 +99,21 @@
       scroll-behavior: smooth;
       width: 100% !important;
       background-attachment: scroll !important;
-      border: 6px solid var(--book-cover) !important;
+      border: 12px solid var(--book-cover) !important; /* Match desktop/editor exactly */
       border-radius: 16px !important;
       margin: 0 !important;
     }
+
     .public-page {
       width: 100% !important;
       min-width: 650px !important; 
-      padding: 20px 16px !important; /* EXACT match with editor.css:1316 */
+      padding: 20px 16px 80px !important; /* Extra bottom padding for scroll clearance */
       position: relative;
+    }
+    
+    /* Ensure the book content doesn't get cut off */
+    .public-content {
+      padding-bottom: 40px !important;
     }
     .public-story {
       padding: 10px 5px !important; 
@@ -496,7 +502,7 @@
               if (e.touches && !isDragging && isTouchActive) {
                 const dx = Math.abs(e.touches[0].clientX - startX);
                 const dy = Math.abs(e.touches[0].clientY - startY);
-                if (dx > 10 || dy > 10) {
+                if (dx > 20 || dy > 20) { // Increased threshold to 20px for safer scrolling
                   isTouchActive = false;
                   clearTimeout(touchTimer);
                 }

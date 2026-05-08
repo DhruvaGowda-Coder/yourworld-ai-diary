@@ -1491,7 +1491,7 @@ if (workspace) {
       if (e.touches && !isDragging && isTouchActive) {
         const dx = Math.abs(e.touches[0].clientX - startX);
         const dy = Math.abs(e.touches[0].clientY - startY);
-        if (dx > 10 || dy > 10) {
+        if (dx > 20 || dy > 20) { // Increased threshold to 20px for safer scrolling
           isTouchActive = false;
           clearTimeout(touchTimer);
         }
