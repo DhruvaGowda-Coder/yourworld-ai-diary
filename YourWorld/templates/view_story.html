@@ -227,13 +227,13 @@
       <main class="public-main">
         <div class="book-area">
           <div class="book" id="publicBook">
-            <div class="page public-page" id="publicPage" style="display: flex; flex-direction: column;">
+            <div class="page public-page" id="publicPage" style="display: flex; flex-direction: column; position: relative;">
               <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none;" value="{{ pages[0].title if pages else 'Untitled' }}" />
               <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
                 <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 100px 0;">{{ pages[0].content if pages else '' }}</div>
-                <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; pointer-events: none; border-radius: 24px !important; overflow: hidden !important; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3); -webkit-mask-image: -webkit-radial-gradient(white, black); mask-image: radial-gradient(white, black);">
-                  <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: 100%; object-fit: cover; border-radius: 24px !important; display: block;" />
-                </div>
+              </div>
+              <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; pointer-events: none; border-radius: 24px !important; overflow: hidden !important; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3); -webkit-mask-image: -webkit-radial-gradient(white, black); mask-image: radial-gradient(white, black);">
+                <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: 100%; object-fit: cover; border-radius: 24px !important; display: block;" />
               </div>
             </div>
           </div>
