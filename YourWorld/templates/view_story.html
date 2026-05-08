@@ -84,11 +84,12 @@
     }
     .book, .public-story .book {
       height: auto !important;
+      min-height: 420px !important;
       max-height: 85vh !important;
       overflow-x: hidden !important;
       overflow-y: auto !important;
       -webkit-overflow-scrolling: touch;
-      padding: 20px 15px !important;
+      padding: 20px !important;
       scroll-behavior: smooth;
       
       /* Matching Shared Canvas Scrollbar Style */
@@ -123,9 +124,9 @@
     }
 
     .page-scroll {
-      overflow-y: visible !important;
+      overflow-y: auto !important;
       height: auto !important;
-      max-height: none !important;
+      max-height: 520px !important;
       display: block !important;
     }
 
@@ -135,6 +136,9 @@
 
     #publicIllustration {
       box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
+      border-radius: 14px !important;
+      overflow: hidden !important;
+      -webkit-mask-image: -webkit-radial-gradient(white, black); /* Safari fix */
     }
   }
 
@@ -166,10 +170,19 @@
     overflow: hidden !important;
     height: 100%;
     position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .book, .public-story .book {
+    padding: 34px;
+    min-height: 680px;
   }
   
   .page-scroll {
     overflow-y: auto;
+    min-height: 520px;
+    max-height: 520px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
   }
@@ -191,10 +204,13 @@
   }
 
   #publicIllustration {
+    border-radius: 14px !important;
     overflow: hidden !important;
+    -webkit-mask-image: -webkit-radial-gradient(white, black); /* Safari fix */
   }
 
   #publicIllustrationImg {
+    border-radius: 14px !important;
     display: block;
     width: 100%;
     height: 100%;
