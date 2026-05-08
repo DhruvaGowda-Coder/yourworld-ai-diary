@@ -187,7 +187,7 @@
   
   .book, .public-story .book {
     padding: 34px 34px 60px;
-    min-height: auto; /* Allow shrinking */
+    min-height: 680px; /* Restore desktop weight */
     display: flex;
     flex-direction: column;
   }
@@ -195,7 +195,7 @@
   .page-scroll {
     overflow-y: auto;
     flex: 1; 
-    height: auto; 
+    min-height: 520px; /* Restore desktop book height */
     max-height: 520px;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.35) rgba(255, 255, 255, 0.92);
