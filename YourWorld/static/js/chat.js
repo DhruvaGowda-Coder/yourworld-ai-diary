@@ -1,7 +1,8 @@
 // ── Chat History Persistence ─────────────────────────────────────────────────
 const CHAT_STORAGE_KEY = 'yw_chat_history';
 const CHAT_DISPLAY_KEY = 'yw_chat_display';
-const MAX_STORED_DISPLAY = 30;
+const MAX_STORED_DISPLAY = 60; // Increased to show more history
+const MAX_CHAT_HISTORY = 50;   // Increased context for AI
 
 function _saveChatHistory() {
   try {
@@ -14,10 +15,28 @@ function _saveDisplayMessages() {
   try {
     const items = [];
     chatMessages.querySelectorAll('.chat-bubble').forEach(el => {
-      items.push({ who: el.classList.contains('bot') ? 'bot' : 'user', html: el.innerHTML });
+      items.push({ 
+        who: el.classList.contains('bot') ? 'bot' : 'user', 
+        html: el.querySelector('.bubble-content').innerHTML 
+      });
     });
     localStorage.setItem(CHAT_DISPLAY_KEY, JSON.stringify(items.slice(-MAX_STORED_DISPLAY)));
   } catch(e) {}
+}
+
+async function _syncHistoryToCloud() {
+  if (typeof userId !== 'undefined' && userId && !userId.startsWith('guest_')) {
+    try {
+      // We send the current state to the server to overwrite the cloud state
+      // This is called after a single message is deleted
+      const historyPayload = chatHistory.slice(-MAX_CHAT_HISTORY);
+      await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify({ message: "", history: historyPayload, sync_only: true }),
+      });
+    } catch(e) {}
+  }
 }
 
 async function _loadStoredChat() {
@@ -27,10 +46,7 @@ async function _loadStoredChat() {
     if (Array.isArray(storedDisplay) && storedDisplay.length > 0) {
       if (chatMessages) chatMessages.innerHTML = '';
       storedDisplay.forEach(({ who, html }) => {
-        const bubble = document.createElement('div');
-        bubble.className = `chat-bubble ${who}`;
-        bubble.innerHTML = html;
-        chatMessages.appendChild(bubble);
+        addMessage(html, who, true); // true = bypass parsing as it's already HTML
       });
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
@@ -41,7 +57,7 @@ async function _loadStoredChat() {
     }
   } catch(e) {}
 
-  // 2. If logged in, sync with Cloud (Firebase) to handle cross-device
+  // 2. If logged in, sync with Cloud (Firebase)
   if (typeof userId !== 'undefined' && userId && !userId.startsWith('guest_')) {
     try {
       const response = await fetch('/api/chat/sync');
@@ -62,7 +78,7 @@ async function _loadStoredChat() {
         }
       }
     } catch(e) {
-      console.warn('Cloud chat sync failed', e);
+      console.warn('Cloud sync failed', e);
     }
   }
 
@@ -70,7 +86,6 @@ async function _loadStoredChat() {
 }
 
 async function _clearChatHistory() {
-  // Clear UI and Local Storage
   try {
     localStorage.removeItem(CHAT_STORAGE_KEY);
     localStorage.removeItem(CHAT_DISPLAY_KEY);
@@ -78,29 +93,71 @@ async function _clearChatHistory() {
   chatHistory.length = 0;
   if (chatMessages) chatMessages.innerHTML = '';
   
-  // Clear Cloud History (Firebase)
   if (typeof userId !== 'undefined' && userId && !userId.startsWith('guest_')) {
     try {
-      await fetch('/api/chat/clear', { 
-        method: 'POST', 
-        headers: { 'X-CSRFToken': csrfToken } 
-      });
-    } catch(e) { console.error('Cloud clear failed', e); }
+      await fetch('/api/chat/clear', { method: 'POST', headers: { 'X-CSRFToken': csrfToken } });
+    } catch(e) {}
   }
   
   ensureGreeting();
 }
 
+function _deleteMessage(bubbleEl) {
+  if (!bubbleEl) return;
+  
+  // Find index. Note: chatHistory includes greetings and multiple messages.
+  // We'll filter the array by matching the content if possible, 
+  // but a simpler way is to just rebuild history from DOM.
+  bubbleEl.remove();
+  
+  // Rebuild in-memory history from remaining bubbles
+  const newHistory = [];
+  chatMessages.querySelectorAll('.chat-bubble').forEach(el => {
+    const content = el.querySelector('.bubble-content').textContent;
+    newHistory.push({
+      role: el.classList.contains('bot') ? 'assistant' : 'user',
+      content: content
+    });
+  });
+  
+  chatHistory.length = 0;
+  chatHistory.push(...newHistory);
+  
+  _saveChatHistory();
+  _saveDisplayMessages();
+  
+  // Sync deletion to cloud
+  _syncHistoryToCloud();
+}
+
 // ── Core message renderer ────────────────────────────────────────────────────
-function addMessage(text, who = 'user') {
+function addMessage(text, who = 'user', isHtml = false) {
   if (!chatMessages) return;
   const bubble = document.createElement('div');
   bubble.className = `chat-bubble ${who}`;
-  if (who === 'bot' && typeof marked !== 'undefined') {
-    bubble.innerHTML = marked.parse(text);
+  
+  const content = document.createElement('div');
+  content.className = 'bubble-content';
+  if (who === 'bot' && typeof marked !== 'undefined' && !isHtml) {
+    content.innerHTML = marked.parse(text);
+  } else if (isHtml) {
+    content.innerHTML = text;
   } else {
-    bubble.textContent = text;
+    content.textContent = text;
   }
+  
+  // Delete button (visible on hover)
+  const del = document.createElement('button');
+  del.className = 'chat-msg-delete';
+  del.innerHTML = '&times;';
+  del.title = 'Delete message';
+  del.onclick = (e) => {
+    e.stopPropagation();
+    _deleteMessage(bubble);
+  };
+  
+  bubble.appendChild(content);
+  bubble.appendChild(del);
   chatMessages.appendChild(bubble);
   chatMessages.scrollTop = chatMessages.scrollHeight;
   return bubble;
@@ -126,14 +183,6 @@ function ensureGreeting() {
   newBtn.innerHTML = '<span style="font-size:1.2rem;vertical-align:middle;margin-right:2px;">+</span> New';
   newBtn.style.cssText = 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);color:#f3cda2;font-size:0.75rem;font-weight:600;cursor:pointer;padding:4px 10px;border-radius:20px;transition:all 0.2s;line-height:1;display:inline-flex;align-items:center;text-transform:uppercase;letter-spacing:0.02em;margin-right:4px;';
   
-  newBtn.addEventListener('mouseenter', () => { 
-    newBtn.style.background = 'rgba(255,255,255,0.15)'; 
-    newBtn.style.borderColor = 'rgba(255,255,255,0.25)';
-  });
-  newBtn.addEventListener('mouseleave', () => { 
-    newBtn.style.background = 'rgba(255,255,255,0.08)'; 
-    newBtn.style.borderColor = 'rgba(255,255,255,0.1)';
-  });
   newBtn.addEventListener('click', () => { 
     if (confirm('Start a new chat? This will clear current messages.')) {
       _clearChatHistory(); 
@@ -339,11 +388,7 @@ if (chatForm && chatText) {
       .then((response) => response.json().then((data) => ({ response, data })))
       .then(({ response, data }) => {
         if (response.status === 401 && data.error === 'login_required') {
-          typingBubble.innerHTML = 'AI chat requires a free account. <a href="/login/google" class="chat-login-link">Sign in here</a> - it only takes a second.';
-          chatHistory.push({ role: 'user', content: text });
-          chatHistory.push({ role: 'assistant', content: 'AI chat requires a free account. Sign in to continue.' });
-          _saveChatHistory();
-          _saveDisplayMessages();
+          typingBubble.querySelector('.bubble-content').innerHTML = 'AI chat requires a free account. <a href="/login/google" class="chat-login-link">Sign in here</a>.';
           return;
         }
         if (data && data.theme) {
@@ -352,10 +397,12 @@ if (chatForm && chatText) {
         }
         const reply = (data && data.reply) ? data.reply : null;
         if (!reply) throw new Error('No reply');
+        
+        const contentEl = typingBubble.querySelector('.bubble-content');
         if (typeof marked !== 'undefined') {
-          typingBubble.innerHTML = marked.parse(reply);
+          contentEl.innerHTML = marked.parse(reply);
         } else {
-          typingBubble.textContent = reply;
+          contentEl.textContent = reply;
         }
         chatHistory.push({ role: 'user', content: text });
         chatHistory.push({ role: 'assistant', content: reply });
@@ -363,22 +410,12 @@ if (chatForm && chatText) {
         _saveDisplayMessages();
       })
       .catch(() => {
-        const fallbackOptions = getThemeMeta(activeTheme).fallback;
-        const fallback = fallbackOptions[Math.floor(Math.random() * fallbackOptions.length)];
-        if (typeof marked !== 'undefined') {
-          typingBubble.innerHTML = marked.parse(fallback);
-        } else {
-          typingBubble.textContent = fallback;
-        }
-        chatHistory.push({ role: 'user', content: text });
-        chatHistory.push({ role: 'assistant', content: fallback });
-        _saveChatHistory();
-        _saveDisplayMessages();
+        const contentEl = typingBubble.querySelector('.bubble-content');
+        contentEl.textContent = 'I am here with you. Tell me more.';
       });
   });
 }
 
-// ── Restore history on page load ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   _loadStoredChat();
 });

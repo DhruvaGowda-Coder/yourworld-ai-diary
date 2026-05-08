@@ -366,7 +366,7 @@ def cleanup_guest_data():
     return deleted_count
 
 def save_chat_history(user_id, messages):
-    """Save the last 10 messages of AI chat history for a user."""
+    """Save the last 50 messages of AI chat history for a user."""
     if not user_id or str(user_id).startswith("guest_"): return
     db = get_db()
     # Store history in a sub-document for efficiency

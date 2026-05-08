@@ -285,7 +285,8 @@ def api_chat():
     messages = [{"role": "system", "content": system_prompt}]
     if related_pages:
         messages.append({"role": "system", "content": "Recent pages:\n" + "\n".join(related_pages)})
-    messages.extend([{"role": h.get("role"), "content": h.get("content")} for h in history[-10:] if h.get("role") in {"user", "assistant"}])
+    # Append limited history (up to 50 messages for context)
+    messages.extend([{"role": h.get("role"), "content": h.get("content")} for h in history[-50:] if h.get("role") in {"user", "assistant"}])
     messages.append({"role": "user", "content": message})
 
     if not GROQ_API_KEY: return jsonify({"reply": "AI unavailable.", "fallback": True})
@@ -304,7 +305,7 @@ def api_chat():
         # Update Cloud History for cross-device sync
         if user_id and not str(user_id).startswith("guest_"):
             new_history = history + [{"role": "user", "content": message}, {"role": "assistant", "content": reply}]
-            save_chat_history(user_id, new_history[-10:])
+            save_chat_history(user_id, new_history[-50:])
             
         return jsonify({"reply": reply})
     except Exception as e:
