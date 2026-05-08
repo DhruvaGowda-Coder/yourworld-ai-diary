@@ -99,7 +99,8 @@
       inset 0 0 0 2px rgba(30, 14, 7, 0.45),
       inset 0 0 65px rgba(70, 40, 18, 0.24),
       inset 0 0 110px rgba(58, 31, 14, 0.14);
-    overflow: hidden;
+    overflow-y: auto;
+    max-height: 680px;
     width: 100%;
     perspective: 1200px;
     display: flex;
@@ -128,10 +129,10 @@
   }
   
   .page-scroll {
-    overflow-y: auto;
+    overflow: visible;
     flex: 1; 
     min-height: 520px; /* Restore desktop book height */
-    max-height: 520px;
+    max-height: none;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.35) rgba(255, 255, 255, 0.92);
     padding-right: 4px;
@@ -796,7 +797,13 @@
             // Clamp x between 0 and availableX (never let image exceed page right edge)
             const clampedX = Math.max(0, Math.min(rawX, Math.max(0, availableX)));
             
-            el.style.transform = `translate(${clampedX}px, ${s.y || 0}px)`;
+            // Clamp y so image stays within visible page scroll area
+            const pageScrollEl = document.querySelector('.page-scroll');
+            const scrollH = pageScrollEl ? pageScrollEl.clientHeight : 520;
+            // top: 60px baseline + y offset; clamp so image top never exceeds scrollable height - some margin
+            const rawY = s.y || 0;
+            const clampedY = Math.max(-60, Math.min(rawY, Math.max(0, scrollH - 80)));
+            el.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
             
             if (s.height) el.style.height = `${s.height}px`;
             else el.style.height = 'auto';
