@@ -1452,8 +1452,10 @@ if (workspace) {
 
     // Touch support for dragging with hold-to-drag prevention
     pageIllustration.addEventListener('touchstart', (e) => {
-      if (window.innerWidth <= 900) return; // image is inline on mobile, no drag
+      // Check resize/delete FIRST
       if (e.target.id === 'resizeHandle' || e.target.id === 'deleteIllustrationBtn') return;
+      // Then block drag on mobile
+      if (window.innerWidth <= 900) return;
       const touch = e.touches[0];
       startX = touch.clientX;
       startY = touch.clientY;

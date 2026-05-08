@@ -1470,7 +1470,21 @@ button:active:not(:disabled) {
   }
 
   #resizeHandle {
-    display: none !important;
+    display: flex !important;
+    width: 44px !important;
+    height: 44px !important;
+    bottom: 6px !important;
+    right: 6px !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+    border: 2px solid rgba(255, 255, 255, 0.6) !important;
+    border-radius: 50% !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: nwse-resize !important;
+  }
+
+  .page-illustration {
+    cursor: default !important;
   }
 }
 
