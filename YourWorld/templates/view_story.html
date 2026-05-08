@@ -195,12 +195,21 @@
   .page-scroll {
     overflow-y: auto;
     flex: 1; 
-    height: auto; /* Remove min-height to fix wasted space */
+    height: auto; 
     max-height: 520px;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.35) rgba(255, 255, 255, 0.92);
     padding-right: 4px;
     scrollbar-gutter: stable;
+  }
+
+  /* Interaction cursor for editable stories */
+  .public-story[data-can-edit="true"] #publicIllustration {
+    cursor: grab !important;
+    pointer-events: auto !important;
+  }
+  .public-story[data-can-edit="true"] #publicIllustration:active {
+    cursor: grabbing !important;
   }
 
   .page-scroll::-webkit-scrollbar {
@@ -282,8 +291,11 @@
               <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
                 <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;">{{ pages[0].content if pages else '' }}</div>
               </div>
-              <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; pointer-events: none; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+              <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
                 <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+                {% if can_edit %}
+                <div class="resize-handle" id="publicResizeHandle" style="position: absolute; bottom: 0; right: 0; width: 24px; height: 24px; cursor: nwse-resize; background: linear-gradient(-45deg, rgba(0, 0, 0, 0.3) 15%, transparent 60%); border-bottom-right-radius: 24px; z-index: 30;"></div>
+                {% endif %}
               </div>
             </div>
           </div>
@@ -342,8 +354,70 @@
           if (contentEl) contentEl.contentEditable = "true";
           if (titleEl) titleEl.style.pointerEvents = 'auto';
           if (contentEl) contentEl.style.pointerEvents = 'auto';
+          if (illEl) illEl.style.pointerEvents = 'auto';
+          
+          // --- Implementation of Drag and Resize for View Mode ---
+          let isDragging = false;
+          let isResizing = false;
+          let startX, startY, startW, startH, startTX, startTY;
+          let currentX = 0, currentY = 0;
+
+          function getTransformXY(el) {
+            const style = window.getComputedStyle(el);
+            const matrix = new WebKitCSSMatrix(style.transform);
+            return { x: matrix.m41, y: matrix.m42 };
+          }
+
+          if (illEl) {
+            illEl.addEventListener('mousedown', (e) => {
+              if (e.target.id === 'publicResizeHandle') return;
+              isDragging = true;
+              startX = e.clientX;
+              startY = e.clientY;
+              const pos = getTransformXY(illEl);
+              startTX = pos.x;
+              startTY = pos.y;
+              illEl.style.cursor = 'grabbing';
+              e.preventDefault();
+            });
+
+            const resizeH = document.getElementById('publicResizeHandle');
+            if (resizeH) {
+              resizeH.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startW = illEl.offsetWidth;
+                startH = illEl.offsetHeight;
+                e.preventDefault();
+                e.stopPropagation();
+              });
+            }
+
+            window.addEventListener('mousemove', (e) => {
+              if (isDragging) {
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                currentX = startTX + dx;
+                currentY = startTY + dy;
+                illEl.style.transform = `translate(${currentX}px, ${currentY}px)`;
+              } else if (isResizing) {
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                illEl.style.width = (startW + dx) + 'px';
+                illEl.style.height = (startH + dy) + 'px';
+              }
+            });
+
+            window.addEventListener('mouseup', () => {
+              isDragging = false;
+              isResizing = false;
+              if (illEl) illEl.style.cursor = 'grab';
+            });
+          }
         } else {
           if (titleEl) titleEl.style.pointerEvents = 'none';
+          if (illEl) illEl.style.pointerEvents = 'none';
           if (contentEl) {
             contentEl.style.pointerEvents = 'none';
             contentEl.contentEditable = "false";
@@ -476,7 +550,20 @@
                   content_style: p.content_style,
                   image_url: p.image_url,
                   image_attached: p.image_attached,
-                  image_style: p.image_style
+                  image_style: JSON.stringify({
+                    x: (function() {
+                      const style = window.getComputedStyle(illEl);
+                      const matrix = new WebKitCSSMatrix(style.transform);
+                      return matrix.m41;
+                    })(),
+                    y: (function() {
+                      const style = window.getComputedStyle(illEl);
+                      const matrix = new WebKitCSSMatrix(style.transform);
+                      return matrix.m42;
+                    })(),
+                    width: illEl.offsetWidth,
+                    height: illEl.offsetHeight
+                  })
                 })
               });
               if (r.ok) {
