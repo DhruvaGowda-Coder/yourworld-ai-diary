@@ -39,7 +39,7 @@
 
   .workspace.public-story {
     display: grid !important;
-    grid-template-columns: minmax(220px, 300px) 1fr !important; /* EXACT match with Shared Canvas grid */
+    grid-template-columns: 300px 1fr !important; /* FIXED width to match Shared Canvas exactly */
     gap: 24px !important;
     align-items: start !important;
     width: 100% !important;
@@ -177,6 +177,7 @@
     box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     max-width: calc(100% - 40px) !important; /* Prevent overflow */
+    overflow: visible !important; /* Remove internal scrollbars */
   }
 
   #publicIllustrationImg,
@@ -326,10 +327,22 @@
       order: 2 !important; /* Place controls between book and sidebar */
       margin: 20px 0 !important;
     }
+
+    /* Fixed Fitting for Images on Mobile */
+    #publicIllustration {
+      position: relative !important;
+      inset: auto !important;
+      transform: none !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 20px 0 !important;
+      height: auto !important;
+      display: block !important;
+    }
   }
 </style>
 
-<section class="workspace public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}" style="margin: 0; padding: 0;">
+<section class="workspace public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}">
   {% if not_found %}
     <div class="public-notice" style="text-align: center; padding: 100px 20px;">
       <h2 style="font-family: var(--ui-font); margin-bottom: 20px;">Story not found</h2>
