@@ -36,17 +36,21 @@
     border-radius: 10px;
   }
 
+  /* Mobile Styles (Phone/Tablet) */
   @media (max-width: 768px) {
     .public-layout {
       display: flex !important;
       flex-direction: column !important;
+      gap: 20px !important;
     }
     .public-sidebar {
-      margin-bottom: 20px;
+      margin-bottom: 0;
       padding: 12px !important;
       width: 100% !important;
       max-width: 100% !important;
       overflow: hidden !important;
+      background: var(--theme-panel-bg) !important;
+      border-radius: 18px !important;
     }
     .public-page-list {
       display: flex !important;
@@ -73,6 +77,7 @@
       font-size: 0.85rem !important;
       color: rgba(255, 255, 255, 0.7) !important;
       border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 12px !important;
     }
     .public-page-item.is-active {
       color: var(--theme-accent) !important;
@@ -96,104 +101,45 @@
       background-attachment: scroll !important;
       border: 6px solid var(--book-cover) !important;
       border-radius: 16px !important;
-      
-      /* Matching Shared Canvas Scrollbar Style */
-      scrollbar-width: auto !important;
-      scrollbar-color: var(--theme-accent, #ff7e5f) rgba(0,0,0,0.1) !important;
+      margin: 0 !important;
     }
-
     .public-page {
       width: 100% !important;
       min-width: 650px !important; 
       padding: 20px 16px !important; /* EXACT match with editor.css:1316 */
       position: relative;
     }
-
     .public-story {
       padding: 10px 5px !important; 
     }
-    
-    .book::-webkit-scrollbar, 
-    .public-story .book::-webkit-scrollbar {
-      display: block !important;
-      width: 10px !important;
-    }
-    
-    .book::-webkit-scrollbar-thumb, 
-    .public-story .book::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.35) !important;
-      border-radius: 10px !important;
-      border: 2px solid rgba(255, 255, 255, 0.92) !important;
-      background-clip: content-box !important;
-    }
-
-    .book::-webkit-scrollbar-track, 
-    .public-story .book::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.92) !important;
-      border-radius: 10px !important;
-    }
-
-    .public-page {
-      height: auto !important;
-      max-height: none !important;
-      overflow: visible !important; /* Allow illustration corners to show */
-      display: block !important;
-    }
-
     .page-scroll {
-      overflow-y: visible !important; /* Let the book handle scrolling on mobile */
+      overflow-y: visible !important;
       height: auto !important;
       max-height: none !important;
-      display: block !important;
-    }
-
-    .page-scroll::-webkit-scrollbar {
-      display: none !important;
-    }
-
-    /* Enforce rounding for ALL images on mobile */
-    #publicIllustration, .page-illustration, .page-content img {
-      position: absolute !important;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
-      border-radius: 24px !important;
-      overflow: hidden !important;
-      -webkit-mask-image: -webkit-radial-gradient(white, black);
-      mask-image: -webkit-radial-gradient(white, black);
-      z-index: 10 !important;
-    }
-    .page-content img {
-      max-width: 100% !important;
-      height: auto !important;
-      margin: 15px 0 !important;
     }
   }
 
-  /* Theme colors for Story Pages */
-  .public-sidebar-title {
-    color: var(--theme-accent) !important;
-    font-family: var(--ui-font);
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-  }
-  
-  .public-page-item {
-    color: rgba(255, 255, 255, 0.8);
-    transition: all 0.2s ease;
-    cursor: pointer;
-  }
-  
-  .public-page-item:hover {
-    color: var(--theme-accent);
-    background: rgba(255, 255, 255, 0.05);
+  /* Desktop Styles */
+  .public-layout {
+    display: grid;
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); /* EXACT match with editor.css:416 */
+    gap: 24px; /* EXACT match with editor.css:417 */
+    align-items: start;
   }
 
-  .public-page-item.is-active {
-    color: var(--theme-accent) !important;
-    background: var(--theme-accent-soft);
-    border-color: var(--theme-accent-soft-2);
+  .public-sidebar {
+    background: var(--theme-panel-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 18px;
+    padding: 18px;
+    border: 1px solid var(--theme-panel-border);
+    height: fit-content;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
   }
+
   .public-page {
-    overflow: visible !important; /* Allow illustration to show corners */
+    overflow: visible !important;
     height: 100%;
     position: relative;
     display: flex;
@@ -222,8 +168,6 @@
       inset 0 0 110px rgba(58, 31, 14, 0.14);
     overflow: hidden;
     width: 100%;
-    /* No max-width here, matches editor .book behavior */
-    margin: 0 auto;
     perspective: 1200px;
     display: flex;
     flex-direction: column;
@@ -354,9 +298,9 @@
       <a href="/" class="btn primary">Go Home</a>
     </div>
   {% else %}
-    <div class="public-layout" style="display: flex; gap: 24px; align-items: flex-start;">
+    <div class="public-layout">
       <aside class="public-sidebar">
-        <h3 class="public-sidebar-title">Story Pages</h3>
+        <h3 style="color: var(--theme-accent); font-family: var(--ui-font); margin-bottom: 15px; font-size: 1.1rem;">Story Pages</h3>
         <div class="public-page-list" id="publicPageList">
           {% for p in pages %}
             <div class="public-page-item {% if loop.first %}is-active{% endif %}" data-index="{{ loop.index0 }}">
