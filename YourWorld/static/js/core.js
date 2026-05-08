@@ -176,4 +176,13 @@ const syncCycleFromClock = () => {
 syncCycleFromClock();
 window.setInterval(syncCycleFromClock, 5 * 60 * 1000);
 
-const themeParticleLayer = document.getElementById('themeParticleLayer');
+// Initialize active navigation link highlighting
+document.addEventListener('DOMContentLoaded', () => {
+  const currentPath = window.location.pathname;
+  document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
+    const linkPath = new URL(link.href, window.location.origin).pathname;
+    if (currentPath === linkPath) {
+      link.classList.add('active');
+    }
+  });
+});

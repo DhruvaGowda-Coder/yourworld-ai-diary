@@ -30,16 +30,16 @@
       try {
         await ambientAudio.play();
         toggleBtn.textContent = '🔊 Sound';
-        toggleBtn.classList.add('active');
+        toggleBtn.classList.add('is-active');
         console.log('Audio: Playing success');
       } catch (err) {
         console.warn('Audio: Playback blocked/failed:', err.name, err.message);
-        toggleBtn.textContent = '🔇 Paused';
+        toggleBtn.textContent = '🔇 Sound';
       }
     } else {
       ambientAudio.pause();
-      toggleBtn.textContent = '🔇 Off';
-      toggleBtn.classList.remove('active');
+      toggleBtn.textContent = '🔇 Sound';
+      toggleBtn.classList.remove('is-active');
     }
   };
 
