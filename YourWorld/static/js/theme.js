@@ -647,7 +647,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  toggleBtn.addEventListener('click', () => {
+  const toggleAudio = (e) => {
+    if (e) e.preventDefault();
     if (isPlaying) {
       audioPlayer.pause();
       isPlaying = false;
@@ -656,21 +657,37 @@ document.addEventListener('DOMContentLoaded', () => {
       toggleBtn.textContent = '🔇 Sound';
     } else {
       // If no src is loaded yet, load the current theme
-      if (!audioPlayer.src || audioPlayer.src === window.location.href) {
+      if (!audioPlayer.src || audioPlayer.src === window.location.href || audioPlayer.src === '') {
         const curTheme = typeof activeTheme !== 'undefined' ? activeTheme : 'campfire';
         audioPlayer.src = getAudioSrc(curTheme);
       }
-      audioPlayer.play().then(() => {
-        isPlaying = true;
-        localStorage.setItem('yw_sound_enabled', 'true');
-        toggleBtn.textContent = '🔊 Sound';
-        toggleBtn.classList.remove('pulse-highlight');
-      }).catch(err => {
-        console.warn(err);
-        toggleBtn.classList.add('pulse-highlight');
-      });
+      
+      const startPlay = () => {
+        audioPlayer.play().then(() => {
+          isPlaying = true;
+          localStorage.setItem('yw_sound_enabled', 'true');
+          toggleBtn.textContent = '🔊 Sound';
+          toggleBtn.classList.remove('pulse-highlight');
+        }).catch(err => {
+          console.warn('Playback failed:', err);
+          toggleBtn.classList.add('pulse-highlight');
+          // Try to load and play again if it was a source issue
+          audioPlayer.load();
+          audioPlayer.play().catch(() => {});
+        });
+      };
+
+      startPlay();
     }
-  });
+  };
+
+  toggleBtn.addEventListener('click', toggleAudio);
+  toggleBtn.addEventListener('touchstart', (e) => {
+    // Only trigger if not already handled by click (to avoid double toggle)
+    // Actually, on most mobile browsers click is fine, but touchstart is faster.
+    // To be safe, we'll just use click but ensure it's not blocked.
+    // However, some mobile Safari versions prefer user interaction to be very direct.
+  }, { passive: true });
 
   // Theme observer
   window.addEventListener('yw:themechange', (event) => {
