@@ -31,45 +31,58 @@
       overflow-x: auto !important;
       overflow-y: hidden !important;
       gap: 10px !important;
-      padding-bottom: 8px;
-      scrollbar-width: none;
+      padding-bottom: 12px !important; /* Space for scrollbar */
+      scrollbar-width: thin;
+      scrollbar-color: var(--theme-accent) transparent;
     }
     .public-page-list::-webkit-scrollbar {
-      display: none;
+      display: block !important;
+      height: 4px !important;
+    }
+    .public-page-list::-webkit-scrollbar-thumb {
+      background: var(--theme-accent) !important;
+      border-radius: 10px;
     }
     .public-page-item {
       flex: 0 0 auto;
       white-space: nowrap;
       padding: 8px 16px !important;
+      font-size: 0.85rem !important;
     }
     .public-main {
       width: 100% !important;
     }
+    .book, .public-story .book {
+      max-height: 75vh !important;
+    }
   }
 
-  /* Desktop Scrollbar Refinement */
+  /* Shared Canvas Scrollbar Style */
   .public-page {
-    overflow: hidden !important; /* Remove outer scrollbar */
+    overflow: hidden !important;
   }
   
   .page-scroll {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.5) transparent; /* Modern white scrollbar */
+    scrollbar-color: var(--theme-accent) rgba(0, 0, 0, 0.1);
   }
 
-  /* Webkit styling for more control */
   .page-scroll::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
+    height: 8px;
   }
   .page-scroll::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .page-scroll::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.08);
     border-radius: 10px;
   }
+  .page-scroll::-webkit-scrollbar-thumb {
+    background: var(--theme-accent);
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  }
   .page-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
+    filter: brightness(1.1);
   }
 </style>
 
@@ -102,7 +115,7 @@
                 <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; min-height: 450px; overflow: visible;">{{ pages[0].content if pages else '' }}</textarea>
               </div>
               <div class="page-illustration" id="publicIllustration" style="display: none;">
-                <img id="publicIllustrationImg" alt="Story illustration" style="border-radius: 8px; width: 100%; height: 100%; object-fit: cover;" />
+                <img id="publicIllustrationImg" alt="Story illustration" style="border-radius: 14px; width: 100%; height: 100%; object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.2);" />
               </div>
             </div>
           </div>
