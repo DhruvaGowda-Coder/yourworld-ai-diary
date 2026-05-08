@@ -179,9 +179,11 @@
     position: absolute !important;
     z-index: 10 !important;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border: none !important;
+    background: transparent !important;
     max-width: calc(100% - 40px) !important;
-    overflow: visible !important;
+    overflow: hidden !important;
+    border-radius: 24px !important;
     user-select: none !important;
     /* touch-action is handled by JS during drag only, not statically */
   }
@@ -452,7 +454,7 @@
           <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
             <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;">{{ pages[0].content | e if pages else '' }}</div>
           </div>
-          <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+          <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; background: transparent !important; border: none !important; box-shadow: none; overflow: hidden; border-radius: 24px;">
             <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: auto; object-fit: cover; display: block; border-radius: 24px;" />
             {% if can_edit %}
             <div class="resize-handle" id="publicResizeHandle"></div>
