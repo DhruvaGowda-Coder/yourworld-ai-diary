@@ -10,6 +10,11 @@
   let chatHistory = [];
   let currentSessionId = localStorage.getItem(CHAT_SESSION_KEY) || null;
 
+  function _getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+  }
+
   function _saveLocalState() {
     try {
       localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatHistory.slice(-MAX_CHAT_HISTORY)));
@@ -115,10 +120,11 @@
     _saveLocalState();
     _saveDisplayMessages();
 
-    if (typeof userId !== 'undefined' && userId && !String(userId).startsWith('guest_')) {
+    const uid = document.getElementById('current-user-data')?.textContent;
+    if (uid && uid !== 'null') {
       fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': window.csrfToken || '' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _getCsrfToken() },
         body: JSON.stringify({ sync_only: true, history: history, session_id: currentSessionId }),
       })
       .then(r => r.json())
@@ -151,8 +157,12 @@
     histBtn.title = 'Chat History';
     histBtn.innerHTML = `
       <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="1 4 1 10 7 10"></polyline>
-        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
       </svg>
     `;
     histBtn.onclick = async () => {
@@ -169,7 +179,7 @@
               const item = document.createElement('div');
               item.className = 'history-item';
               item.innerHTML = `
-                <div class="history-item-icon">💬</div>
+                <div class="history-item-icon">📜</div>
                 <div class="history-item-content">
                   <div class="history-title">${s.title}</div>
                   <div class="history-date">${new Date(s.updated_at).toLocaleDateString()}</div>
@@ -225,7 +235,6 @@
       let newLeft = startLeft + dx;
       let newTop = startTop + dy;
       
-      // Bounds
       newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - panel.offsetWidth));
       newTop = Math.max(0, Math.min(newTop, window.innerHeight - panel.offsetHeight));
       
@@ -310,7 +319,7 @@
       
       fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': window.csrfToken || '' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _getCsrfToken() },
         body: JSON.stringify({ message: text, history: chatHistory, session_id: currentSessionId }),
       })
       .then(r => r.json())
@@ -322,7 +331,10 @@
         _saveLocalState();
         _saveDisplayMessages();
       })
-      .catch(() => { typing.querySelector('.bubble-content').textContent = 'Error.'; });
+      .catch((err) => { 
+        console.error('Chat error:', err);
+        typing.querySelector('.bubble-content').textContent = 'Error sending message. Please refresh.'; 
+      });
     };
 
     // Load Initial State

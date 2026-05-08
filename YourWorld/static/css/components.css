@@ -1453,6 +1453,13 @@ a:focus-visible {
 }
 
 /* ── Chat Multi-Session & Premium UI ── */
+.chat-actions {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  height: 100%;
+}
+
 .chat-header-icon {
   background: none;
   border: none;
@@ -1472,6 +1479,27 @@ a:focus-visible {
   transform: translateY(-1px);
 }
 
+.chat-new-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 50px;
+  white-space: nowrap;
+  transition: all 0.2s;
+  height: fit-content;
+  align-self: center;
+}
+
+.chat-new-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
 .chat-history-list {
   display: none;
   position: absolute;
@@ -1479,9 +1507,9 @@ a:focus-visible {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(18, 14, 12, 0.98);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(22, 18, 16, 0.75);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
   z-index: 100;
   overflow-y: auto;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -1512,8 +1540,8 @@ a:focus-visible {
 }
 
 .history-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  transform: translateX(2px);
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(3px);
 }
 
 .history-item-icon {
