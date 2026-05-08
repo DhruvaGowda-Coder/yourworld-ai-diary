@@ -125,13 +125,13 @@
     }
   }
 
-  /* Desktop Styles */
-  .public-layout {
-    display: grid;
-    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); /* EXACT match with editor.css:416 */
-    gap: 24px; /* EXACT match with editor.css:417 */
-    align-items: start;
-    width: 100%;
+  /* Desktop Styles - Synced with .workspace grid in editor.css */
+  .workspace.public-story {
+    display: grid !important;
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr) !important;
+    gap: 24px !important;
+    align-items: start !important;
+    width: 100% !important;
   }
 
   .public-sidebar {
@@ -143,7 +143,7 @@
     border: 1px solid var(--theme-panel-border);
     height: fit-content;
     width: 100%;
-    max-width: 300px; /* Match grid column */
+    max-width: 300px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.2);
   }
 
@@ -315,19 +315,18 @@
       <a href="/" class="btn primary">Go Home</a>
     </div>
   {% else %}
-    <div class="public-layout">
-      <aside class="public-sidebar">
-        <h3 style="color: var(--theme-accent); font-family: var(--ui-font); margin-bottom: 15px; font-size: 1.1rem;">Story Pages</h3>
-        <div class="public-page-list" id="publicPageList">
-          {% for p in pages %}
-            <div class="public-page-item {% if loop.first %}is-active{% endif %}" data-index="{{ loop.index0 }}">
-              {{ p.title or 'Untitled Page' }}
-            </div>
-          {% endfor %}
-        </div>
-      </aside>
+    <aside class="public-sidebar">
+      <h3 style="color: var(--theme-accent); font-family: var(--ui-font); margin-bottom: 15px; font-size: 1.1rem;">Story Pages</h3>
+      <div class="public-page-list" id="publicPageList">
+        {% for p in pages %}
+          <div class="public-page-item {% if loop.first %}is-active{% endif %}" data-index="{{ loop.index0 }}">
+            {{ p.title or 'Untitled Page' }}
+          </div>
+        {% endfor %}
+      </div>
+    </aside>
 
-      <main class="public-main">
+    <main class="public-main">
         <div class="book-area">
           <div class="book" id="publicBook">
             <div class="page public-page" id="publicPage" style="display: flex; flex-direction: column; position: relative;">
