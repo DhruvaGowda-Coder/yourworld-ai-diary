@@ -454,22 +454,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       };
 
-      // Preview on hover
-      tile.addEventListener('mouseenter', () => tryPreview(themeId));
-
-      // Selection logic
+      // Selection logic - Click only
       tile.addEventListener('click', () => tryPreview(themeId));
     });
-
-    // Reset preview if mouse leaves the grid entirely without selecting
-    const themeGrid = document.querySelector('.theme-grid');
-    if (themeGrid) {
-      themeGrid.addEventListener('mouseleave', () => {
-        const checkedRadio = document.querySelector('input[name="theme"]:checked');
-        const selectedTheme = checkedRadio ? checkedRadio.value : initialTheme;
-        if (window.setThemeState) window.setThemeState(selectedTheme);
-      });
-    }
   }
 });
 </script>
