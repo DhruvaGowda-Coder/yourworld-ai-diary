@@ -79,6 +79,21 @@
     white-space: nowrap;
     margin-right: 12px;
   }
+  .theme-audio-status {
+    font-size: 0.75em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+  }
+  .btn-pill {
+    white-space: nowrap;
+    border-radius: 20px !important;
+    padding: 4px 12px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em;
+    font-size: 0.72em !important;
+  }
 </style>
 
 <script nonce="{{ csp_nonce }}">
@@ -220,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
       themeTitle.innerHTML = `${t.icon} ${t.name} <span style="font-weight: 400; opacity: 0.6; font-size: 0.8em;">(${t.id})</span>`;
       
       const statusText = document.createElement('span');
-      statusText.style.fontSize = '0.75em';
+      statusText.className = 'theme-audio-status';
       if (activeUrl) {
          statusText.style.color = '#4CAF50';
          statusText.textContent = `🎵 Active: ${songList.find(s => s.url === activeUrl)?.name || 'Custom Song'}`;
@@ -238,10 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
       actions.style.gap = '8px';
 
       const manageBtn = document.createElement('button');
-      manageBtn.className = 'btn ghost';
-      manageBtn.style.padding = '4px 8px';
-      manageBtn.style.fontSize = '0.75em';
-      manageBtn.textContent = isExpanded ? 'Close' : `Library (${songList.length})`;
+      manageBtn.className = 'btn ghost btn-pill';
+      manageBtn.textContent = isExpanded ? 'CLOSE' : `LIBRARY (${songList.length})`;
       manageBtn.onclick = (e) => {
          e.stopPropagation();
          expandedTheme = isExpanded ? null : t.id;
