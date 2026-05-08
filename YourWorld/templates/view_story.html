@@ -43,6 +43,7 @@
     gap: 24px !important;
     align-items: start !important;
     width: 100% !important;
+    max-width: none !important; /* Allow full expansion to match editor parent */
     margin: 0 auto !important;
   }
 
@@ -61,9 +62,11 @@
     padding: 18px;
     border: 1px solid var(--theme-panel-border);
     height: fit-content;
-    width: 100%;
-    max-width: 300px; /* Sync with minmax(220px, 300px) */
+    width: 300px !important; /* FORCE strict parity */
+    min-width: 300px !important;
+    max-width: 300px !important;
     box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    box-sizing: border-box !important;
   }
 
   .public-page {
@@ -276,6 +279,9 @@
     .public-page-item {
       flex: 0 0 auto;
       white-space: nowrap;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 200px !important;
       padding: 8px 16px !important;
       font-size: 0.85rem !important;
       color: rgba(255, 255, 255, 0.7) !important;
