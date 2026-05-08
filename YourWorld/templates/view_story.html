@@ -13,7 +13,7 @@
 {% endif %}
 {% endblock %}
 {% block content %}
-<section class="public-story" data-can-edit="{{ 'true' if can_edit else 'false' }}" style="max-width: 900px; margin: 0 auto; padding: 20px;">
+<section class="public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}" style="max-width: 900px; margin: 0 auto; padding: 20px;">
   {% if not_found %}
     <div class="public-notice" style="text-align: center; padding: 100px 20px;">
       <h2 style="font-family: var(--ui-font); margin-bottom: 20px;">Story not found</h2>
@@ -24,9 +24,9 @@
     <div class="book-area">
       <div class="book" id="publicBook">
         <div class="page" id="publicPage">
-          <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; pointer-events: {{ 'auto' if can_edit else 'none' }};" />
+          <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; pointer-events: {% if can_edit %}auto{% else %}none{% endif %};" />
           <div class="page-scroll">
-            <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; pointer-events: {{ 'auto' if can_edit else 'none' }}; min-height: 450px;"></textarea>
+            <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; pointer-events: {% if can_edit %}auto{% else %}none{% endif %}; min-height: 450px;"></textarea>
           </div>
           <div class="page-illustration" id="publicIllustration" style="display: none; margin-top: 20px;">
             <img id="publicIllustrationImg" alt="Story illustration" style="max-width: 100%; border-radius: 8px;" />
@@ -46,7 +46,9 @@
 
     <div class="public-meta" style="color: #fff; margin-top: 40px; text-align: center; font-size: 0.95rem; opacity: 0.7; font-family: var(--ui-font);">
       Shared code: <strong>{{ code }}</strong>
-      <span class="public-mode" style="margin-left: 10px; padding: 4px 10px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 0.8rem;">{{ "Editable" if can_edit else "View Only" }}</span>
+      <span class="public-mode" style="margin-left: 10px; padding: 4px 10px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 0.8rem;">
+        {% if can_edit %}Editable{% else %}View Only{% endif %}
+      </span>
     </div>
 
     <script id="publicPagesData" type="application/json">{{ pages | tojson }}</script>
@@ -56,13 +58,12 @@
         try {
           const dataEl = document.getElementById('publicPagesData');
           pages = JSON.parse(dataEl.textContent || '[]');
-          console.log("Loaded pages:", pages);
         } catch(e) {
-          console.error("Failed to parse pages data:", e);
+          console.error("Data parse error:", e);
         }
 
         let currentIndex = 0;
-        const canEdit = {{ 'true' if can_edit else 'false' }};
+        const canEdit = {% if can_edit %}true{% else %}false{% endif %};
 
         const titleEl = document.getElementById('publicTitle');
         const contentEl = document.getElementById('publicContent');
@@ -79,17 +80,12 @@
         }
 
         function render() {
-          if (!pages.length) {
-            console.warn("No pages found.");
-            return;
-          }
+          if (!pages.length) return;
           const p = pages[currentIndex];
-          console.log("Rendering page index", currentIndex, p);
 
           titleEl.value = p.title || 'Untitled';
           contentEl.value = p.content || '';
           
-          // Apply stored styles
           const applyStyles = (el, styleStr) => {
             if (!el || !styleStr) return;
             try {
@@ -111,16 +107,16 @@
             illEl.style.display = 'none';
           }
 
-          countEl.textContent = `${currentIndex + 1} / ${pages.length}`;
-          prevBtn.disabled = currentIndex === 0;
-          nextBtn.disabled = currentIndex === pages.length - 1;
+          countEl.textContent = (currentIndex + 1) + " / " + pages.length;
+          prevBtn.disabled = (currentIndex === 0);
+          nextBtn.disabled = (currentIndex === pages.length - 1);
         }
 
-        prevBtn.onclick = () => { if (currentIndex > 0) { currentIndex--; render(); } };
-        nextBtn.onclick = () => { if (currentIndex < pages.length - 1) { currentIndex++; render(); } };
+        prevBtn.onclick = function() { if (currentIndex > 0) { currentIndex--; render(); } };
+        nextBtn.onclick = function() { if (currentIndex < pages.length - 1) { currentIndex++; render(); } };
 
         if (saveBtn) {
-          saveBtn.onclick = async () => {
+          saveBtn.onclick = async function() {
             const p = pages[currentIndex];
             saveBtn.disabled = true;
             saveBtn.textContent = 'Saving...';
