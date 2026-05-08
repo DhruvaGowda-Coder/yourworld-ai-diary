@@ -18,9 +18,9 @@
     const src = getAudioSrc(theme);
     if (!src) return;
 
-    // Direct comparison of source
     const targetUrl = new URL(src, window.location.origin).href;
     if (ambientAudio.src !== targetUrl) {
+      console.log('Audio: Loading source:', src);
       ambientAudio.src = src;
       ambientAudio.load();
       if (savedTime > 0) ambientAudio.currentTime = savedTime;
@@ -31,8 +31,9 @@
         await ambientAudio.play();
         toggleBtn.textContent = '🔊 Sound';
         toggleBtn.classList.add('active');
+        console.log('Audio: Playing success');
       } catch (err) {
-        console.warn('Autoplay blocked.', err);
+        console.warn('Audio: Playback blocked/failed:', err.name, err.message);
         toggleBtn.textContent = '🔇 Paused';
       }
     } else {
@@ -47,24 +48,30 @@
     isPlaying = !isPlaying;
     localStorage.setItem('yw_sound_enabled', isPlaying ? 'true' : 'false');
     
-    if (isPlaying) {
-      // Force a re-load on click to ensure it's fresh
-      const theme = typeof activeTheme !== 'undefined' ? activeTheme : 'campfire';
-      ambientAudio.src = getAudioSrc(theme);
-      ambientAudio.load();
-    }
+    // Hard re-sync before playing
+    const theme = typeof activeTheme !== 'undefined' ? activeTheme : 'campfire';
+    const src = getAudioSrc(theme);
+    ambientAudio.src = src;
+    ambientAudio.load();
     
     await loadAndPlay();
   };
 
-  toggleBtn.addEventListener('click', toggleAudio);
-
-  // Initialize on page load
-  window.addEventListener('load', () => {
-    loadAndPlay();
+  // Error listener for deeper debugging
+  ambientAudio.addEventListener('error', (e) => {
+    console.error('Audio: Source error detected:', ambientAudio.error);
+    if (isPlaying) {
+      toggleBtn.textContent = '⚠️ Error';
+    }
   });
 
-  // Mobile/Tablet fix: Resume on first interaction
+  toggleBtn.addEventListener('click', toggleAudio);
+
+  window.addEventListener('load', () => {
+    // Small delay to ensure UserAudio is fully ready
+    setTimeout(loadAndPlay, 100);
+  });
+
   const unlockAudio = () => {
     if (isPlaying && ambientAudio.paused) {
       loadAndPlay();
@@ -75,19 +82,16 @@
   document.addEventListener('touchstart', unlockAudio, { passive: true });
   document.addEventListener('click', unlockAudio, { passive: true });
 
-  // Save progress every 2 seconds
   setInterval(() => {
     if (isPlaying && !ambientAudio.paused) {
       localStorage.setItem('yw_sound_time', ambientAudio.currentTime);
     }
   }, 2000);
 
-  // Theme change listener
   window.addEventListener('yw:themechange', () => {
     if (isPlaying) loadAndPlay();
   });
 
-  // Library updates
   window.reloadThemeAudio = (theme, url) => {
     if (window.UserAudio) window.UserAudio[theme] = url;
     if (isPlaying && (typeof activeTheme !== 'undefined' ? activeTheme : 'campfire') === theme) {
