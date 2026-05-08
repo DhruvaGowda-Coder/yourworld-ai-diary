@@ -39,31 +39,65 @@
     .public-sidebar {
       margin-bottom: 20px;
       padding: 12px !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
     }
     .public-page-list {
       display: flex !important;
       flex-direction: row !important;
-      overflow-x: auto !important;
+      overflow-x: scroll !important; /* Force scroll visibility */
       overflow-y: hidden !important;
       gap: 10px !important;
       padding-bottom: 12px !important;
+      -webkit-overflow-scrolling: touch;
     }
     .public-page-item {
       flex: 0 0 auto;
       white-space: nowrap;
       padding: 8px 16px !important;
       font-size: 0.85rem !important;
+      color: rgba(255, 255, 255, 0.7) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+    .public-page-item.is-active {
+      color: var(--theme-accent) !important;
+      border-color: var(--theme-accent) !important;
+      background: var(--theme-accent-soft) !important;
     }
     .public-main {
       width: 100% !important;
     }
     .book, .public-story .book {
-      max-height: 80vh !important;
-      overflow: hidden !important; /* Remove the extra border scrollbar on mobile */
+      max-height: 85vh !important;
+      overflow: hidden !important;
     }
   }
 
-  /* Match Editor Scrollbar Style (White/Subtle) */
+  /* Theme colors for Story Pages */
+  .public-sidebar-title {
+    color: var(--theme-accent) !important;
+    font-family: var(--ui-font);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+  }
+  
+  .public-page-item {
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .public-page-item:hover {
+    color: var(--theme-accent);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .public-page-item.is-active {
+    color: var(--theme-accent) !important;
+    background: var(--theme-accent-soft);
+    border-color: var(--theme-accent-soft-2);
+  }
   .public-page {
     overflow: hidden !important;
   }
@@ -115,8 +149,8 @@
           <div class="book" id="publicBook">
             <div class="page public-page" id="publicPage">
               <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important;" value="{{ pages[0].title if pages else 'Untitled' }}" />
-              <div class="page-scroll" style="overflow-y: auto;">
-                <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; min-height: 450px; overflow: visible;">{{ pages[0].content if pages else '' }}</textarea>
+              <div class="page-scroll" style="overflow-y: auto; height: 100%;">
+                <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; min-height: 100%; width: 100%; border: none; background: transparent; resize: none; overflow: hidden; padding: 0;">{{ pages[0].content if pages else '' }}</textarea>
               </div>
               <div class="page-illustration" id="publicIllustration" style="display: none;">
                 <img id="publicIllustrationImg" alt="Story illustration" style="border-radius: 14px; width: 100%; height: 100%; object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.2);" />
