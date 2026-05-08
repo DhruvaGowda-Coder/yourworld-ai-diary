@@ -1702,11 +1702,11 @@ button:active:not(:disabled) {
 }
 
 .theme-tile:has(input:checked) {
-  border-color: rgba(255, 176, 116, 0.72);
+  border-color: var(--theme-accent);
   background:
-    radial-gradient(circle at top right, rgba(255, 204, 145, 0.28), transparent 38%),
-    rgba(255, 157, 86, 0.2);
-  box-shadow: 0 0 0 1px rgba(255, 182, 118, 0.25);
+    radial-gradient(circle at top right, var(--theme-accent-soft-2), transparent 38%),
+    var(--theme-accent-soft);
+  box-shadow: 0 0 0 1px var(--theme-accent-soft-2);
 }
 
 .theme-campfire {
