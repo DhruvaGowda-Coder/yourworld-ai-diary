@@ -181,6 +181,35 @@
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     max-width: calc(100% - 40px) !important; /* Prevent overflow */
     overflow: visible !important; /* Remove internal scrollbars */
+    touch-action: none !important; /* PREVENT browser scroll during drag */
+    user-select: none !important;
+  }
+
+  .resize-handle {
+    position: absolute !important;
+    bottom: -12px !important;
+    right: -12px !important;
+    width: 44px !important; /* LARGE touch target for mobile */
+    height: 44px !important;
+    background: var(--theme-accent) !important;
+    border: 3px solid #fff !important;
+    border-radius: 50% !important;
+    cursor: nwse-resize !important;
+    z-index: 100 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .resize-handle::after {
+    content: "";
+    width: 14px;
+    height: 14px;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    margin-top: -6px;
+    margin-left: -6px;
   }
 
   #publicIllustrationImg,
@@ -379,7 +408,7 @@
           <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
             <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
             {% if can_edit %}
-            <div class="resize-handle" id="publicResizeHandle" style="position: absolute; bottom: 0; right: 0; width: 24px; height: 24px; cursor: nwse-resize; background: linear-gradient(-45deg, rgba(0, 0, 0, 0.3) 15%, transparent 60%); border-bottom-right-radius: 24px; z-index: 30;"></div>
+            <div class="resize-handle" id="publicResizeHandle"></div>
             <button type="button" id="publicDeleteIllBtn" style="position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.5); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 31; backdrop-filter: blur(4px); transition: all 0.2s;">&times;</button>
             {% endif %}
           </div>
@@ -499,6 +528,8 @@
                   isDragging = true;
                   illEl.classList.add('is-dragging');
                   if (navigator.vibrate) navigator.vibrate(5);
+                  // Strict suppression of body scrolling
+                  document.body.style.overflow = 'hidden';
                 }
               }, 200);
             }, { passive: false });
@@ -521,6 +552,8 @@
                 startY = e.touches[0].clientY;
                 startW = illEl.offsetWidth;
                 startH = illEl.offsetHeight;
+                document.body.style.overflow = 'hidden'; // Stop page scroll
+                e.preventDefault();
                 e.stopPropagation();
               }, { passive: false });
             }
@@ -575,6 +608,7 @@
               if (isDragging || isResizing) {
                 isDragging = false;
                 isResizing = false;
+                document.body.style.overflow = ''; // Restore page scroll
                 if (illEl) {
                   illEl.style.cursor = 'grab';
                   illEl.classList.remove('is-dragging');
