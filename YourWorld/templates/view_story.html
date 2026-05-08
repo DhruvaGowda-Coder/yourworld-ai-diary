@@ -72,11 +72,33 @@
         const saveBtn = document.getElementById('publicSaveBtn');
 
         function render() {
-          if (!pages.length) return;
+          if (!pages.length) {
+            console.warn("No pages found to render.");
+            return;
+          }
           const p = pages[currentIndex];
+          console.log("Rendering page:", currentIndex, p);
+
           titleEl.textContent = p.title || 'Untitled';
           contentEl.textContent = p.content || '';
           
+          // Apply stored styles
+          const applyStyles = (el, styleStr) => {
+            if (!el || !styleStr) return;
+            try {
+              const s = JSON.parse(styleStr);
+              el.style.fontWeight = s.bold ? '700' : '400';
+              el.style.fontStyle = s.italic ? 'italic' : 'normal';
+              el.style.textDecoration = s.underline ? 'underline' : 'none';
+              el.style.fontSize = s.fontSize ? s.fontSize + 'rem' : 'inherit';
+            } catch(e) {
+              console.error("Style parse failed:", e);
+            }
+          };
+
+          applyStyles(titleEl, p.title_style);
+          applyStyles(contentEl, p.content_style);
+
           if (p.image_url && p.image_attached) {
             illImg.src = p.image_url;
             illEl.style.display = 'block';
