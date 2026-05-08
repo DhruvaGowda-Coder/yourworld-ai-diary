@@ -150,6 +150,8 @@
   .public-page {
     overflow: visible !important;
     height: 100%;
+    min-height: 100% !important;
+    padding-bottom: 80px !important;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -315,8 +317,10 @@
       <a href="/" class="btn primary">Go Home</a>
     </div>
   {% else %}
-    <aside class="public-sidebar">
-      <h3 style="color: var(--theme-accent); font-family: var(--ui-font); margin-bottom: 15px; font-size: 1.1rem;">Story Pages</h3>
+    <aside class="entry-sidebar public-sidebar">
+      <div class="sidebar-header">
+        <h3 style="color: var(--theme-accent); font-family: var(--ui-font); font-size: 1.1rem;">Story Pages</h3>
+      </div>
       <div class="public-page-list" id="publicPageList">
         {% for p in pages %}
           <div class="public-page-item {% if loop.first %}is-active{% endif %}" data-index="{{ loop.index0 }}">
@@ -326,36 +330,33 @@
       </div>
     </aside>
 
-    <main class="public-main">
-        <div class="book-area">
-          <div class="book" id="publicBook">
-            <div class="page public-page" id="publicPage" style="display: flex; flex-direction: column; position: relative;">
-              <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none;" value="{{ pages[0].title if pages else 'Untitled' }}" />
-              <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
-                <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;">{{ pages[0].content if pages else '' }}</div>
-              </div>
-              <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
-                {% if can_edit %}
-                <div class="resize-handle" id="publicResizeHandle" style="position: absolute; bottom: 0; right: 0; width: 24px; height: 24px; cursor: nwse-resize; background: linear-gradient(-45deg, rgba(0, 0, 0, 0.3) 15%, transparent 60%); border-bottom-right-radius: 24px; z-index: 30;"></div>
-                <button type="button" id="publicDeleteIllBtn" style="position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.5); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 31; backdrop-filter: blur(4px); transition: all 0.2s;">&times;</button>
-                {% endif %}
-              </div>
-            </div>
+    <div class="book-area">
+      <div class="book" id="publicBook">
+        <div class="page public-page" id="publicPage" style="display: flex; flex-direction: column; position: relative;">
+          <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none;" value="{{ pages[0].title if pages else 'Untitled' }}" />
+          <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
+            <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;">{{ pages[0].content if pages else '' }}</div>
+          </div>
+          <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+            {% if can_edit %}
+            <div class="resize-handle" id="publicResizeHandle" style="position: absolute; bottom: 0; right: 0; width: 24px; height: 24px; cursor: nwse-resize; background: linear-gradient(-45deg, rgba(0, 0, 0, 0.3) 15%, transparent 60%); border-bottom-right-radius: 24px; z-index: 30;"></div>
+            <button type="button" id="publicDeleteIllBtn" style="position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.5); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 31; backdrop-filter: blur(4px); transition: all 0.2s;">&times;</button>
+            {% endif %}
           </div>
         </div>
+      </div>
 
-        <div class="page-controls public-view-controls" id="publicControls" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 30px;">
-          <button class="btn ghost" id="publicPrevBtn" type="button" aria-label="Previous page">Previous</button>
-          <span class="public-page-count" id="publicPageCount" style="font-family: var(--ui-font); font-size: 0.9rem; opacity: 0.8; color: #fff;">
-            {% if pages %}1 / {{ pages|length }}{% endif %}
-          </span>
-          <button class="btn ghost" id="publicNextBtn" type="button" aria-label="Next page">Next</button>
-          {% if can_edit %}
-            <button class="btn primary" id="publicSaveBtn" type="button">Save Changes</button>
-          {% endif %}
-        </div>
-      </main>
+      <div class="page-controls public-view-controls" id="publicControls" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 30px;">
+        <button class="btn ghost" id="publicPrevBtn" type="button" aria-label="Previous page">Previous</button>
+        <span class="public-page-count" id="publicPageCount" style="font-family: var(--ui-font); font-size: 0.9rem; opacity: 0.8; color: #fff;">
+          {% if pages %}1 / {{ pages|length }}{% endif %}
+        </span>
+        <button class="btn ghost" id="publicNextBtn" type="button" aria-label="Next page">Next</button>
+        {% if can_edit %}
+          <button class="btn primary" id="publicSaveBtn" type="button">Save Changes</button>
+        {% endif %}
+      </div>
     </div>
 
     <div class="public-meta" style="color: #fff; margin-top: 40px; text-align: center; font-size: 0.95rem; opacity: 0.7; font-family: var(--ui-font);">
