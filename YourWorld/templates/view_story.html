@@ -447,6 +447,31 @@
   }
 </style>
 
+<!-- Shared code badge — always visible, outside the grid -->
+<div class="public-meta" style="
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  color: #fff;
+  text-align: center;
+  font-size: 0.95rem;
+  font-family: var(--ui-font);
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 16px;
+">
+  Shared code: <strong>{{ code }}</strong>
+  <span class="public-mode" style="margin-left: 10px; padding: 4px 10px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 0.8rem;">
+    {% if can_edit %}Editable{% else %}View Only{% endif %}
+  </span>
+  {% if can_edit %}
+    <div class="public-edit-warning" style="margin-top: 4px; font-size: 0.82rem; opacity: 0.8;">Anyone with this code can save changes to this shared canvas.</div>
+  {% endif %}
+</div>
+
 <section class="workspace public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}">
   {% if not_found %}
     <div class="public-notice" style="text-align: center; padding: 100px 20px;">
@@ -497,15 +522,6 @@
       </div>
     </div>
 
-    <div class="public-meta" style="color: #fff; margin-top: 40px; text-align: center; font-size: 0.95rem; opacity: 0.7; font-family: var(--ui-font);">
-      Shared code: <strong>{{ code }}</strong>
-      <span class="public-mode" style="margin-left: 10px; padding: 4px 10px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 0.8rem;">
-        {% if can_edit %}Editable{% else %}View Only{% endif %}
-      </span>
-      {% if can_edit %}
-        <div class="public-edit-warning" style="margin-top: 10px; font-size: 0.82rem;">Anyone with this code can save changes to this shared canvas.</div>
-      {% endif %}
-    </div>
 
     <script id="publicPagesData" type="application/json">{{ pages | tojson }}</script>
     <script nonce="{{ csp_nonce }}">
