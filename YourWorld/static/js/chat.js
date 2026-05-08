@@ -92,8 +92,6 @@
         _saveLocalState();
         _saveDisplayMessages();
         panel.classList.remove('showing-history');
-      } else {
-        throw new Error('Failed to fetch session');
       }
     } catch(e) {
       msgs.innerHTML = '<div style="text-align:center;padding:20px;color:#ff4d4d;">Failed to load.</div>';
@@ -149,31 +147,42 @@
     const actions = panel.querySelector('.chat-actions');
     
     const histBtn = document.createElement('button');
-    histBtn.innerHTML = '🕒';
-    histBtn.className = 'chat-header-icon';
+    histBtn.className = 'chat-header-icon chat-history-toggle';
     histBtn.title = 'Chat History';
+    histBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"></polyline>
+        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+      </svg>
+    `;
     histBtn.onclick = async () => {
       const showing = panel.classList.toggle('showing-history');
       if (showing) {
-        historyList.innerHTML = '<div style="text-align:center;padding:20px;opacity:0.6;">Fetching chats...</div>';
+        historyList.innerHTML = '<div style="text-align:center;padding:40px;opacity:0.4;font-size:0.9rem;">Fetching your chats...</div>';
         try {
           const r = await fetch('/api/chat/sessions');
           if (!r.ok) throw new Error('API Error');
           const data = await r.json();
-          historyList.innerHTML = '<div style="font-weight:600;padding:12px;opacity:0.8;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.05);">RECENT CHATS</div>';
+          historyList.innerHTML = '<div class="history-list-header">RECENT CONVERSATIONS</div>';
           if (data.sessions && data.sessions.length) {
             data.sessions.forEach(s => {
               const item = document.createElement('div');
               item.className = 'history-item';
-              item.innerHTML = `<div class="history-title">${s.title}</div><div class="history-date">${new Date(s.updated_at).toLocaleDateString()}</div>`;
+              item.innerHTML = `
+                <div class="history-item-icon">💬</div>
+                <div class="history-item-content">
+                  <div class="history-title">${s.title}</div>
+                  <div class="history-date">${new Date(s.updated_at).toLocaleDateString()}</div>
+                </div>
+              `;
               item.onclick = () => loadSession(s.id);
               historyList.appendChild(item);
             });
           } else {
-            historyList.innerHTML += '<div style="padding:20px;text-align:center;opacity:0.5;font-size:0.85rem;">No history found. Try sending a message first.</div>';
+            historyList.innerHTML += '<div style="padding:40px;text-align:center;opacity:0.5;font-size:0.85rem;">No history found.<br>Send a message to start a backup.</div>';
           }
         } catch(e) { 
-          historyList.innerHTML = '<div style="padding:20px;text-align:center;color:#ff8888;font-size:0.85rem;">Failed to load history.<br><button onclick="location.reload()" style="margin-top:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;padding:4px 10px;border-radius:4px;cursor:pointer;">Retry</button></div>';
+          historyList.innerHTML = '<div style="padding:40px;text-align:center;color:#ff8888;font-size:0.85rem;">Failed to load history.<br><button onclick="location.reload()" class="chat-retry-btn">Retry</button></div>';
         }
       }
     };
@@ -194,33 +203,29 @@
     };
     if (actions) actions.insertBefore(newBtn, histBtn);
 
-    // ── Drag & Move ──
+    // ── STRICT Drag & Move ──
     let isDragging = false;
     let startX, startY, startLeft, startTop;
 
-    const onPointerDown = (e) => {
-      // Don't drag if clicking buttons, UNLESS it's the drag handle itself
-      if (e.target.closest('button') && e.target.id !== 'chatDragHandle') return;
-      
+    const startDragging = (e) => {
       isDragging = true;
       startX = e.clientX;
       startY = e.clientY;
       const rect = panel.getBoundingClientRect();
       startLeft = rect.left;
       startTop = rect.top;
-      panel.setPointerCapture(e.pointerId);
       panel.style.transition = 'none';
       e.preventDefault();
     };
 
-    const onPointerMove = (e) => {
+    window.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
       let newLeft = startLeft + dx;
       let newTop = startTop + dy;
       
-      // Bounds checks
+      // Bounds
       newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - panel.offsetWidth));
       newTop = Math.max(0, Math.min(newTop, window.innerHeight - panel.offsetHeight));
       
@@ -228,12 +233,11 @@
       panel.style.top = newTop + 'px';
       panel.style.bottom = 'auto';
       panel.style.right = 'auto';
-    };
+    });
 
-    const onPointerUp = (e) => {
+    window.addEventListener('pointerup', () => {
       if (!isDragging) return;
       isDragging = false;
-      panel.releasePointerCapture(e.pointerId);
       panel.style.transition = '';
       localStorage.setItem(POS_STORAGE_KEY, JSON.stringify({ 
         left: panel.style.left, 
@@ -241,48 +245,44 @@
         width: panel.style.width,
         height: panel.style.height
       }));
-    };
+    });
 
-    if (dragHandle) {
-      dragHandle.addEventListener('pointerdown', onPointerDown);
-      dragHandle.addEventListener('pointermove', onPointerMove);
-      dragHandle.addEventListener('pointerup', onPointerUp);
-    }
+    if (dragHandle) dragHandle.addEventListener('pointerdown', startDragging);
 
-    // ── Resize ──
+    // ── STRICT Resize ──
     let isResizing = false;
     let startW, startH;
 
-    const onResizeDown = (e) => {
+    const startResizing = (e) => {
       isResizing = true;
       startX = e.clientX;
       startY = e.clientY;
       startW = panel.offsetWidth;
       startH = panel.offsetHeight;
-      panel.setPointerCapture(e.pointerId);
-      e.stopPropagation();
       e.preventDefault();
+      e.stopPropagation();
     };
 
-    const onResizeMove = (e) => {
+    window.addEventListener('pointermove', (e) => {
       if (!isResizing) return;
       const dw = e.clientX - startX;
       const dh = e.clientY - startY;
       panel.style.width = Math.max(280, startW + dw) + 'px';
       panel.style.height = Math.max(300, startH + dh) + 'px';
-    };
+    });
 
-    const onResizeUp = (e) => {
+    window.addEventListener('pointerup', () => {
+      if (!isResizing) return;
       isResizing = false;
-      panel.releasePointerCapture(e.pointerId);
-      onPointerUp(e); // save state
-    };
+      localStorage.setItem(POS_STORAGE_KEY, JSON.stringify({ 
+        left: panel.style.left, 
+        top: panel.style.top,
+        width: panel.style.width,
+        height: panel.style.height
+      }));
+    });
 
-    if (resizeHandle) {
-      resizeHandle.addEventListener('pointerdown', onResizeDown);
-      resizeHandle.addEventListener('pointermove', onResizeMove);
-      resizeHandle.addEventListener('pointerup', onResizeUp);
-    }
+    if (resizeHandle) resizeHandle.addEventListener('pointerdown', startResizing);
 
     // Restore Position
     try {
