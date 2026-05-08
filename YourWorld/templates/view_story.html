@@ -83,15 +83,57 @@
       width: 100% !important;
     }
     .book, .public-story .book {
-      height: 85vh !important;
-      overflow: hidden !important;
+      height: auto !important;
+      max-height: 85vh !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      padding: 20px 15px !important;
+      scroll-behavior: smooth;
+      
+      /* Matching Shared Canvas Scrollbar Style */
+      scrollbar-width: thin;
+      scrollbar-color: var(--theme-accent, #ffb5a0) rgba(0, 0, 0, 0.1);
     }
-    .page-scroll::-webkit-scrollbar {
+    
+    .book::-webkit-scrollbar, 
+    .public-story .book::-webkit-scrollbar {
       display: block !important;
-      width: 4px !important;
+      width: 6px !important;
     }
-    .page-scroll::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.2) !important; /* Darker for paper visibility */
+    
+    .book::-webkit-scrollbar-thumb, 
+    .public-story .book::-webkit-scrollbar-thumb {
+      background: var(--theme-accent, #ffb5a0) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2) !important;
+    }
+
+    .book::-webkit-scrollbar-track, 
+    .public-story .book::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05) !important;
+      border-radius: 10px !important;
+    }
+
+    .public-page {
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      display: block !important;
+    }
+
+    .page-scroll {
+      overflow-y: visible !important;
+      height: auto !important;
+      max-height: none !important;
+      display: block !important;
+    }
+
+    .page-scroll::-webkit-scrollbar {
+      display: none !important;
+    }
+
+    .page-illustration {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
     }
   }
 
@@ -121,9 +163,11 @@
   }
   .public-page {
     overflow: hidden !important;
+    height: 100%;
   }
   
   .page-scroll {
+    overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
   }
@@ -141,14 +185,7 @@
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
   .page-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.4);
-  }
-
-  /* Force rounded corners on illustrations */
-  .page-illustration, .page-illustration img {
-    border-radius: 14px !important;
-    overflow: hidden !important;
-    -webkit-mask-image: -webkit-radial-gradient(white, black);
+    background: rgba(255, 255, 255, 0.4);
   }
 </style>
 
@@ -175,12 +212,12 @@
       <main class="public-main">
         <div class="book-area">
           <div class="book" id="publicBook">
-            <div class="page public-page" id="publicPage" style="height: 100%; display: flex; flex-direction: column; overflow: hidden !important;">
+            <div class="page public-page" id="publicPage" style="display: flex; flex-direction: column;">
               <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none;" value="{{ pages[0].title if pages else 'Untitled' }}" />
-              <div class="page-scroll" style="overflow-y: auto; flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important; -webkit-overflow-scrolling: touch;">
-                <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 100px 0; min-height: 100%;">{{ pages[0].content if pages else '' }}</div>
-                <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                  <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+              <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
+                <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 100px 0;">{{ pages[0].content if pages else '' }}</div>
+                <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; pointer-events: none; border-radius: 24px !important; overflow: hidden !important; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3); -webkit-mask-image: -webkit-radial-gradient(white, black); mask-image: radial-gradient(white, black);">
+                  <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: 100%; object-fit: cover; border-radius: 24px !important; display: block;" />
                 </div>
               </div>
             </div>
@@ -215,11 +252,14 @@
       (function() {
         let pages = [];
         try {
-          pages = JSON.parse(document.getElementById('publicPagesData').textContent || '[]');
-        } catch(e) { console.error("Data error", e); }
+          const dataEl = document.getElementById('publicPagesData');
+          pages = JSON.parse(dataEl ? dataEl.textContent : '[]');
+        } catch(e) { 
+          console.error("Data error", e); 
+        }
 
         let currentIndex = 0;
-        const canEdit = {% if can_edit %}true{% else %}false{% endif %};
+        const canEdit = JSON.parse('{{ can_edit | tojson }}');
 
         const titleEl = document.getElementById('publicTitle');
         const contentEl = document.getElementById('publicContent');
@@ -233,23 +273,29 @@
         const pageListItems = document.querySelectorAll('.public-page-item');
 
         if (canEdit) {
-          titleEl.readOnly = false;
-          contentEl.contentEditable = "true";
-          titleEl.style.pointerEvents = 'auto';
-          contentEl.style.pointerEvents = 'auto';
+          if (titleEl) titleEl.readOnly = false;
+          if (contentEl) contentEl.contentEditable = "true";
+          if (titleEl) titleEl.style.pointerEvents = 'auto';
+          if (contentEl) contentEl.style.pointerEvents = 'auto';
         } else {
-          titleEl.style.pointerEvents = 'none';
-          contentEl.style.pointerEvents = 'none';
-          contentEl.contentEditable = "false";
+          if (titleEl) titleEl.style.pointerEvents = 'none';
+          if (contentEl) {
+            contentEl.style.pointerEvents = 'none';
+            contentEl.contentEditable = "false";
+          }
         }
 
         function updateButtonState() {
           const atStart = currentIndex === 0;
           const atEnd = currentIndex >= pages.length - 1;
-          prevBtn.disabled = atStart;
-          nextBtn.disabled = atEnd;
-          prevBtn.setAttribute('aria-disabled', String(atStart));
-          nextBtn.setAttribute('aria-disabled', String(atEnd));
+          if (prevBtn) {
+            prevBtn.disabled = atStart;
+            prevBtn.setAttribute('aria-disabled', String(atStart));
+          }
+          if (nextBtn) {
+            nextBtn.disabled = atEnd;
+            nextBtn.setAttribute('aria-disabled', String(atEnd));
+          }
           
           pageListItems.forEach((item, idx) => {
             item.classList.toggle('is-active', idx === currentIndex);
@@ -265,7 +311,7 @@
             el.style.top = '0px';
             el.style.transform = `translate(${s.x || 0}px, ${s.y || 0}px)`;
             el.style.width = s.width ? `${s.width}px` : '250px';
-            el.style.maxWidth = '100%'; // Prevent overflow on mobile
+            el.style.maxWidth = '100%';
             if (s.height) el.style.height = `${s.height}px`;
             else el.style.height = 'auto';
           } catch(e) {
@@ -281,10 +327,9 @@
           if (!pages.length) return;
           const p = pages[currentIndex];
 
-          titleEl.value = p.title || 'Untitled';
-          contentEl.innerText = p.content || '';
+          if (titleEl) titleEl.value = p.title || 'Untitled';
+          if (contentEl) contentEl.innerText = p.content || '';
           
-          // Reset scroll
           const pageScroll = document.querySelector('.page-scroll');
           if (pageScroll) pageScroll.scrollTop = 0;
           const publicPage = document.getElementById('publicPage');
@@ -305,14 +350,16 @@
           applyStyles(contentEl, p.content_style);
 
           if (p.image_url && p.image_attached) {
-            illImg.src = p.image_url;
-            illEl.style.display = 'block';
-            applyImageStyle(illEl, p.image_style);
+            if (illImg) illImg.src = p.image_url;
+            if (illEl) {
+              illEl.style.display = 'block';
+              applyImageStyle(illEl, p.image_style);
+            }
           } else {
-            illEl.style.display = 'none';
+            if (illEl) illEl.style.display = 'none';
           }
 
-          countEl.textContent = (currentIndex + 1) + " / " + pages.length;
+          if (countEl) countEl.textContent = (currentIndex + 1) + " / " + pages.length;
           updateButtonState();
         }
 
@@ -326,12 +373,12 @@
           }
         }
 
-        prevBtn.addEventListener('click', function() {
-          navigate(-1);
-        });
-        nextBtn.addEventListener('click', function() {
-          navigate(1);
-        });
+        if (prevBtn) {
+          prevBtn.addEventListener('click', function() { navigate(-1); });
+        }
+        if (nextBtn) {
+          nextBtn.addEventListener('click', function() { navigate(1); });
+        }
         
         pageListItems.forEach(item => {
           item.addEventListener('click', () => {
@@ -369,14 +416,16 @@
               });
               if (r.ok) {
                 p.title = titleEl.value;
-                p.content = contentEl.value;
+                p.content = contentEl.innerText;
                 saveBtn.textContent = 'Saved!';
                 
-                // Update sidebar title
                 const sidebarItem = document.querySelector(`.public-page-item[data-index="${currentIndex}"]`);
                 if (sidebarItem) sidebarItem.textContent = titleEl.value || 'Untitled Page';
                 
-                setTimeout(() => { saveBtn.textContent = 'Save Changes'; saveBtn.disabled = false; }, 2000);
+                setTimeout(() => { 
+                  saveBtn.textContent = 'Save Changes'; 
+                  saveBtn.disabled = false; 
+                }, 2000);
               }
             } catch(e) {
               alert('Save failed');
