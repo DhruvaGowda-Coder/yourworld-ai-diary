@@ -120,7 +120,7 @@ const THEME_META = {
 };
 
 const chatHistory = [];
-const MAX_CHAT_HISTORY = 10;
+const MAX_CHAT_HISTORY = 50;
 let getChatContext = () => null;
 let activeTheme = (bodyEl && bodyEl.dataset.theme) ? bodyEl.dataset.theme : 'campfire';
 const fireThemes = new Set(['campfire']);
@@ -143,6 +143,14 @@ const setThemeState = (theme) => {
   activeTheme = resolved;
   if (bodyEl) bodyEl.dataset.theme = resolved;
   if (chatSubtitle) chatSubtitle.textContent = getThemeMeta(resolved).subtitle;
+  
+  // Update Header Icon Emoji
+  const iconEl = document.getElementById('chatThemeIcon');
+  if (iconEl) {
+    const emojis = { campfire:'🔥', water:'🌊', wind:'💨', earth:'🌿', ice:'❄️', storm:'⚡', space:'🌌', garden:'🌸', cherry:'🌺' };
+    iconEl.textContent = emojis[resolved] || '✨';
+  }
+
   window.dispatchEvent(new CustomEvent('yw:themechange', { detail: { theme: resolved } }));
 };
 
