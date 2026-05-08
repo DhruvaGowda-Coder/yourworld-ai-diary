@@ -398,8 +398,8 @@
       margin: 20px 0 !important;
     }
 
-    /* Fixed Fitting for Images on Mobile */
-    #publicIllustration {
+    /* View-only mode (default mobile): image flows naturally inline */
+    .public-story[data-can-edit="false"] #publicIllustration {
       position: relative !important;
       inset: auto !important;
       transform: none !important;
@@ -407,7 +407,15 @@
       max-width: 100% !important;
       margin: 20px 0 !important;
       height: auto !important;
-      display: block !important;
+      pointer-events: none !important;
+      touch-action: auto !important;
+    }
+
+    /* Edit mode on mobile: allow JS to control positioning */
+    .public-story[data-can-edit="true"] #publicIllustration {
+      position: absolute !important;
+      touch-action: none !important;
+      /* width/transform/left/top are fully controlled by JS */
     }
   }
 </style>
@@ -438,7 +446,7 @@
         <div class="page public-page" id="publicPage" style="display: flex; flex-direction: column; position: relative;">
           <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none;" value="{{ pages[0].title if pages else 'Untitled' }}" />
           <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
-            <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;">{{ pages[0].content if pages else '' }}</div>
+            <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;">{{ pages[0].content | safe if pages else '' }}</div>
           </div>
           <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
             <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: auto; object-fit: cover; display: block; border-radius: 24px;" />
@@ -504,6 +512,24 @@
           if (contentEl) contentEl.style.pointerEvents = 'auto';
           if (illEl) illEl.style.pointerEvents = 'auto';
           
+          let touchMoveController = null;
+
+          // Safety reset for body overflow
+          document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+              document.body.style.overflow = '';
+              isDragging = false;
+              isResizing = false;
+              isTouchActive = false;
+              if (touchTimer) clearTimeout(touchTimer);
+            }
+          });
+          window.addEventListener('blur', () => {
+            document.body.style.overflow = '';
+            isDragging = false;
+            isResizing = false;
+          });
+          
           // --- Implementation of Drag and Resize for View Mode ---
           let isDragging = false;
           let isResizing = false;
@@ -565,6 +591,13 @@
                   if (navigator.vibrate) navigator.vibrate(5);
                   // Strict suppression of body scrolling
                   document.body.style.overflow = 'hidden';
+
+                  if (touchMoveController) touchMoveController.abort();
+                  touchMoveController = new AbortController();
+                  window.addEventListener('touchmove', handleMove, { 
+                    passive: false, 
+                    signal: touchMoveController.signal 
+                  });
                 }
               }, 200);
             }, { passive: false });
@@ -635,11 +668,15 @@
             };
 
             window.addEventListener('mousemove', handleMove);
-            window.addEventListener('touchmove', handleMove, { passive: false });
+            window.addEventListener('touchmove', handleMove, { passive: true });
 
             const handleEnd = () => {
               isTouchActive = false;
               if (touchTimer) clearTimeout(touchTimer);
+              if (touchMoveController) {
+                touchMoveController.abort();
+                touchMoveController = null;
+              }
               if (isDragging || isResizing) {
                 isDragging = false;
                 isResizing = false;
@@ -656,6 +693,10 @@
             window.addEventListener('touchcancel', () => {
               isTouchActive = false;
               if (touchTimer) clearTimeout(touchTimer);
+              if (touchMoveController) {
+                touchMoveController.abort();
+                touchMoveController = null;
+              }
               isDragging = false;
               isResizing = false;
               document.body.style.overflow = '';
@@ -693,13 +734,16 @@
 
         function applyImageStyle(el, styleStr) {
           if (!el) return;
+          const isMobile = window.innerWidth <= 900;
+          // On mobile in view-only mode, image is inline — skip all positioning
+          if (isMobile && !canEdit) return;
+
           try {
             const s = styleStr ? JSON.parse(styleStr) : { x: 0, y: 0, width: 250, height: null };
             
             // Get the page container width for clamping
             const page = document.getElementById('publicPage');
             const pageW = page ? page.offsetWidth : 500;
-            const isMobile = window.innerWidth <= 900;
             
             el.style.position = 'absolute';
             el.style.left = '20px';
@@ -714,13 +758,12 @@
             el.style.width = clampedWidth + 'px';
             el.style.maxWidth = 'calc(100% - 40px)';
             
-            // Clamp x offset so the image stays within the page (allow slight overflow on purpose for design)
+            // Clamp x offset so the image stays within the page
             const rawX = s.x || 0;
-            // Max x: right edge of page minus image width minus 20px margin
-            const maxX = pageW - clampedWidth - 40;
-            // Min x: allow small negative offset (e.g. -10px) but no more
-            const minX = isMobile ? 0 : -10;
-            const clampedX = Math.max(minX, Math.min(rawX, Math.max(0, maxX)));
+            // Compute actual available width after the image is placed
+            const availableX = pageW - clampedWidth;
+            // Clamp x between 0 and availableX (never let image exceed page right edge)
+            const clampedX = Math.max(0, Math.min(rawX, Math.max(0, availableX)));
             
             el.style.transform = `translate(${clampedX}px, ${s.y || 0}px)`;
             
@@ -742,12 +785,13 @@
           const p = pages[currentIndex];
 
           if (titleEl) titleEl.value = p.title || 'Untitled';
-          if (contentEl) contentEl.innerText = p.content || '';
+          if (contentEl) contentEl.innerHTML = p.content || '';
           
           const pageScroll = document.querySelector('.page-scroll');
           if (pageScroll) pageScroll.scrollTop = 0;
           const publicPage = document.getElementById('publicPage');
           if (publicPage) publicPage.scrollTop = 0;
+          if (bookEl) bookEl.scrollTop = 0;
           
           const applyStyles = (el, styleStr) => {
             if (!el || !styleStr) return;
@@ -766,11 +810,15 @@
           if (p.image_url && p.image_attached) {
             if (illImg) illImg.src = p.image_url;
             if (illEl) {
-              illEl.style.display = 'block';
+              illEl.style.removeProperty('display');
               applyImageStyle(illEl, p.image_style);
             }
           } else {
-            if (illEl) illEl.style.display = 'none';
+            if (illEl) illEl.style.setProperty('display', 'none', 'important');
+            if (illImg) {
+                illImg.src = '';
+                illImg.removeAttribute('src');
+            }
           }
 
           if (countEl) countEl.textContent = (currentIndex + 1) + " / " + pages.length;
@@ -785,9 +833,9 @@
           // Only scroll the book into view if it is NOT already visible
           if (bookEl) {
             const rect = bookEl.getBoundingClientRect();
-            const inView = rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
-            if (!inView) {
-              bookEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            // Only scroll if the top of the book is not visible (user has scrolled way past it)
+            if (rect.top < 0) {
+              bookEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
             }
           }
         }
@@ -806,9 +854,8 @@
             // Only scroll if book is outside viewport
             if (bookEl) {
               const rect = bookEl.getBoundingClientRect();
-              const inView = rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
-              if (!inView) {
-                bookEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              if (rect.top < 0) {
+                bookEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
               }
             }
           });
@@ -829,7 +876,7 @@
                 body: JSON.stringify({
                   id: p.id,
                   title: titleEl.value,
-                  content: contentEl.innerText,
+                  content: contentEl.innerHTML,
                   type: 'story',
                   title_style: p.title_style,
                   content_style: p.content_style,
@@ -859,7 +906,7 @@
               });
               if (r.ok) {
                 p.title = titleEl.value;
-                p.content = contentEl.innerText;
+                p.content = contentEl.innerHTML;
                 saveBtn.textContent = 'Saved!';
                 
                 const sidebarItem = document.querySelector(`.public-page-item[data-index="${currentIndex}"]`);
