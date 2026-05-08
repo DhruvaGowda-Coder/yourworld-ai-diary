@@ -442,19 +442,23 @@ document.addEventListener('DOMContentLoaded', () => {
     themeTiles.forEach(tile => {
       const themeId = tile.dataset.themePreview;
       
-      // Preview on hover
-      tile.addEventListener('mouseenter', () => {
+      const tryPreview = (id) => {
         if (typeof window.setThemeState === 'function') {
-          window.setThemeState(themeId);
+          window.setThemeState(id);
+        } else {
+          // Fallback if core.js is still loading
+          document.body.dataset.theme = id;
+          const emojis = { campfire:'🔥', water:'🌊', wind:'💨', earth:'🌿', ice:'❄️', storm:'⚡', space:'🌌', garden:'🌸', cherry:'🌺' };
+          const iconEl = document.getElementById('chatThemeIcon');
+          if (iconEl) iconEl.textContent = emojis[id] || '✨';
         }
-      });
+      };
+
+      // Preview on hover
+      tile.addEventListener('mouseenter', () => tryPreview(themeId));
 
       // Selection logic
-      tile.addEventListener('click', () => {
-        if (typeof window.setThemeState === 'function') {
-          window.setThemeState(themeId);
-        }
-      });
+      tile.addEventListener('click', () => tryPreview(themeId));
     });
 
     // Reset preview if mouse leaves the grid entirely without selecting
