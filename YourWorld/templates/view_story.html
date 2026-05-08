@@ -24,9 +24,9 @@
     <div class="book-area">
       <div class="book" id="publicBook">
         <div class="page" id="publicPage">
-          <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important;" />
+          <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important;" value="{{ pages[0].title if pages else 'Untitled' }}" />
           <div class="page-scroll">
-            <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; min-height: 450px;"></textarea>
+            <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; min-height: 450px;">{{ pages[0].content if pages else '' }}</textarea>
           </div>
           <div class="page-illustration" id="publicIllustration" style="display: none; margin-top: 20px;">
             <img id="publicIllustrationImg" alt="Story illustration" style="max-width: 100%; border-radius: 8px;" />
@@ -37,7 +37,9 @@
 
     <div class="page-controls" id="publicControls" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 30px;">
       <button class="btn ghost" id="publicPrevBtn" type="button">Previous</button>
-      <span class="public-page-count" id="publicPageCount" style="font-family: var(--ui-font); font-size: 0.9rem; opacity: 0.8; color: #fff;"></span>
+      <span class="public-page-count" id="publicPageCount" style="font-family: var(--ui-font); font-size: 0.9rem; opacity: 0.8; color: #fff;">
+        {% if pages %}1 / {{ pages|length }}{% endif %}
+      </span>
       <button class="btn ghost" id="publicNextBtn" type="button">Next</button>
       {% if can_edit %}
         <button class="btn primary" id="publicSaveBtn" type="button">Save Changes</button>
@@ -56,11 +58,8 @@
       (function() {
         let pages = [];
         try {
-          const dataEl = document.getElementById('publicPagesData');
-          pages = JSON.parse(dataEl.textContent || '[]');
-        } catch(e) {
-          console.error("Data parse error:", e);
-        }
+          pages = JSON.parse(document.getElementById('publicPagesData').textContent || '[]');
+        } catch(e) { console.error("Data error", e); }
 
         let currentIndex = 0;
         const canEdit = {% if can_edit %}true{% else %}false{% endif %};
@@ -74,7 +73,6 @@
         const nextBtn = document.getElementById('publicNextBtn');
         const saveBtn = document.getElementById('publicSaveBtn');
 
-        // Apply interactive state via JS to avoid template/IDE conflicts
         if (canEdit) {
           titleEl.readOnly = false;
           contentEl.readOnly = false;
