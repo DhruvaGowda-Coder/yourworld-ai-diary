@@ -24,9 +24,9 @@
     <div class="book-area">
       <div class="book" id="publicBook">
         <div class="page" id="publicPage">
-          <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; pointer-events: {% if can_edit %}auto{% else %}none{% endif %};" />
+          <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important;" />
           <div class="page-scroll">
-            <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; pointer-events: {% if can_edit %}auto{% else %}none{% endif %}; min-height: 450px;"></textarea>
+            <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; min-height: 450px;"></textarea>
           </div>
           <div class="page-illustration" id="publicIllustration" style="display: none; margin-top: 20px;">
             <img id="publicIllustrationImg" alt="Story illustration" style="max-width: 100%; border-radius: 8px;" />
@@ -74,9 +74,15 @@
         const nextBtn = document.getElementById('publicNextBtn');
         const saveBtn = document.getElementById('publicSaveBtn');
 
+        // Apply interactive state via JS to avoid template/IDE conflicts
         if (canEdit) {
           titleEl.readOnly = false;
           contentEl.readOnly = false;
+          titleEl.style.pointerEvents = 'auto';
+          contentEl.style.pointerEvents = 'auto';
+        } else {
+          titleEl.style.pointerEvents = 'none';
+          contentEl.style.pointerEvents = 'none';
         }
 
         function render() {
