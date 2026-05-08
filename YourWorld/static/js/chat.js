@@ -1,8 +1,9 @@
-// ── Chat Multi-Session & Logic ────────────────────────────────────────────────
+// ── Chat (Aura) Multi-Session, Drag & Resize ─────────────────────────────────
 (function() {
   const CHAT_STORAGE_KEY = 'yw_chat_history';
   const CHAT_DISPLAY_KEY = 'yw_chat_display';
   const CHAT_SESSION_KEY = 'yw_chat_session_id';
+  const POS_STORAGE_KEY = 'yw_chat_pos';
   const MAX_STORED_DISPLAY = 60;
   const MAX_CHAT_HISTORY = 50;
 
@@ -90,7 +91,7 @@
         panel.classList.remove('showing-history');
       }
     } catch(e) {
-      msgs.innerHTML = '<div style="text-align:center;padding:20px;color:var(--theme-accent-2);">Failed to load history.</div>';
+      msgs.innerHTML = '<div style="text-align:center;padding:20px;color:#ff4d4d;">Failed to load.</div>';
     }
   }
 
@@ -123,21 +124,24 @@
     const launchBtn = document.getElementById('chatLaunch');
     const panel = document.getElementById('chatPanel');
     const closeBtn = document.getElementById('chatClose');
+    const dragHandle = document.getElementById('chatDragHandle');
+    const resizeHandle = document.getElementById('chatResizeHandle');
     const form = document.getElementById('chatForm');
     const textInput = document.getElementById('chatText');
     const msgs = document.getElementById('chatMessages');
+
+    if (!panel) return;
+
+    // ── History List ──
     const historyList = document.createElement('div');
     historyList.id = 'chatHistoryList';
     historyList.className = 'chat-history-list';
     panel.insertBefore(historyList, msgs);
 
-    // Header Actions
     const actions = panel.querySelector('.chat-actions');
     
-    // History Toggle
     const histBtn = document.createElement('button');
     histBtn.innerHTML = '🕒';
-    histBtn.title = 'View History';
     histBtn.className = 'chat-header-icon';
     histBtn.onclick = async () => {
       const showing = panel.classList.toggle('showing-history');
@@ -158,12 +162,11 @@
           } else {
             historyList.innerHTML += '<div style="padding:20px;text-align:center;opacity:0.5;font-size:0.85rem;">No history found.</div>';
           }
-        } catch(e) { historyList.innerHTML = 'Error loading sessions.'; }
+        } catch(e) { historyList.innerHTML = 'Error loading history.'; }
       }
     };
-    actions.insertBefore(histBtn, actions.firstChild);
+    if (actions) actions.insertBefore(histBtn, actions.firstChild);
 
-    // New Chat Button
     const newBtn = document.createElement('button');
     newBtn.innerHTML = '+ New';
     newBtn.className = 'chat-new-btn';
@@ -177,9 +180,108 @@
       panel.classList.remove('showing-history');
       ensureGreeting();
     };
-    actions.insertBefore(newBtn, histBtn);
+    if (actions) actions.insertBefore(newBtn, histBtn);
 
-    if (launchBtn) launchBtn.onclick = () => { panel.classList.add('open'); ensureGreeting(); };
+    // ── Drag & Move ──
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+
+    const onPointerDown = (e) => {
+      if (e.target.closest('button') || e.target.closest('input')) return;
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = panel.getBoundingClientRect();
+      startLeft = rect.left;
+      startTop = rect.top;
+      panel.setPointerCapture(e.pointerId);
+      panel.style.transition = 'none';
+    };
+
+    const onPointerMove = (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      let newLeft = startLeft + dx;
+      let newTop = startTop + dy;
+      
+      // Bounds checks
+      newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - panel.offsetWidth));
+      newTop = Math.max(0, Math.min(newTop, window.innerHeight - panel.offsetHeight));
+      
+      panel.style.left = newLeft + 'px';
+      panel.style.top = newTop + 'px';
+      panel.style.bottom = 'auto';
+      panel.style.right = 'auto';
+    };
+
+    const onPointerUp = (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      panel.releasePointerCapture(e.pointerId);
+      panel.style.transition = '';
+      localStorage.setItem(POS_STORAGE_KEY, JSON.stringify({ 
+        left: panel.style.left, 
+        top: panel.style.top,
+        width: panel.style.width,
+        height: panel.style.height
+      }));
+    };
+
+    if (dragHandle) {
+      dragHandle.addEventListener('pointerdown', onPointerDown);
+      dragHandle.addEventListener('pointermove', onPointerMove);
+      dragHandle.addEventListener('pointerup', onPointerUp);
+    }
+
+    // ── Resize ──
+    let isResizing = false;
+    let startW, startH;
+
+    const onResizeDown = (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startW = panel.offsetWidth;
+      startH = panel.offsetHeight;
+      panel.setPointerCapture(e.pointerId);
+      e.stopPropagation();
+    };
+
+    const onResizeMove = (e) => {
+      if (!isResizing) return;
+      const dw = e.clientX - startX;
+      const dh = e.clientY - startY;
+      panel.style.width = Math.max(280, startW + dw) + 'px';
+      panel.style.height = Math.max(300, startH + dh) + 'px';
+    };
+
+    const onResizeUp = (e) => {
+      isResizing = false;
+      panel.releasePointerCapture(e.pointerId);
+      onPointerUp(e); // save state
+    };
+
+    if (resizeHandle) {
+      resizeHandle.addEventListener('pointerdown', onResizeDown);
+      resizeHandle.addEventListener('pointermove', onResizeMove);
+      resizeHandle.addEventListener('pointerup', onResizeUp);
+    }
+
+    // Restore Position
+    try {
+      const saved = JSON.parse(localStorage.getItem(POS_STORAGE_KEY));
+      if (saved && window.innerWidth > 768) {
+        if (saved.left) panel.style.left = saved.left;
+        if (saved.top) panel.style.top = saved.top;
+        if (saved.width) panel.style.width = saved.width;
+        if (saved.height) panel.style.height = saved.height;
+        panel.style.bottom = 'auto';
+        panel.style.right = 'auto';
+      }
+    } catch(e) {}
+
+    if (launchBtn) launchBtn.onclick = () => { panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false'); ensureGreeting(); };
     if (closeBtn) closeBtn.onclick = () => panel.classList.remove('open');
 
     if (form) form.onsubmit = async (e) => {
