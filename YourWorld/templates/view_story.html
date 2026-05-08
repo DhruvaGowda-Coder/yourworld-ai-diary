@@ -85,7 +85,7 @@
     .book, .public-story .book {
       height: auto !important;
       min-height: auto !important; 
-      max-height: 85vh !important;
+      max-height: 70vh !important; /* EXACT match with editor.css:1249 */
       overflow-x: auto !important;
       overflow-y: auto !important;
       -webkit-overflow-scrolling: touch;
@@ -94,7 +94,7 @@
       scroll-behavior: smooth;
       width: 100% !important;
       background-attachment: scroll !important;
-      border: 6px solid var(--book-cover) !important; /* Thinner for mobile */
+      border: 6px solid var(--book-cover) !important;
       border-radius: 16px !important;
       
       /* Matching Shared Canvas Scrollbar Style */
@@ -104,13 +104,13 @@
 
     .public-page {
       width: 100% !important;
-      min-width: 650px !important; /* Even wider for better image fit */
-      padding: 24px !important;
+      min-width: 650px !important; 
+      padding: 20px 16px !important; /* EXACT match with editor.css:1316 */
       position: relative;
     }
 
     .public-story {
-      padding: 10px 5px !important; /* Reduce outer padding to make book look wider */
+      padding: 10px 5px !important; 
     }
     
     .book::-webkit-scrollbar, 
@@ -222,7 +222,7 @@
       inset 0 0 110px rgba(58, 31, 14, 0.14);
     overflow: hidden;
     width: 100%;
-    max-width: 900px;
+    /* No max-width here, matches editor .book behavior */
     margin: 0 auto;
     perspective: 1200px;
     display: flex;
@@ -346,15 +346,15 @@
   }
 </style>
 
-<section class="public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}" style="max-width: 1400px; margin: 0 auto; padding: 20px;">
+<section class="public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}" style="max-width: 1400px; margin: 0 auto; padding: 28px var(--gutter, 24px) 80px;">
   {% if not_found %}
     <div class="public-notice" style="text-align: center; padding: 100px 20px;">
       <h2 style="font-family: var(--ui-font); margin-bottom: 20px;">Story not found</h2>
       <p style="opacity: 0.8; margin-bottom: 30px;">The code <strong>{{ code }}</strong> does not match any shared story.</p>
-      <a class="btn ghost" href="/">Back to Home</a>
+      <a href="/" class="btn primary">Go Home</a>
     </div>
   {% else %}
-    <div class="public-layout" style="display: grid; grid-template-columns: 280px 1fr; gap: 30px;">
+    <div class="public-layout" style="display: flex; gap: 24px; align-items: flex-start;">
       <aside class="public-sidebar">
         <h3 class="public-sidebar-title">Story Pages</h3>
         <div class="public-page-list" id="publicPageList">
