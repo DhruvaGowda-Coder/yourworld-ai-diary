@@ -980,8 +980,6 @@ button:active:not(:disabled) {
   cursor: pointer;
   transition: all 0.2s ease;
 }
-  100% { transform: rotateY(82deg) translate(8px, -10px) scale(1.08); opacity: 0; }
-}
 
 .page-controls {
   margin-top: 16px;
