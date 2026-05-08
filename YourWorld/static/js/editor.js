@@ -609,7 +609,15 @@ if (workspace) {
 
     const activeItem = entryList.querySelector('.entry-item.active');
     if (activeItem) {
-      activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const container = entryList;
+      const itemTop = activeItem.offsetTop;
+      const itemBottom = itemTop + activeItem.offsetHeight;
+      const containerScrollTop = container.scrollTop;
+      const containerBottom = containerScrollTop + container.clientHeight;
+      const isVisible = itemTop >= containerScrollTop && itemBottom <= containerBottom;
+      if (!isVisible) {
+        activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
   };
 
@@ -798,7 +806,11 @@ if (workspace) {
           currentIndex = entries.length - 1;
           lastActiveIndex = currentIndex;
         }
-        renderEntries();
+        // Only re-render entry list if title changed (sidebar only shows titles)
+        const titleChanged = entries[existingIndex]?.title !== data.title;
+        if (titleChanged || existingIndex < 0) {
+          renderEntries();
+        }
         updatePageCount();
         updateDeleteButton();
         
@@ -1142,12 +1154,13 @@ if (workspace) {
   }
 
   if (imageViewBtn && imageModal && imageModalImg) {
-
     imageViewBtn.addEventListener('click', () => {
       if (!currentImageUrl) return;
-      imageModalImg.src = currentImageUrl;
-      imageModal.classList.add('open');
-      imageModal.setAttribute('aria-hidden', 'false');
+      if (pageIllustrationImg && pageIllustrationImg.naturalWidth > 0) {
+        imageModalImg.src = currentImageUrl;
+        imageModal.classList.add('open');
+        imageModal.setAttribute('aria-hidden', 'false');
+      }
     });
   }
 
@@ -1444,6 +1457,9 @@ if (workspace) {
       if (touchTimer) clearTimeout(touchTimer);
       touchTimer = setTimeout(() => {
         if (isTouchActive) {
+          document.documentElement.style.overflow = 'hidden';
+          document.documentElement.style.position = 'fixed';
+          document.documentElement.style.width = '100%';
           isDragging = true;
           pageIllustration.classList.add('is-dragging');
           if (navigator.vibrate) navigator.vibrate(5); // Subtle haptic feedback
@@ -1470,6 +1486,9 @@ if (workspace) {
         startY = e.touches[0].clientY;
         startW = pageIllustration.offsetWidth;
         startH = pageIllustration.offsetHeight;
+        document.documentElement.style.overflow = 'hidden';
+        document.documentElement.style.position = 'fixed';
+        document.documentElement.style.width = '100%';
         e.stopPropagation();
       }, { passive: false });
     }
@@ -1544,6 +1563,10 @@ if (workspace) {
       if (isDragging || isResizing) {
         isDragging = false;
         isResizing = false;
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        document.documentElement.style.position = '';
+        document.documentElement.style.width = '';
         pageIllustration.style.cursor = 'grab';
         pageIllustration.classList.remove('is-dragging');
       }
@@ -1556,6 +1579,10 @@ if (workspace) {
       if (touchTimer) clearTimeout(touchTimer);
       isDragging = false;
       isResizing = false;
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.position = '';
+      document.documentElement.style.width = '';
       pageIllustration.style.cursor = 'grab';
       pageIllustration.classList.remove('is-dragging');
     });
