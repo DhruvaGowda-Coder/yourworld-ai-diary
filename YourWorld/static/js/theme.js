@@ -14,10 +14,13 @@
   };
 
   const loadAndPlay = async () => {
-    const src = getAudioSrc(typeof activeTheme !== 'undefined' ? activeTheme : 'campfire');
+    const theme = typeof activeTheme !== 'undefined' ? activeTheme : (document.body.dataset.theme || 'campfire');
+    const src = getAudioSrc(theme);
     if (!src) return;
 
-    if (ambientAudio.src !== new URL(src, window.location.origin).href) {
+    // Direct comparison of source
+    const targetUrl = new URL(src, window.location.origin).href;
+    if (ambientAudio.src !== targetUrl) {
       ambientAudio.src = src;
       ambientAudio.load();
       if (savedTime > 0) ambientAudio.currentTime = savedTime;
@@ -29,7 +32,7 @@
         toggleBtn.textContent = '🔊 Sound';
         toggleBtn.classList.add('active');
       } catch (err) {
-        console.warn('Autoplay blocked. Waiting for interaction.', err);
+        console.warn('Autoplay blocked.', err);
         toggleBtn.textContent = '🔇 Paused';
       }
     } else {
@@ -43,41 +46,58 @@
     if (e) e.preventDefault();
     isPlaying = !isPlaying;
     localStorage.setItem('yw_sound_enabled', isPlaying ? 'true' : 'false');
+    
+    if (isPlaying) {
+      // Force a re-load on click to ensure it's fresh
+      const theme = typeof activeTheme !== 'undefined' ? activeTheme : 'campfire';
+      ambientAudio.src = getAudioSrc(theme);
+      ambientAudio.load();
+    }
+    
     await loadAndPlay();
   };
 
   toggleBtn.addEventListener('click', toggleAudio);
 
-  // Initial attempt
-  document.addEventListener('DOMContentLoaded', () => {
+  // Initialize on page load
+  window.addEventListener('load', () => {
     loadAndPlay();
-    // Mobile fix: start on first touch if enabled
-    const mobileInit = () => {
-      if (isPlaying && ambientAudio.paused) loadAndPlay();
-      document.removeEventListener('touchstart', mobileInit);
-    };
-    document.addEventListener('touchstart', mobileInit);
   });
 
-  // Save progress
+  // Mobile/Tablet fix: Resume on first interaction
+  const unlockAudio = () => {
+    if (isPlaying && ambientAudio.paused) {
+      loadAndPlay();
+    }
+    document.removeEventListener('touchstart', unlockAudio);
+    document.removeEventListener('click', unlockAudio);
+  };
+  document.addEventListener('touchstart', unlockAudio, { passive: true });
+  document.addEventListener('click', unlockAudio, { passive: true });
+
+  // Save progress every 2 seconds
   setInterval(() => {
     if (isPlaying && !ambientAudio.paused) {
       localStorage.setItem('yw_sound_time', ambientAudio.currentTime);
     }
-  }, 1000);
+  }, 2000);
 
-  // Handle theme changes
-  window.addEventListener('yw:themechange', (e) => {
+  // Theme change listener
+  window.addEventListener('yw:themechange', () => {
     if (isPlaying) loadAndPlay();
   });
 
-  // Global exports
+  // Library updates
   window.reloadThemeAudio = (theme, url) => {
     if (window.UserAudio) window.UserAudio[theme] = url;
-    if (isPlaying && theme === activeTheme) loadAndPlay();
+    if (isPlaying && (typeof activeTheme !== 'undefined' ? activeTheme : 'campfire') === theme) {
+      loadAndPlay();
+    }
   };
   window.removeThemeAudio = (theme) => {
     if (window.UserAudio) window.UserAudio[theme] = "";
-    if (isPlaying && theme === activeTheme) loadAndPlay();
+    if (isPlaying && (typeof activeTheme !== 'undefined' ? activeTheme : 'campfire') === theme) {
+      loadAndPlay();
+    }
   };
 })();

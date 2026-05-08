@@ -214,7 +214,7 @@
       newBtn.id = 'chatNewBtn';
       newBtn.className = 'chat-new-btn';
       newBtn.innerHTML = '+ New';
-      newBtn.style.cssText = 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);color:#f3cda2;font-size:0.75rem;font-weight:600;cursor:pointer;padding:4px 10px;border-radius:20px;margin-right:4px;';
+      newBtn.style.cssText = 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.9);font-size:0.75rem;font-weight:600;cursor:pointer;padding:4px 10px;border-radius:20px;margin-right:4px;';
       newBtn.onclick = () => { if (confirm('Clear chat history?')) { 
         localStorage.removeItem(CHAT_STORAGE_KEY); localStorage.removeItem(CHAT_DISPLAY_KEY);
         chatHistory.length = 0; if (msgs) msgs.innerHTML = '';
