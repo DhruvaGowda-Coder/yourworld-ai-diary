@@ -24,10 +24,13 @@
     try {
       const items = [];
       msgs.querySelectorAll('.chat-bubble').forEach(el => {
-        items.push({ 
-          who: el.classList.contains('bot') ? 'bot' : 'user', 
-          html: el.querySelector('.bubble-content').innerHTML 
-        });
+        const contentEl = el.querySelector('.bubble-content');
+        if (contentEl) {
+          items.push({ 
+            who: el.classList.contains('bot') ? 'bot' : 'user', 
+            html: contentEl.innerHTML 
+          });
+        }
       });
       localStorage.setItem(CHAT_DISPLAY_KEY, JSON.stringify(items.slice(-MAX_STORED_DISPLAY)));
     } catch(e) {}
@@ -89,6 +92,8 @@
         _saveLocalState();
         _saveDisplayMessages();
         panel.classList.remove('showing-history');
+      } else {
+        throw new Error('Failed to fetch session');
       }
     } catch(e) {
       msgs.innerHTML = '<div style="text-align:center;padding:20px;color:#ff4d4d;">Failed to load.</div>';
@@ -100,10 +105,13 @@
     if (!msgs) return;
     const history = [];
     msgs.querySelectorAll('.chat-bubble').forEach(el => {
-      history.push({
-        role: el.classList.contains('bot') ? 'assistant' : 'user',
-        content: el.querySelector('.bubble-content').textContent
-      });
+      const contentEl = el.querySelector('.bubble-content');
+      if (contentEl) {
+        history.push({
+          role: el.classList.contains('bot') ? 'assistant' : 'user',
+          content: contentEl.textContent
+        });
+      }
     });
     chatHistory = history;
     _saveLocalState();
@@ -143,12 +151,14 @@
     const histBtn = document.createElement('button');
     histBtn.innerHTML = '🕒';
     histBtn.className = 'chat-header-icon';
+    histBtn.title = 'Chat History';
     histBtn.onclick = async () => {
       const showing = panel.classList.toggle('showing-history');
       if (showing) {
         historyList.innerHTML = '<div style="text-align:center;padding:20px;opacity:0.6;">Fetching chats...</div>';
         try {
           const r = await fetch('/api/chat/sessions');
+          if (!r.ok) throw new Error('API Error');
           const data = await r.json();
           historyList.innerHTML = '<div style="font-weight:600;padding:12px;opacity:0.8;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.05);">RECENT CHATS</div>';
           if (data.sessions && data.sessions.length) {
@@ -160,9 +170,11 @@
               historyList.appendChild(item);
             });
           } else {
-            historyList.innerHTML += '<div style="padding:20px;text-align:center;opacity:0.5;font-size:0.85rem;">No history found.</div>';
+            historyList.innerHTML += '<div style="padding:20px;text-align:center;opacity:0.5;font-size:0.85rem;">No history found. Try sending a message first.</div>';
           }
-        } catch(e) { historyList.innerHTML = 'Error loading history.'; }
+        } catch(e) { 
+          historyList.innerHTML = '<div style="padding:20px;text-align:center;color:#ff8888;font-size:0.85rem;">Failed to load history.<br><button onclick="location.reload()" style="margin-top:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;padding:4px 10px;border-radius:4px;cursor:pointer;">Retry</button></div>';
+        }
       }
     };
     if (actions) actions.insertBefore(histBtn, actions.firstChild);
@@ -187,7 +199,9 @@
     let startX, startY, startLeft, startTop;
 
     const onPointerDown = (e) => {
-      if (e.target.closest('button') || e.target.closest('input')) return;
+      // Don't drag if clicking buttons, UNLESS it's the drag handle itself
+      if (e.target.closest('button') && e.target.id !== 'chatDragHandle') return;
+      
       isDragging = true;
       startX = e.clientX;
       startY = e.clientY;
@@ -196,6 +210,7 @@
       startTop = rect.top;
       panel.setPointerCapture(e.pointerId);
       panel.style.transition = 'none';
+      e.preventDefault();
     };
 
     const onPointerMove = (e) => {
@@ -246,6 +261,7 @@
       startH = panel.offsetHeight;
       panel.setPointerCapture(e.pointerId);
       e.stopPropagation();
+      e.preventDefault();
     };
 
     const onResizeMove = (e) => {

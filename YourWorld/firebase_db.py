@@ -391,7 +391,6 @@ def get_chat_sessions(user_id, limit=20):
     db = get_db()
     docs = (db.collection('chat_sessions')
             .where(filter=FieldFilter('user_id', '==', str(user_id)))
-            .order_by('updated_at', direction=firestore.Query.DESCENDING)
             .limit(limit)
             .stream())
     
@@ -401,8 +400,10 @@ def get_chat_sessions(user_id, limit=20):
         sessions.append({
             'id': doc.id,
             'title': d.get('title', 'New Chat'),
-            'updated_at': d.get('updated_at')
+            'updated_at': d.get('updated_at', '')
         })
+    # Sort in memory to avoid needing a composite index
+    sessions.sort(key=lambda x: x['updated_at'], reverse=True)
     return sessions
 
 def get_chat_session(user_id, session_id):
