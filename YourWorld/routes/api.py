@@ -318,6 +318,13 @@ def api_chat_sync():
     history = get_chat_history(user_id)
     return jsonify({"history": history})
 
+@api_bp.route("/api/chat/clear", methods=["POST"])
+@auth_required
+def api_chat_clear():
+    user_id = session.get("user_id")
+    save_chat_history(user_id, [])
+    return jsonify({"success": True})
+
 @api_bp.route("/api/activity")
 @ensure_session
 def api_activity():

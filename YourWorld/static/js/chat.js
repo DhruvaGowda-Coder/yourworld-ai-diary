@@ -48,12 +48,10 @@ async function _loadStoredChat() {
       if (response.ok) {
         const data = await response.json();
         if (data.history && data.history.length > 0) {
-          // Update in-memory history
           chatHistory.length = 0;
           chatHistory.push(...data.history);
           _saveChatHistory();
 
-          // Refresh UI with Cloud history if local was empty or outdated
           if (chatMessages) {
             chatMessages.innerHTML = '';
             data.history.forEach(msg => {
@@ -64,20 +62,32 @@ async function _loadStoredChat() {
         }
       }
     } catch(e) {
-      console.warn('Cloud chat sync failed, using local copy.', e);
+      console.warn('Cloud chat sync failed', e);
     }
   }
 
   ensureGreeting();
 }
 
-function _clearChatHistory() {
+async function _clearChatHistory() {
+  // Clear UI and Local Storage
   try {
     localStorage.removeItem(CHAT_STORAGE_KEY);
     localStorage.removeItem(CHAT_DISPLAY_KEY);
   } catch(e) {}
   chatHistory.length = 0;
   if (chatMessages) chatMessages.innerHTML = '';
+  
+  // Clear Cloud History (Firebase)
+  if (typeof userId !== 'undefined' && userId && !userId.startsWith('guest_')) {
+    try {
+      await fetch('/api/chat/clear', { 
+        method: 'POST', 
+        headers: { 'X-CSRFToken': csrfToken } 
+      });
+    } catch(e) { console.error('Cloud clear failed', e); }
+  }
+  
   ensureGreeting();
 }
 
@@ -105,24 +115,34 @@ function ensureGreeting() {
   _saveDisplayMessages();
 }
 
-// ── Inject Clear History button into chat header ──────────────────────────────
-(function injectClearBtn() {
+// ── Inject "New Chat" button into chat header ────────────────────────────────
+(function injectNewChatBtn() {
   const actions = document.querySelector('.chat-actions');
   if (!actions) return;
-  const clearBtn = document.createElement('button');
-  clearBtn.id = 'chatClearBtn';
-  clearBtn.className = 'chat-clear-btn';
-  clearBtn.title = 'Clear chat history';
-  clearBtn.setAttribute('aria-label', 'Clear chat history');
-  clearBtn.textContent = '🗑';
-  clearBtn.style.cssText = 'background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:0.9rem;cursor:pointer;padding:2px 4px;border-radius:6px;transition:color 0.2s;line-height:1;';
-  clearBtn.addEventListener('mouseenter', () => { clearBtn.style.color = '#f3cda2'; });
-  clearBtn.addEventListener('mouseleave', () => { clearBtn.style.color = 'rgba(255,255,255,0.4)'; });
-  clearBtn.addEventListener('click', () => { _clearChatHistory(); });
+  const newBtn = document.createElement('button');
+  newBtn.id = 'chatNewBtn';
+  newBtn.className = 'chat-new-btn';
+  newBtn.title = 'Start a new conversation';
+  newBtn.innerHTML = '<span style="font-size:1.2rem;vertical-align:middle;margin-right:2px;">+</span> New';
+  newBtn.style.cssText = 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);color:#f3cda2;font-size:0.75rem;font-weight:600;cursor:pointer;padding:4px 10px;border-radius:20px;transition:all 0.2s;line-height:1;display:inline-flex;align-items:center;text-transform:uppercase;letter-spacing:0.02em;margin-right:4px;';
+  
+  newBtn.addEventListener('mouseenter', () => { 
+    newBtn.style.background = 'rgba(255,255,255,0.15)'; 
+    newBtn.style.borderColor = 'rgba(255,255,255,0.25)';
+  });
+  newBtn.addEventListener('mouseleave', () => { 
+    newBtn.style.background = 'rgba(255,255,255,0.08)'; 
+    newBtn.style.borderColor = 'rgba(255,255,255,0.1)';
+  });
+  newBtn.addEventListener('click', () => { 
+    if (confirm('Start a new chat? This will clear current messages.')) {
+      _clearChatHistory(); 
+    }
+  });
   
   const closeBtn = document.getElementById('chatClose');
-  if (closeBtn) actions.insertBefore(clearBtn, closeBtn);
-  else actions.appendChild(clearBtn);
+  if (closeBtn) actions.insertBefore(newBtn, closeBtn);
+  else actions.appendChild(newBtn);
 })();
 
 // ── Chat panel open / close ──────────────────────────────────────────────────
