@@ -1219,7 +1219,7 @@ button:active:not(:disabled) {
   left: 20px;
   width: 250px;
   display: none;
-  border-radius: 14px;
+  border-radius: 24px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: rgba(0, 0, 0, 0.04);
   box-shadow: 0 8px 24px rgba(0,0,0,0.15);
@@ -1236,7 +1236,7 @@ button:active:not(:disabled) {
   height: 100%;
   object-fit: cover;
   display: block;
-  border-radius: 14px;
+  border-radius: 24px;
   pointer-events: none;
 }
 

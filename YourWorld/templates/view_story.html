@@ -296,6 +296,7 @@
                 <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
                 {% if can_edit %}
                 <div class="resize-handle" id="publicResizeHandle" style="position: absolute; bottom: 0; right: 0; width: 24px; height: 24px; cursor: nwse-resize; background: linear-gradient(-45deg, rgba(0, 0, 0, 0.3) 15%, transparent 60%); border-bottom-right-radius: 24px; z-index: 30;"></div>
+                <button type="button" id="publicDeleteIllBtn" style="position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.5); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 31; backdrop-filter: blur(4px); transition: all 0.2s;">&times;</button>
                 {% endif %}
               </div>
             </div>
@@ -371,13 +372,27 @@
 
           if (illEl) {
             illEl.addEventListener('mousedown', (e) => {
-              if (e.target.id === 'publicResizeHandle') return;
+              if (e.target.id === 'publicResizeHandle' || e.target.id === 'publicDeleteIllBtn') return;
               isDragging = true;
               startX = e.clientX;
               startY = e.clientY;
-              const pos = getTransformXY(illEl);
-              startTX = pos.x;
-              startTY = pos.y;
+              
+              // More robust transform parsing
+              const style = window.getComputedStyle(illEl);
+              const transform = style.transform;
+              if (transform && transform !== 'none') {
+                const matrix = transform.match(/matrix.*\((.+)\)/);
+                if (matrix) {
+                  const values = matrix[1].split(', ');
+                  startTX = parseFloat(values[4]);
+                  startTY = parseFloat(values[5]);
+                } else {
+                  startTX = 0; startTY = 0;
+                }
+              } else {
+                startTX = 0; startTY = 0;
+              }
+              
               illEl.style.cursor = 'grabbing';
               e.preventDefault();
             });
@@ -395,6 +410,18 @@
               });
             }
 
+            const delIllBtn = document.getElementById('publicDeleteIllBtn');
+            if (delIllBtn) {
+              delIllBtn.addEventListener('click', (e) => {
+                if (confirm('Remove this illustration?')) {
+                  const p = pages[currentIndex];
+                  p.image_attached = false;
+                  illEl.style.display = 'none';
+                }
+                e.stopPropagation();
+              });
+            }
+
             window.addEventListener('mousemove', (e) => {
               if (isDragging) {
                 const dx = e.clientX - startX;
@@ -405,8 +432,8 @@
               } else if (isResizing) {
                 const dx = e.clientX - startX;
                 const dy = e.clientY - startY;
-                illEl.style.width = (startW + dx) + 'px';
-                illEl.style.height = (startH + dy) + 'px';
+                illEl.style.width = Math.max(50, startW + dx) + 'px';
+                illEl.style.height = Math.max(50, startH + dy) + 'px';
               }
             });
 
@@ -551,20 +578,26 @@
                   content_style: p.content_style,
                   image_url: p.image_url,
                   image_attached: p.image_attached,
-                  image_style: JSON.stringify({
-                    x: (function() {
-                      const style = window.getComputedStyle(illEl);
-                      const matrix = new WebKitCSSMatrix(style.transform);
-                      return matrix.m41;
-                    })(),
-                    y: (function() {
-                      const style = window.getComputedStyle(illEl);
-                      const matrix = new WebKitCSSMatrix(style.transform);
-                      return matrix.m42;
-                    })(),
-                    width: illEl.offsetWidth,
-                    height: illEl.offsetHeight
-                  })
+                  image_style: (function() {
+                    if (illEl.style.display === 'none') return p.image_style;
+                    const style = window.getComputedStyle(illEl);
+                    const transform = style.transform;
+                    let tx = 0, ty = 0;
+                    if (transform && transform !== 'none') {
+                      const matrix = transform.match(/matrix.*\((.+)\)/);
+                      if (matrix) {
+                        const values = matrix[1].split(', ');
+                        tx = parseFloat(values[4]);
+                        ty = parseFloat(values[5]);
+                      }
+                    }
+                    return JSON.stringify({
+                      x: tx,
+                      y: ty,
+                      width: illEl.offsetWidth,
+                      height: illEl.offsetHeight
+                    });
+                  })()
                 })
               });
               if (r.ok) {
