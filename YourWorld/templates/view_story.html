@@ -36,62 +36,6 @@
     border-radius: 10px;
   }
 
-  @media (max-width: 900px) {
-    .workspace.public-story {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 20px !important;
-      padding: 0 !important;
-    }
-
-    .public-main {
-      order: 1 !important;
-      width: 100% !important;
-    }
-
-    .public-sidebar {
-      order: 2 !important;
-      max-width: 100% !important; 
-      width: 100% !important;
-      margin-bottom: 20px !important;
-      padding: 12px !important;
-      background: var(--theme-panel-bg) !important;
-      border-radius: 18px !important;
-    }
-
-    .book, .public-story .book {
-      height: auto !important;
-      min-height: auto !important; 
-      max-height: 70vh !important;
-      overflow-x: auto !important;
-      overflow-y: auto !important;
-      -webkit-overflow-scrolling: touch;
-      display: block !important;
-      padding: 12px 10px !important;
-      scroll-behavior: smooth;
-      width: 100% !important;
-      background-attachment: scroll !important;
-      border: 12px solid var(--book-cover) !important; 
-      border-radius: 22px !important; 
-      margin: 0 !important;
-    }
-
-    .public-page {
-      width: 100% !important;
-      padding: 20px 16px !important; 
-      position: relative;
-    }
-    
-    .public-story {
-      padding: 0 !important; 
-    }
-
-    .page-scroll {
-      overflow-y: visible !important;
-      height: auto !important;
-      max-height: none !important;
-    }
-  }
 
   .workspace.public-story {
     display: grid !important;
@@ -102,7 +46,7 @@
     margin: 0 auto !important;
   }
 
-  .public-main {
+  .book-area {
     min-width: 0;
     width: 100%;
     display: flex;
@@ -281,6 +225,107 @@
     filter: brightness(1.1);
     box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
     transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+
+  /* MOBILE OPTIMIZATION - Mirroring Shared Canvas exactly */
+  @media (max-width: 900px) {
+    .workspace.public-story {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 24px !important;
+      padding: 0 !important;
+    }
+
+    .book-area {
+      order: 1 !important;
+      width: 100% !important;
+    }
+
+    .public-sidebar {
+      order: 3 !important; /* Move sidebar to bottom like editor */
+      max-width: 100% !important; 
+      width: 100% !important;
+      margin-top: 20px !important;
+      padding: 18px !important;
+      background: var(--theme-panel-bg) !important;
+      border-radius: 18px !important;
+    }
+
+    .public-page-list {
+      display: flex !important;
+      flex-direction: row !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      gap: 12px !important;
+      padding: 4px 0 16px 0 !important;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: var(--theme-accent) rgba(255, 255, 255, 0.1);
+    }
+
+    .public-page-list::-webkit-scrollbar {
+      display: block !important;
+      height: 6px !important;
+    }
+    .public-page-list::-webkit-scrollbar-thumb {
+      background: var(--theme-accent) !important;
+      border-radius: 10px !important;
+    }
+
+    .public-page-item {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      padding: 8px 16px !important;
+      font-size: 0.85rem !important;
+      color: rgba(255, 255, 255, 0.7) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 12px !important;
+      background: rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .public-page-item.is-active {
+      color: var(--theme-accent) !important;
+      border-color: var(--theme-accent) !important;
+      background: var(--theme-accent-soft) !important;
+    }
+
+    .book, .public-story .book {
+      height: auto !important;
+      min-height: auto !important; 
+      max-height: 70vh !important;
+      overflow-x: auto !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      display: block !important;
+      padding: 12px 10px !important;
+      scroll-behavior: smooth;
+      width: 100% !important;
+      background-attachment: scroll !important;
+      border: 12px solid var(--book-cover) !important; 
+      border-radius: 22px !important; 
+      margin: 0 !important;
+    }
+
+    .public-page {
+      width: 100% !important;
+      padding: 20px 16px !important; 
+      position: relative;
+    }
+    
+    .public-story {
+      padding: 0 !important; 
+    }
+
+    .page-scroll {
+      overflow-y: visible !important;
+      height: auto !important;
+      max-height: none !important;
+    }
+
+    .public-view-controls {
+      order: 2 !important; /* Place controls between book and sidebar */
+      margin: 20px 0 !important;
+    }
   }
 </style>
 
