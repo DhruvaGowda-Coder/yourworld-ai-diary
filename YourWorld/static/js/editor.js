@@ -1411,6 +1411,76 @@ if (workspace) {
     });
   }
 
+  // --- Implementation of Drag, Resize, and Delete for Shared Canvas Editor ---
+  if (pageIllustration) {
+    let isDragging = false;
+    let isResizing = false;
+    let startX, startY, startW, startH, startTX, startTY;
+
+    pageIllustration.addEventListener('mousedown', (e) => {
+      if (e.target.id === 'resizeHandle' || e.target.id === 'deleteIllustrationBtn') return;
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startTX = imageStyleState.x || 0;
+      startTY = imageStyleState.y || 0;
+      pageIllustration.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+
+    const resizeH = document.getElementById('resizeHandle');
+    if (resizeH) {
+      resizeH.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startW = pageIllustration.offsetWidth;
+        startH = pageIllustration.offsetHeight;
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    }
+
+    const deleteIllBtn = document.getElementById('deleteIllustrationBtn');
+    if (deleteIllBtn) {
+      deleteIllBtn.addEventListener('click', (e) => {
+        if (confirm('Remove this illustration from the page?')) {
+          imageAttached = false;
+          updateImageActions();
+          updatePageIllustration();
+          markDirty();
+        }
+        e.stopPropagation();
+      });
+    }
+
+    window.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        imageStyleState.x = startTX + dx;
+        imageStyleState.y = startTY + dy;
+        applyImageStyle();
+        markDirty();
+      } else if (isResizing) {
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        imageStyleState.width = Math.max(50, startW + dx);
+        imageStyleState.height = Math.max(50, startH + dy);
+        applyImageStyle();
+        markDirty();
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging || isResizing) {
+        isDragging = false;
+        isResizing = false;
+        pageIllustration.style.cursor = 'grab';
+      }
+    });
+  }
+
   applyEditorStyle();
   resizeContentInput();
   loadEntries();
