@@ -464,13 +464,19 @@ if (workspace) {
   const applyImageStyle = () => {
     if (!pageIllustration) return;
     const isMobile = window.innerWidth <= 900;
+    if (isMobile) {
+      // On mobile: image is inline, no absolute positioning
+      pageIllustration.style.width = '100%';
+      pageIllustration.style.height = 'auto';
+      pageIllustration.style.transform = 'none';
+      return;
+    }
     if (imageStyleState.width) {
       pageIllustration.style.width = `${imageStyleState.width}px`;
     } else {
       pageIllustration.style.width = '250px';
     }
-    // On mobile, never force an explicit height — let it be natural
-    if (!isMobile && imageStyleState.height) {
+    if (imageStyleState.height) {
       pageIllustration.style.height = `${imageStyleState.height}px`;
     } else {
       pageIllustration.style.height = 'auto';
@@ -1446,6 +1452,7 @@ if (workspace) {
 
     // Touch support for dragging with hold-to-drag prevention
     pageIllustration.addEventListener('touchstart', (e) => {
+      if (window.innerWidth <= 900) return; // image is inline on mobile, no drag
       if (e.target.id === 'resizeHandle' || e.target.id === 'deleteIllustrationBtn') return;
       const touch = e.touches[0];
       startX = touch.clientX;

@@ -1430,8 +1430,23 @@ button:active:not(:disabled) {
   }
 
   .page-illustration {
+    position: relative !important;
+    inset: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 16px 0 !important;
     z-index: 20;
-    /* Removed display: block !important to allow JS to hide it when no image is present */
+    overflow: hidden !important;
+    border-radius: 16px !important;
+  }
+
+  .page-illustration img {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    display: block;
   }
 
   .public-controls {
@@ -1454,8 +1469,7 @@ button:active:not(:disabled) {
     max-width: 100% !important;
   }
 
-  /* Hide resize in private editor on mobile, but keep it in shared canvas editable mode */
-  .page #resizeHandle {
+  #resizeHandle {
     display: none !important;
   }
 }

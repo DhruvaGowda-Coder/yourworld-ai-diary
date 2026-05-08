@@ -165,27 +165,26 @@
     background: rgba(0, 0, 0, 0.45);
   }
 
-  /* Global rounding for images and their containers */
-  #publicIllustration, 
-  .page-illustration,
-  .page-content img {
+  #publicIllustration,
+  .page-illustration {
     border-radius: 24px !important;
     overflow: hidden !important;
-    -webkit-mask-image: -webkit-radial-gradient(white, black);
-    mask-image: -webkit-radial-gradient(white, black);
+  }
+  .page-content img {
+    border-radius: 12px !important;
+    max-width: 100%;
   }
 
   #publicIllustration {
     position: absolute !important;
     z-index: 10 !important;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
     border: none !important;
     background: transparent !important;
+    box-shadow: none !important;
     max-width: calc(100% - 40px) !important;
     overflow: hidden !important;
     border-radius: 24px !important;
     user-select: none !important;
-    /* touch-action is handled by JS during drag only, not statically */
   }
 
   /* Only block touch scroll when edit mode is active */
@@ -200,8 +199,8 @@
 
   .resize-handle {
     position: absolute !important;
-    bottom: -10px !important;
-    right: -10px !important;
+    bottom: 8px !important;
+    right: 8px !important;
     width: 32px !important; /* Slightly smaller, more refined */
     height: 32px !important;
     background: rgba(255, 255, 255, 0.1) !important; /* Semi-transparent */
@@ -236,14 +235,11 @@
 
   #publicIllustrationImg,
   .page-illustration img {
-    border-radius: 24px !important;
+    border-radius: 0 !important;
     display: block;
     width: 100%;
-    /* Use natural aspect ratio unless explicit height is on the container */
     height: auto;
     object-fit: cover;
-    -webkit-mask-image: -webkit-radial-gradient(white, black);
-    mask-image: -webkit-radial-gradient(white, black);
   }
 
   /* When the container has an explicit height (user resized), fill it */
@@ -405,29 +401,23 @@
       margin: 20px 0 !important;
     }
 
-    /* View-only mode (default mobile): image flows naturally inline */
-    .public-story[data-can-edit="false"] #publicIllustration {
+    /* Both view-only and edit mode: image flows inline on mobile */
+    .public-story #publicIllustration {
       position: relative !important;
       inset: auto !important;
       transform: none !important;
-      width: 100% !important;
-      max-width: 100% !important;
-      margin: 20px 0 !important;
-      height: auto !important;
-      pointer-events: none !important;
-      touch-action: auto !important;
-    }
-
-    /* Edit mode on mobile: constrain image within book bounds */
-    .public-story[data-can-edit="true"] #publicIllustration {
-      position: relative !important;
-      inset: auto !important;
-      transform: none !important;
-      touch-action: none !important;
       width: 100% !important;
       max-width: 100% !important;
       height: auto !important;
       margin: 16px 0 !important;
+      pointer-events: none !important;
+      touch-action: auto !important;
+    }
+
+    /* Edit mode: allow interaction but still inline */
+    .public-story[data-can-edit="true"] #publicIllustration {
+      pointer-events: auto !important;
+      touch-action: none !important;
     }
 
     .public-story[data-can-edit="true"] .resize-handle {
@@ -500,8 +490,8 @@
           <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
             <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;">{{ pages[0].content | e if pages else '' }}</div>
           </div>
-          <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; background: transparent !important; border: none !important; box-shadow: none; overflow: hidden; border-radius: 24px;">
-            <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: auto; object-fit: cover; display: block; border-radius: 24px;" />
+          <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; background: transparent; border: none; box-shadow: none;">
+            <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: auto; object-fit: cover; display: block;" />
             {% if can_edit %}
             <div class="resize-handle" id="publicResizeHandle"></div>
             <button type="button" id="publicDeleteIllBtn" style="position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.5); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 31; backdrop-filter: blur(4px); transition: all 0.2s;">&times;</button>
@@ -610,9 +600,8 @@
 
             // Touch support for dragging with hold-to-drag prevention
             illEl.addEventListener('touchstart', (e) => {
+              if (window.innerWidth <= 900) return; // inline on mobile, no drag
               if (e.target.id === 'publicResizeHandle' || e.target.id === 'publicDeleteIllBtn') return;
-              // On mobile, image is inline (position:relative) — dragging is disabled, only resize works
-              if (window.innerWidth <= 900) return;
               const touch = e.touches[0];
               startX = touch.clientX;
               startY = touch.clientY;
@@ -668,6 +657,7 @@
               });
               // Touch support for resizing
               resizeH.addEventListener('touchstart', (e) => {
+                if (window.innerWidth <= 900) return; // inline on mobile, resize not applicable
                 isResizing = true;
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
