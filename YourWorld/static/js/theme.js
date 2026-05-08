@@ -591,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // by prioritizing server data for logged-in users and only using localStorage for guests.
 
   const getAudioSrc = (theme) => {
-    if (window.UserAudio[theme]) {
+    if (window.UserAudio && window.UserAudio[theme]) {
       return window.UserAudio[theme];
     }
     return `/static/audio/${theme}.wav`;
@@ -599,6 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const loadAndPlay = (theme, seekTo) => {
     const src = getAudioSrc(theme);
+    if (!src) return;
     
     audioPlayer.pause();
     audioPlayer.src = src;
