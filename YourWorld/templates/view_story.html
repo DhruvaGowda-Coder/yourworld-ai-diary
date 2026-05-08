@@ -84,12 +84,12 @@
     }
     .book, .public-story .book {
       height: auto !important;
-      min-height: 520px !important; /* Increased from 420px to match Shared Canvas better */
+      min-height: 520px !important;
       max-height: 85vh !important;
       overflow-x: hidden !important;
-      overflow-y: hidden !important; /* Book itself shouldn't scroll, inner page-scroll should */
-      display: flex !important;
-      flex-direction: column !important;
+      overflow-y: auto !important; /* Restore mobile scrolling */
+      -webkit-overflow-scrolling: touch;
+      display: block !important; /* Simpler layout for mobile */
       padding: 20px !important;
       scroll-behavior: smooth;
       
@@ -120,17 +120,15 @@
     .public-page {
       height: auto !important;
       max-height: none !important;
-      overflow: hidden !important;
+      overflow: visible !important; /* Allow illustration corners to show */
       display: block !important;
     }
 
     .page-scroll {
-      overflow-y: auto !important;
-      flex: 1 !important; /* Take all available space in the book */
-      min-height: 380px !important;
-      max-height: none !important; /* Allow it to grow to fill the 85vh book */
+      overflow-y: visible !important; /* Let the book handle scrolling on mobile */
+      height: auto !important;
+      max-height: none !important;
       display: block !important;
-      -webkit-overflow-scrolling: touch;
     }
 
     .page-scroll::-webkit-scrollbar {
@@ -139,11 +137,13 @@
 
     /* Enforce rounding for ALL images on mobile */
     #publicIllustration, .page-illustration, .page-content img {
+      position: absolute !important;
       box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
       border-radius: 24px !important;
       overflow: hidden !important;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
       mask-image: -webkit-radial-gradient(white, black);
+      z-index: 10 !important;
     }
     .page-content img {
       max-width: 100% !important;
@@ -177,12 +177,11 @@
     border-color: var(--theme-accent-soft-2);
   }
   .public-page {
-    overflow: hidden !important;
+    overflow: visible !important; /* Allow illustration to show corners */
     height: 100%;
     position: relative;
     display: flex;
     flex-direction: column;
-    border-radius: 12px; /* Subtle rounding for the inner page */
   }
   
   .book, .public-story .book {
@@ -217,7 +216,7 @@
     background: rgba(255, 255, 255, 0.4);
   }
 
-  /* Ensure ALL images (illustrations or inline) have rounded corners */
+  /* Global rounding for images and their containers */
   #publicIllustration, 
   .page-illustration,
   .page-content img {
@@ -225,6 +224,13 @@
     overflow: hidden !important;
     -webkit-mask-image: -webkit-radial-gradient(white, black);
     mask-image: -webkit-radial-gradient(white, black);
+    position: relative; /* Base for inline images */
+  }
+
+  #publicIllustration {
+    position: absolute !important;
+    z-index: 10 !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
   }
 
   #publicIllustrationImg,
