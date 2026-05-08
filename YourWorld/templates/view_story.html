@@ -39,7 +39,7 @@
 
   .workspace.public-story {
     display: grid !important;
-    grid-template-columns: 320px 1fr !important; /* EXACT match with entry-sidebar width */
+    grid-template-columns: minmax(220px, 300px) 1fr !important; /* EXACT match with Shared Canvas grid */
     gap: 24px !important;
     align-items: start !important;
     width: 100% !important;
@@ -62,7 +62,7 @@
     border: 1px solid var(--theme-panel-border);
     height: fit-content;
     width: 100%;
-    max-width: 320px; /* EXACT match with .entry-sidebar:429 */
+    max-width: 300px; /* Sync with minmax(220px, 300px) */
     box-shadow: 0 8px 32px rgba(0,0,0,0.2);
   }
 
@@ -308,7 +308,7 @@
 
     .public-page {
       width: 100% !important;
-      padding: 20px 16px !important; 
+      padding: 20px 0 !important; /* Remove side padding to match editor's edge-to-edge look */
       position: relative;
     }
     
