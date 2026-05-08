@@ -84,8 +84,8 @@ body.chat-resize-active * {
 
 .chat-subtitle {
   font-size: 0.75rem;
-  color: var(--theme-accent-soft-2, #f3cda2);
-  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
 }
 
 .chat-close {
