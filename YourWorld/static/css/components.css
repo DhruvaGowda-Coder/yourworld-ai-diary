@@ -1111,8 +1111,21 @@ body[data-theme="cherry"] ::selection { background: rgba(255, 182, 197, 0.3); }
 
 /* ─── Enhanced Modal ─── */
 .image-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.image-modal.open {
+  display: flex;
 }
 
 .image-modal-card {

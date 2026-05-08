@@ -1157,7 +1157,6 @@ if (workspace) {
       if (!currentImageUrl) return;
       if (pageIllustrationImg && pageIllustrationImg.naturalWidth > 0) {
         imageModalImg.src = currentImageUrl;
-        imageModalImg.style.display = 'block';
         imageModal.classList.add('open');
         imageModal.setAttribute('aria-hidden', 'false');
       }
@@ -1168,10 +1167,7 @@ if (workspace) {
     const closeModal = () => {
       imageModal.classList.remove('open');
       imageModal.setAttribute('aria-hidden', 'true');
-      if (imageModalImg) {
-        imageModalImg.style.display = 'none';
-        imageModalImg.src = '';
-      }
+      imageModalImg.src = '';
     };
     imageModalClose.addEventListener('click', closeModal);
     imageModal.addEventListener('click', (event) => {
