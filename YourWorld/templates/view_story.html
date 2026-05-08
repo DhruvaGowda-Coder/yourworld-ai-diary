@@ -7,6 +7,52 @@
 {% if pages %}
 <meta property="og:title" content="{{ pages[0].title }}">
 <meta property="og:description" content="{{ (pages[0].content | striptags)[:150] }}...">
+<meta property="og:type" content="article">
+{% if pages[0].image_url %}
+<meta property="og:image" content="{{ pages[0].image_url }}">
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+  @media (max-width: 768px) {
+    .public-layout {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    .public-sidebar {
+      margin-bottom: 20px;
+      padding: 12px !important;
+    }
+    .public-page-list {
+      display: flex !important;
+      flex-direction: row !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      gap: 10px !important;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+    .public-page-list::-webkit-scrollbar {
+      display: none;
+    }
+    .public-page-item {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      padding: 8px 16px !important;
+    }
+    .public-main {
+      width: 100% !important;
+    }
+  }
+</style>
+
+<section class="public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+  {% if not_found %}
+    <div class="public-notice" style="text-align: center; padding: 100px 20px;">
+      <h2 style="font-family: var(--ui-font); margin-bottom: 20px;">Story not found</h2>
+      <p style="opacity: 0.8; margin-bottom: 30px;">The code <strong>{{ code }}</strong> does not match any shared story.</p>
       <a class="btn ghost" href="/">Back to Home</a>
     </div>
   {% else %}
@@ -37,17 +83,16 @@
           </div>
         </div>
 
-    <div class="page-controls public-view-controls" id="publicControls" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 30px;">
-      <button class="btn ghost" id="publicPrevBtn" type="button" aria-label="Previous page">Previous</button>
-      <span class="public-page-count" id="publicPageCount" style="font-family: var(--ui-font); font-size: 0.9rem; opacity: 0.8; color: #fff;">
-        {% if pages %}1 / {{ pages|length }}{% endif %}
-      </span>
-      <button class="btn ghost" id="publicNextBtn" type="button" aria-label="Next page">Next</button>
-      {% if can_edit %}
-        <button class="btn primary" id="publicSaveBtn" type="button">Save Changes</button>
-      {% endif %}
-    </div>
-
+        <div class="page-controls public-view-controls" id="publicControls" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 30px;">
+          <button class="btn ghost" id="publicPrevBtn" type="button" aria-label="Previous page">Previous</button>
+          <span class="public-page-count" id="publicPageCount" style="font-family: var(--ui-font); font-size: 0.9rem; opacity: 0.8; color: #fff;">
+            {% if pages %}1 / {{ pages|length }}{% endif %}
+          </span>
+          <button class="btn ghost" id="publicNextBtn" type="button" aria-label="Next page">Next</button>
+          {% if can_edit %}
+            <button class="btn primary" id="publicSaveBtn" type="button">Save Changes</button>
+          {% endif %}
+        </div>
       </main>
     </div>
 
