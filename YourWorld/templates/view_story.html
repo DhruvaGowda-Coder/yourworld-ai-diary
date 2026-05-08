@@ -85,7 +85,7 @@
     .book, .public-story .book {
       height: auto !important;
       max-height: 85vh !important;
-      overflow-x: auto !important;      /* Enables horizontal pan */
+      overflow-x: hidden !important;
       overflow-y: auto !important;
       -webkit-overflow-scrolling: touch;
       padding: 20px 15px !important;
@@ -118,9 +118,8 @@
     .public-page {
       height: auto !important;
       max-height: none !important;
-      overflow: visible !important;
+      overflow: hidden !important;
       display: block !important;
-      min-width: 560px;
     }
 
     .page-scroll {
@@ -136,9 +135,6 @@
 
     #publicIllustration {
       box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
-      border-radius: 14px !important;
-      overflow: hidden !important;
-      -webkit-mask-image: -webkit-radial-gradient(white, black); /* Safari fix */
     }
   }
 
@@ -167,7 +163,7 @@
     border-color: var(--theme-accent-soft-2);
   }
   .public-page {
-    overflow: visible !important;   /* was: hidden — that was killing the corners */
+    overflow: hidden !important;
     height: 100%;
     position: relative;
   }
@@ -195,13 +191,10 @@
   }
 
   #publicIllustration {
-    border-radius: 14px !important;
     overflow: hidden !important;
-    -webkit-mask-image: -webkit-radial-gradient(white, black); /* Safari fix */
   }
 
   #publicIllustrationImg {
-    border-radius: 14px !important;
     display: block;
     width: 100%;
     height: 100%;
@@ -237,8 +230,8 @@
               <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
                 <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 100px 0;">{{ pages[0].content if pages else '' }}</div>
               </div>
-              <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; pointer-events: none; border-radius: 24px !important; overflow: hidden !important; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3); -webkit-mask-image: -webkit-radial-gradient(white, black); mask-image: radial-gradient(white, black);">
-                <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: 100%; object-fit: cover; border-radius: 24px !important; display: block;" />
+              <div class="page-illustration" id="publicIllustration" style="display: none; z-index: 10; pointer-events: none; border: 1px solid rgba(0, 0, 0, 0.08) !important; background: rgba(0, 0, 0, 0.04) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
               </div>
             </div>
           </div>
