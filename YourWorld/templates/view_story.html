@@ -24,9 +24,9 @@
     <div class="book-area">
       <div class="book" id="publicBook">
         <div class="page" id="publicPage">
-          <h2 class="page-title" id="publicTitle" {% if can_edit %}contenteditable="true" style="outline:none; border-bottom:1px dashed var(--theme-accent-soft);"{% endif %}></h2>
+          <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; pointer-events: {{ 'auto' if can_edit else 'none' }};" />
           <div class="page-scroll">
-            <div class="page-content" id="publicContent" {% if can_edit %}contenteditable="true" style="outline:none;"{% endif %}></div>
+            <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; pointer-events: {{ 'auto' if can_edit else 'none' }}; min-height: 450px;"></textarea>
           </div>
           <div class="page-illustration" id="publicIllustration" style="display: none; margin-top: 20px;">
             <img id="publicIllustrationImg" alt="Story illustration" style="max-width: 100%; border-radius: 8px;" />
@@ -37,30 +37,32 @@
 
     <div class="page-controls" id="publicControls" style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 30px;">
       <button class="btn ghost" id="publicPrevBtn" type="button">Previous</button>
-      <span class="public-page-count" id="publicPageCount" style="font-family: var(--ui-font); font-size: 0.9rem; opacity: 0.8;"></span>
+      <span class="public-page-count" id="publicPageCount" style="font-family: var(--ui-font); font-size: 0.9rem; opacity: 0.8; color: #fff;"></span>
       <button class="btn ghost" id="publicNextBtn" type="button">Next</button>
       {% if can_edit %}
         <button class="btn primary" id="publicSaveBtn" type="button">Save Changes</button>
       {% endif %}
     </div>
 
-    <div class="public-meta" style="color: var(--text-color); margin-top: 40px; text-align: center; font-size: 0.95rem; opacity: 0.7; font-family: var(--ui-font);">
+    <div class="public-meta" style="color: #fff; margin-top: 40px; text-align: center; font-size: 0.95rem; opacity: 0.7; font-family: var(--ui-font);">
       Shared code: <strong>{{ code }}</strong>
-      <span class="public-mode" style="margin-left: 10px; padding: 4px 10px; background: rgba(255,255,255,0.05); border-radius: 20px; font-size: 0.8rem;">{{ "Editable" if can_edit else "View Only" }}</span>
+      <span class="public-mode" style="margin-left: 10px; padding: 4px 10px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 0.8rem;">{{ "Editable" if can_edit else "View Only" }}</span>
     </div>
 
     <script id="publicPagesData" type="application/json">{{ pages | tojson }}</script>
-    <noscript>
-      {% for page in pages %}
-        <h3 class="page-title">{{ page.title or "Untitled" }}</h3>
-        <div class="page-content">{{ page.content | striptags }}</div>
-      {% endfor %}
-    </noscript>
     <script>
       (function() {
-        const pages = JSON.parse(document.getElementById('publicPagesData').textContent || '[]');
+        let pages = [];
+        try {
+          const dataEl = document.getElementById('publicPagesData');
+          pages = JSON.parse(dataEl.textContent || '[]');
+          console.log("Loaded pages:", pages);
+        } catch(e) {
+          console.error("Failed to parse pages data:", e);
+        }
+
         let currentIndex = 0;
-        const canEdit = document.querySelector('.public-story').dataset.canEdit === 'true';
+        const canEdit = {{ 'true' if can_edit else 'false' }};
 
         const titleEl = document.getElementById('publicTitle');
         const contentEl = document.getElementById('publicContent');
@@ -71,16 +73,21 @@
         const nextBtn = document.getElementById('publicNextBtn');
         const saveBtn = document.getElementById('publicSaveBtn');
 
+        if (canEdit) {
+          titleEl.readOnly = false;
+          contentEl.readOnly = false;
+        }
+
         function render() {
           if (!pages.length) {
-            console.warn("No pages found to render.");
+            console.warn("No pages found.");
             return;
           }
           const p = pages[currentIndex];
-          console.log("Rendering page:", currentIndex, p);
+          console.log("Rendering page index", currentIndex, p);
 
-          titleEl.textContent = p.title || 'Untitled';
-          contentEl.textContent = p.content || '';
+          titleEl.value = p.title || 'Untitled';
+          contentEl.value = p.content || '';
           
           // Apply stored styles
           const applyStyles = (el, styleStr) => {
@@ -90,10 +97,8 @@
               el.style.fontWeight = s.bold ? '700' : '400';
               el.style.fontStyle = s.italic ? 'italic' : 'normal';
               el.style.textDecoration = s.underline ? 'underline' : 'none';
-              el.style.fontSize = s.fontSize ? s.fontSize + 'rem' : 'inherit';
-            } catch(e) {
-              console.error("Style parse failed:", e);
-            }
+              if (s.fontSize) el.style.fontSize = s.fontSize + 'rem';
+            } catch(e) {}
           };
 
           applyStyles(titleEl, p.title_style);
@@ -102,13 +107,6 @@
           if (p.image_url && p.image_attached) {
             illImg.src = p.image_url;
             illEl.style.display = 'block';
-            if (p.image_style) {
-              try {
-                const s = JSON.parse(p.image_style);
-                illImg.style.width = s.width ? s.width + 'px' : '100%';
-                illImg.style.height = 'auto';
-              } catch(e) {}
-            }
           } else {
             illEl.style.display = 'none';
           }
@@ -116,8 +114,6 @@
           countEl.textContent = `${currentIndex + 1} / ${pages.length}`;
           prevBtn.disabled = currentIndex === 0;
           nextBtn.disabled = currentIndex === pages.length - 1;
-          
-          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         prevBtn.onclick = () => { if (currentIndex > 0) { currentIndex--; render(); } };
@@ -126,12 +122,8 @@
         if (saveBtn) {
           saveBtn.onclick = async () => {
             const p = pages[currentIndex];
-            const newTitle = titleEl.textContent;
-            const newContent = contentEl.textContent;
-            
             saveBtn.disabled = true;
             saveBtn.textContent = 'Saving...';
-            
             try {
               const r = await fetch('/api/entry/save', {
                 method: 'POST',
@@ -141,8 +133,8 @@
                 },
                 body: JSON.stringify({
                   id: p.id,
-                  title: newTitle,
-                  content: newContent,
+                  title: titleEl.value,
+                  content: contentEl.value,
                   type: 'story',
                   title_style: p.title_style,
                   content_style: p.content_style,
@@ -152,20 +144,15 @@
                 })
               });
               if (r.ok) {
-                const data = await r.json();
-                p.title = newTitle;
-                p.content = newContent;
-                p.updated_at = data.updated_at;
-                render();
+                p.title = titleEl.value;
+                p.content = contentEl.value;
                 saveBtn.textContent = 'Saved!';
                 setTimeout(() => { saveBtn.textContent = 'Save Changes'; saveBtn.disabled = false; }, 2000);
-              } else {
-                throw new Error('Save failed');
               }
             } catch(e) {
-              alert('Failed to save changes.');
-              saveBtn.textContent = 'Save Changes';
+              alert('Save failed');
               saveBtn.disabled = false;
+              saveBtn.textContent = 'Save Changes';
             }
           };
         }
