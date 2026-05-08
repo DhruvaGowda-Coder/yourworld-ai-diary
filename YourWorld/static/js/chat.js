@@ -226,6 +226,7 @@
 
     // Initial Load
     try {
+      // 1. Instant load from local storage
       const stored = JSON.parse(localStorage.getItem(CHAT_DISPLAY_KEY) || '[]');
       if (stored.length && msgs) {
         msgs.innerHTML = '';
@@ -233,6 +234,25 @@
       }
       const hist = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
       chatHistory.push(...hist);
+
+      // 2. Fetch latest from Cloud if logged in
+      const currentUserId = (typeof userId !== 'undefined') ? userId : (window.user ? window.user.id : null);
+      if (currentUserId && !String(currentUserId).startsWith('guest_')) {
+        fetch('/api/chat/sync')
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (data && data.history && data.history.length > 0) {
+              chatHistory.length = 0;
+              chatHistory.push(...data.history);
+              _saveChatHistory();
+              if (msgs) {
+                msgs.innerHTML = '';
+                data.history.forEach(m => addMessage(m.content, m.role === 'assistant' ? 'bot' : 'user'));
+              }
+              _saveDisplayMessages();
+            }
+          }).catch(e => console.warn('Sync failed', e));
+      }
     } catch(e) {}
     ensureGreeting();
   });
