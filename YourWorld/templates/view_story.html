@@ -91,7 +91,7 @@
       scroll-behavior: smooth;
       
       /* Matching Shared Canvas Scrollbar Style */
-      scrollbar-width: thin;
+      scrollbar-width: thin !important;
       scrollbar-color: var(--theme-accent, #ffb5a0) rgba(0, 0, 0, 0.1);
     }
     
@@ -110,7 +110,7 @@
 
     .book::-webkit-scrollbar-track, 
     .public-story .book::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.05) !important;
+      background: rgba(0, 0, 0, 0.08) !important;
       border-radius: 10px !important;
     }
 
@@ -132,8 +132,12 @@
       display: none !important;
     }
 
-    .page-illustration {
+    .page-illustration,
+    .public-story .page-illustration {
       box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
+      border-radius: 24px !important;
+      overflow: hidden !important;
+      -webkit-mask-image: -webkit-radial-gradient(white, black); /* Safari fix for border-radius + overflow */
     }
   }
 
@@ -186,6 +190,17 @@
   }
   .page-scroll::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.4);
+  }
+
+  /* Rounded corners for illustration - desktop & mobile */
+  .page-illustration {
+    border-radius: 24px !important;
+    overflow: hidden !important;
+  }
+
+  .page-illustration img {
+    border-radius: 24px !important;
+    display: block;
   }
 </style>
 
