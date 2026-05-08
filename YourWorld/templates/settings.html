@@ -101,6 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const audioUploadInput = document.getElementById('audioUploadInput');
   const audioUploadStatus = document.getElementById('audioUploadStatus');
   const themeAudioList = document.getElementById('themeAudioList');
+  const themeForm = document.getElementById('themeForm');
+  const themeTiles = document.querySelectorAll('.theme-tile');
+  const initialTheme = document.body.dataset.theme || 'campfire';
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
   const isGuestUser = ("{{ is_guest_user }}" === "True");
   let targetThemeForUpload = null;
@@ -433,6 +436,35 @@ document.addEventListener('DOMContentLoaded', () => {
       targetThemeForUpload = null;
     }
   });
+
+  // Theme Preview Logic
+  if (themeTiles.length > 0) {
+    themeTiles.forEach(tile => {
+      const themeId = tile.dataset.themePreview;
+      
+      // Preview on hover
+      tile.addEventListener('mouseenter', () => {
+        if (window.setThemeState) window.setThemeState(themeId);
+      });
+
+      // Selection logic
+      tile.addEventListener('click', () => {
+        // Radio input is handled by label automatically, 
+        // but we ensure the theme state stays after click
+        if (window.setThemeState) window.setThemeState(themeId);
+      });
+    });
+
+    // Reset preview if mouse leaves the grid entirely without selecting
+    const themeGrid = document.querySelector('.theme-grid');
+    if (themeGrid) {
+      themeGrid.addEventListener('mouseleave', () => {
+        const checkedRadio = document.querySelector('input[name="theme"]:checked');
+        const selectedTheme = checkedRadio ? checkedRadio.value : initialTheme;
+        if (window.setThemeState) window.setThemeState(selectedTheme);
+      });
+    }
+  }
 });
 </script>
 {% endblock %}
