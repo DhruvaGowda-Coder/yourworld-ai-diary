@@ -46,6 +46,31 @@
       width: 100% !important;
     }
   }
+
+  /* Desktop Scrollbar Refinement */
+  .public-page {
+    overflow: hidden !important; /* Remove outer scrollbar */
+  }
+  
+  .page-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.5) transparent; /* Modern white scrollbar */
+  }
+
+  /* Webkit styling for more control */
+  .page-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .page-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .page-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+  }
+  .page-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
 </style>
 
 <section class="public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
@@ -73,7 +98,7 @@
           <div class="book" id="publicBook">
             <div class="page public-page" id="publicPage">
               <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important;" value="{{ pages[0].title if pages else 'Untitled' }}" />
-              <div class="page-scroll" style="overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--theme-accent) transparent;">
+              <div class="page-scroll" style="overflow-y: auto;">
                 <textarea class="page-content" id="publicContent" readonly style="color: #1d1510 !important; min-height: 450px; overflow: visible;">{{ pages[0].content if pages else '' }}</textarea>
               </div>
               <div class="page-illustration" id="publicIllustration" style="display: none;">
