@@ -444,14 +444,16 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Preview on hover
       tile.addEventListener('mouseenter', () => {
-        if (window.setThemeState) window.setThemeState(themeId);
+        if (typeof window.setThemeState === 'function') {
+          window.setThemeState(themeId);
+        }
       });
 
       // Selection logic
       tile.addEventListener('click', () => {
-        // Radio input is handled by label automatically, 
-        // but we ensure the theme state stays after click
-        if (window.setThemeState) window.setThemeState(themeId);
+        if (typeof window.setThemeState === 'function') {
+          window.setThemeState(themeId);
+        }
       });
     });
 

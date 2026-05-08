@@ -138,7 +138,7 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matc
 
 const getThemeMeta = (theme) => THEME_META[theme] || THEME_META.campfire;
 
-const setThemeState = (theme) => {
+window.setThemeState = (theme) => {
   const resolved = THEME_META[theme] ? theme : 'campfire';
   activeTheme = resolved;
   if (bodyEl) bodyEl.dataset.theme = resolved;
