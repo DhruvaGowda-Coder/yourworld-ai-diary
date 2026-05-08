@@ -187,29 +187,38 @@
 
   .resize-handle {
     position: absolute !important;
-    bottom: -12px !important;
-    right: -12px !important;
-    width: 44px !important; /* LARGE touch target for mobile */
-    height: 44px !important;
-    background: var(--theme-accent) !important;
-    border: 3px solid #fff !important;
+    bottom: -10px !important;
+    right: -10px !important;
+    width: 32px !important; /* Slightly smaller, more refined */
+    height: 32px !important;
+    background: rgba(255, 255, 255, 0.1) !important; /* Semi-transparent */
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.4) !important; /* Subtle border */
     border-radius: 50% !important;
     cursor: nwse-resize !important;
     z-index: 100 !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  .resize-handle:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+    transform: scale(1.1) !important;
   }
   
   .resize-handle::after {
     content: "";
-    width: 14px;
-    height: 14px;
-    border-right: 2px solid #fff;
-    border-bottom: 2px solid #fff;
-    margin-top: -6px;
-    margin-left: -6px;
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid rgba(255, 255, 255, 0.8);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.8);
+    margin-top: -4px;
+    margin-left: -4px;
   }
 
   #publicIllustrationImg,
