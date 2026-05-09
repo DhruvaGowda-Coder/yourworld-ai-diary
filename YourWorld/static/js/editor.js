@@ -450,18 +450,12 @@ if (workspace) {
     
     // Force absolute positioning for consistent drag math on all devices
     el.style.position = 'absolute';
+    el.style.width = (state.width || 250) + 'px';
     el.style.height = state.height ? (state.height + 'px') : 'auto';
     el.style.transform = `translate(${state.x || 0}px, ${state.y || 0}px)`;
-    el.style.willChange = 'transform';
     
     if (isMobile) {
-      // Clamp width to container width on mobile
-      const containerWidth = el.parentElement ? el.parentElement.offsetWidth : window.innerWidth;
-      const maxW = containerWidth - 20;
-      el.style.width = Math.min(state.width || 200, maxW) + 'px';
-      el.style.maxWidth = maxW + 'px';
-    } else {
-      el.style.width = (state.width || 250) + 'px';
+      el.style.maxWidth = '100%';
     }
   };
 
@@ -491,22 +485,7 @@ if (workspace) {
       
       // Stop drag/resize interference by killing these events before they bubble to the parent
       delBtn.addEventListener('mousedown', e => e.stopPropagation());
-      delBtn.addEventListener('touchstart', e => {
-        e.stopPropagation();
-        e.preventDefault();
-      }, { passive: false });
-      
-      // Use touchend for mobile delete (click doesn't fire reliably with parent touch handlers)
-      delBtn.addEventListener('touchend', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        console.log('Delete button tapped for index:', index);
-        if (confirm('Remove this image from page?')) {
-          currentImages.splice(index, 1);
-          markDirty();
-          updatePageIllustration();
-        }
-      });
+      delBtn.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
       
       delBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1301,8 +1280,7 @@ if (workspace) {
       if (e.touches && !isDragging && isTouchActive) {
         const dx = Math.abs(e.touches[0].clientX - startX);
         const dy = Math.abs(e.touches[0].clientY - startY);
-        // If user scrolls away before drag activates, cancel
-        if (dx > 8 || dy > 8) {
+        if (dx > 20 || dy > 20) {
           isTouchActive = false;
           clearTimeout(touchTimer);
           window.removeEventListener('touchmove', handleMove);
@@ -1343,8 +1321,6 @@ if (workspace) {
         document.documentElement.style.overflow = '';
         el.style.cursor = 'grab';
         el.classList.remove('is-dragging');
-        el.style.opacity = '1';
-        el.style.transition = 'opacity 0.2s';
       }
       window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('touchmove', handleMove);
@@ -1382,13 +1358,8 @@ if (workspace) {
         if (isTouchActive) {
           isDragging = true;
           el.classList.add('is-dragging');
-          el.style.opacity = '0.85';
-          el.style.transition = 'none';
-          // Lock page scroll while dragging
-          document.body.style.overflow = 'hidden';
-          document.documentElement.style.overflow = 'hidden';
         }
-      }, 100);
+      }, 150);
     }, { passive: false });
 
     const resizeH = el.querySelector('.resize-handle');

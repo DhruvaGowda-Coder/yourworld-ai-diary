@@ -727,16 +727,15 @@ button:active:not(:disabled) {
   width: 100% !important;
 }
 
-/* Editor Textarea Specific - fills scroll container, lets page-scroll handle overflow */
+/* Editor Textarea Specific - Optimized for Modern Native Sizing */
 textarea.page-content {
   height: auto !important;
-  min-height: 560px !important;
+  min-height: 40px !important;
   field-sizing: content !important;
-  overflow: hidden !important; /* page-scroll handles scrolling */
+  overflow: hidden !important; /* Prevents double scrollbars in editor */
   padding-bottom: 20px !important;
   resize: none !important;
   display: block !important;
-  max-height: none !important; /* Let it grow, page-scroll clips */
 }
 
 /* Base styles for both View and Edit modes */
@@ -1399,13 +1398,17 @@ textarea.page-content {
   .book, 
   .public-story .book {
     padding: 12px 10px !important;
-    min-height: 300px !important;
-    max-height: 75vh !important;
+    min-height: auto !important;
+    max-height: none !important; /* Move scroll constraint here */
     max-width: 100% !important;
-    overflow: hidden !important;
-    contain: layout !important; /* Removed paint to avoid clipping scrollbars */
+    overflow-x: hidden !important; /* No horizontal scroll — image is clamped */
+    overflow-y: auto !important;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
     
-    /* These will be moved to .page-scroll */
+    /* Force visible scrollbars on mobile */
+    scrollbar-width: auto !important;
+    scrollbar-color: var(--theme-accent) rgba(0,0,0,0.1) !important;
     
     /* Ensure background texture is stable and covers the entire visible area */
     background-attachment: scroll !important;
@@ -1565,21 +1568,19 @@ textarea.page-content {
 
   .book {
     height: auto !important;
-    min-height: 300px !important;
-    max-height: 75vh !important;
+    min-height: auto !important;
+    max-height: none !important;
     margin: 10px 0 !important;
-    overflow: hidden !important;
-    contain: layout !important; /* Removed paint to avoid clipping scrollbars */
   }
 
   .page,
   .public-page {
     width: 100% !important;
-    height: 100% !important;
-    min-height: 0 !important;
-    max-height: 100% !important;
+    height: auto !important;
+    min-height: none !important;
+    max-height: none !important;
     position: relative !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     display: block !important;
     padding: 20px 16px !important;
   }
@@ -1587,15 +1588,12 @@ textarea.page-content {
   .public-content,
   .page-scroll {
     max-width: 100% !important;
-    overflow-x: hidden !important; 
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin !important;
-    scrollbar-color: var(--theme-accent, #8b5a2b) rgba(0,0,0,0.1) !important;
+    overflow-x: visible !important; 
+    overflow-y: visible !important;
     display: block !important;
-    height: 100% !important;
+    height: auto !important;
     min-height: 0 !important;
-    max-height: 100% !important;
+    max-height: none !important;
   }
 
   .page-scroll {
@@ -1621,14 +1619,8 @@ textarea.page-content {
     position: absolute !important;
     pointer-events: auto !important;
     z-index: 10;
-    overflow: visible !important; /* Don't clip the delete button */
+    overflow: hidden !important;
     border-radius: 16px !important;
-    touch-action: none; /* Prevent browser gestures during drag */
-  }
-
-  .page-illustration.is-dragging {
-    opacity: 0.85;
-    z-index: 100 !important;
   }
 
   .page-illustration img {
@@ -1636,18 +1628,6 @@ textarea.page-content {
     height: auto !important;
     object-fit: contain !important;
     display: block;
-    border-radius: 16px;
-  }
-
-  /* Bigger delete button for mobile touch targets */
-  .page-illustration .delete-ill-btn {
-    width: 36px !important;
-    height: 36px !important;
-    font-size: 22px !important;
-    top: -8px !important;
-    right: -8px !important;
-    z-index: 50 !important;
-    pointer-events: auto !important;
   }
 
   .public-controls {
@@ -1783,7 +1763,6 @@ textarea.page-content {
   white-space: pre-wrap;
   line-height: 1.7;
   font-size: 1.05rem;
-  padding-bottom: 20px;
 }
 
 .public-controls {

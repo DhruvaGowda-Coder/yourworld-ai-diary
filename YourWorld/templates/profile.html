@@ -17,9 +17,9 @@
 
   <div class="profile-stats-row">
     <div class="profile-stat">
-      <span class="profile-stat-icon">✍️</span>
+      <span class="profile-stat-icon">📖</span>
       <span class="profile-stat-value" id="profilePageCount">—</span>
-      <span class="profile-stat-label">Edits</span>
+      <span class="profile-stat-label">Pages</span>
     </div>
     <div class="profile-stat">
       <span class="profile-stat-icon">🔥</span>
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const options = { month: 'short', day: 'numeric', year: 'numeric' };
             const niceDate = date.toLocaleDateString('en-US', options);
-            const tooltipText = `${niceDate}: ${count} ${count === 1 ? 'edit' : 'edits'}`;
+            const tooltipText = `${niceDate}: ${count} ${count === 1 ? 'page' : 'pages'}`;
             
             cell.addEventListener('mouseenter', (e) => {
                 showGlobalTooltip(e.target, tooltipText);
