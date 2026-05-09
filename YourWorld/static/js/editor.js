@@ -448,20 +448,14 @@ if (workspace) {
     if (!el || !state) return;
     const isMobile = window.innerWidth <= 900;
     
-    // Ensure absolute positioning is applied
+    // Force absolute positioning for consistent drag math on all devices
     el.style.position = 'absolute';
+    el.style.width = (state.width || 250) + 'px';
+    el.style.height = state.height ? (state.height + 'px') : 'auto';
+    el.style.transform = `translate(${state.x || 0}px, ${state.y || 0}px)`;
     
     if (isMobile) {
-      // On mobile, we still allow dragging but respect the small viewport
-      el.style.left = (state.x || 0) + 'px';
-      el.style.top = (state.y || 0) + 'px';
-      el.style.width = (state.width || 250) + 'px';
-      el.style.height = state.height ? (state.height + 'px') : 'auto';
-      el.style.transform = 'none';
-    } else {
-      el.style.width = state.width ? `${state.width}px` : '250px';
-      el.style.height = state.height ? `${state.height}px` : 'auto';
-      el.style.transform = `translate(${state.x || 0}px, ${state.y || 0}px)`;
+      el.style.maxWidth = '100%';
     }
   };
 
@@ -1361,7 +1355,7 @@ if (workspace) {
           window.addEventListener('touchmove', handleMove, { passive: false });
           window.addEventListener('touchend', handleEnd);
         }
-      }, 200);
+      }, 150);
     }, { passive: false });
 
     const resizeH = el.querySelector('.resize-handle');
