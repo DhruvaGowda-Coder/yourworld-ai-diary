@@ -727,15 +727,16 @@ button:active:not(:disabled) {
   width: 100% !important;
 }
 
-/* Editor Textarea Specific - Optimized for Modern Native Sizing */
+/* Editor Textarea Specific - fills scroll container, lets page-scroll handle overflow */
 textarea.page-content {
   height: auto !important;
-  min-height: 40px !important;
+  min-height: 560px !important;
   field-sizing: content !important;
-  overflow: hidden !important; /* Prevents double scrollbars in editor */
+  overflow: hidden !important; /* page-scroll handles scrolling */
   padding-bottom: 20px !important;
   resize: none !important;
   display: block !important;
+  max-height: none !important; /* Let it grow, page-scroll clips */
 }
 
 /* Base styles for both View and Edit modes */
