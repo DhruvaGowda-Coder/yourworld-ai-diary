@@ -82,13 +82,13 @@
   }
 
   .public-page {
-    overflow: visible !important;
     height: 100%;
-    min-height: 100% !important;
-    padding-bottom: 20px !important; /* Match editor's tighter layout */
-    position: relative;
+    min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    padding-bottom: 20px !important;
   }
   
   .book, .public-story .book {
@@ -104,8 +104,8 @@
     color: var(--ink);
     border-radius: 22px;
     padding: 34px !important;
-    min-height: 680px !important;
-    max-height: 680px !important;
+    min-height: 400px !important;
+    max-height: 85vh !important;
     border: 12px solid var(--book-cover);
     box-shadow:
       0 28px 80px var(--shadow),
@@ -140,10 +140,10 @@
   }
   
   .page-scroll {
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-    max-height: calc(680px - 120px);
+    overflow-y: auto !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    max-height: none !important;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.35) rgba(255, 255, 255, 0.92);
     padding-right: 4px;
@@ -617,6 +617,13 @@
                   startTY = parseFloat(values[5]);
                 } else { startTX = 0; startTY = 0; }
               } else { startTX = 0; startTY = 0; }
+            
+              // On mobile, read margin instead of transform
+              if (window.innerWidth <= 900) {
+                startTX = parseFloat(illEl.style.marginLeft) || 0;
+                startTY = parseFloat(illEl.style.marginTop) || 0;
+              }
+            
               illEl.style.cursor = 'grabbing';
               e.preventDefault();
             });
@@ -626,6 +633,7 @@
 
             // Touch support for dragging with hold-to-drag prevention
             illEl.addEventListener('touchstart', (e) => {
+              e.preventDefault();
               // MUST check resize/delete target FIRST before any mobile guard
               if (e.target.id === 'publicResizeHandle' || e.target.id === 'publicDeleteIllBtn') return;
               const touch = e.touches[0];
@@ -642,6 +650,12 @@
                 } else { startTX = 0; startTY = 0; }
               } else { startTX = 0; startTY = 0; }
               
+              // On mobile, read margin instead of transform
+              if (window.innerWidth <= 900) {
+                startTX = parseFloat(illEl.style.marginLeft) || 0;
+                startTY = parseFloat(illEl.style.marginTop) || 0;
+              }
+
               if (illImg && illImg.naturalWidth > 0) {
                 // Potential placeholder for "Full illustration view" UI logic if needed
               }
@@ -681,6 +695,8 @@
               });
               // Touch support for resizing
               resizeH.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 isResizing = true;
                 isTouchActive = false;
                 if (touchTimer) clearTimeout(touchTimer);
@@ -695,8 +711,6 @@
                   passive: false,
                   signal: touchMoveController.signal
                 });
-                e.preventDefault();
-                e.stopPropagation();
               }, { passive: false });
             }
 
@@ -731,7 +745,14 @@
                 const dy = clientY - startY;
                 currentX = startTX + dx;
                 currentY = startTY + dy;
-                illEl.style.transform = `translate(${currentX}px, ${currentY}px)`;
+                
+                if (window.innerWidth <= 900) {
+                  // On mobile, image is in flow — use margins for visible movement
+                  illEl.style.marginLeft = Math.max(0, currentX) + 'px';
+                  illEl.style.marginTop = Math.max(0, currentY) + 'px';
+                } else {
+                  illEl.style.transform = `translate(${currentX}px, ${currentY}px)`;
+                }
               } else if (isResizing) {
                 const dx = clientX - startX;
                 const dy = clientY - startY;
@@ -817,22 +838,27 @@
           if (!el) return;
           const isMobile = window.innerWidth <= 900;
           if (isMobile) {
-            // On mobile, always flow image inline — never use absolute positioning
             el.style.position = 'relative';
             el.style.inset = 'auto';
             el.style.transform = 'none';
-            el.style.width = '100%';
+            el.style.marginLeft = '0px';
+            el.style.marginTop = '0px';
+            
+            // Use saved width on mobile too, capped at 100%
+            try {
+              const s = styleStr ? JSON.parse(styleStr) : {};
+              const savedW = s.width || null;
+              if (savedW) {
+                el.style.width = Math.min(savedW, window.innerWidth - 40) + 'px';
+              } else {
+                el.style.width = '100%';
+              }
+            } catch(e) {
+              el.style.width = '100%';
+            }
             el.style.maxWidth = '100%';
             el.style.setProperty('height', 'auto', 'important');
-            
-            if (canEdit) {
-              el.style.order = '-1';
-              el.style.margin = '16px 0';
-            } else {
-              el.style.order = '0';
-              el.style.margin = '0 0 16px 0';
-            }
-            
+            el.style.margin = '16px 0';
             const img = el.querySelector('img');
             if (img) { img.style.height = 'auto'; img.style.width = '100%'; }
             return;
@@ -893,17 +919,17 @@
           if (contentEl) {
             let content = p.content || '';
             if (!canEdit) {
-              const looksLikeCode = /[{};]|#include|def |function |int main/.test(content);
-              if (looksLikeCode) content = ''; 
+              const codePatterns = [/#include/, /int main/, /def \w+\(/, /function \w+\(/, /\bpublic class\b/, /\bimport java\b/];
+              const codeScore = codePatterns.filter(p => p.test(content)).length;
+              if (codeScore >= 2) content = '[Content hidden in view mode]';
             }
             contentEl.innerText = content;
           }
           
-          const pageScroll = document.querySelector('.page-scroll');
-          if (pageScroll) pageScroll.scrollTop = 0;
-          const publicPage = document.getElementById('publicPage');
-          if (publicPage) publicPage.scrollTop = 0;
-          if (bookEl) bookEl.scrollTop = 0;
+          requestAnimationFrame(() => {
+            const pageScroll = document.querySelector('.page-scroll');
+            if (pageScroll) pageScroll.scrollTop = 0;
+          });
           
           const applyStyles = (el, styleStr) => {
             if (!el || !styleStr) return;
@@ -946,10 +972,16 @@
         }
 
         if (prevBtn) {
-          prevBtn.addEventListener('click', function() { navigate(-1); });
+          prevBtn.addEventListener('click', function(e) { 
+            e.preventDefault();
+            navigate(-1); 
+          });
         }
         if (nextBtn) {
-          nextBtn.addEventListener('click', function() { navigate(1); });
+          nextBtn.addEventListener('click', function(e) { 
+            e.preventDefault();
+            navigate(1); 
+          });
         }
         
         pageListItems.forEach(item => {
@@ -982,15 +1014,20 @@
                   image_attached: p.image_attached,
                   image_style: (function() {
                     if (illEl.style.display === 'none') return p.image_style;
-                    const style = window.getComputedStyle(illEl);
-                    const transform = style.transform;
                     let tx = 0, ty = 0;
-                    if (transform && transform !== 'none') {
-                      const matrix = transform.match(/matrix.*\((.+)\)/);
-                      if (matrix) {
-                        const values = matrix[1].split(', ');
-                        tx = parseFloat(values[4]);
-                        ty = parseFloat(values[5]);
+                    if (window.innerWidth <= 900) {
+                      tx = parseFloat(illEl.style.marginLeft) || 0;
+                      ty = parseFloat(illEl.style.marginTop) || 0;
+                    } else {
+                      const style = window.getComputedStyle(illEl);
+                      const transform = style.transform;
+                      if (transform && transform !== 'none') {
+                        const matrix = transform.match(/matrix.*\((.+)\)/);
+                        if (matrix) {
+                          const values = matrix[1].split(', ');
+                          tx = parseFloat(values[4]);
+                          ty = parseFloat(values[5]);
+                        }
                       }
                     }
                     return JSON.stringify({
