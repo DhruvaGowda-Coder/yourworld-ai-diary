@@ -829,7 +829,8 @@
           
           requestAnimationFrame(() => {
             const pageScroll = document.querySelector('.page-scroll');
-            if (pageScroll) pageScroll.scrollTop = 0;
+            const isMobile = window.innerWidth <= 900;
+            if (pageScroll && !isMobile) pageScroll.scrollTop = 0;
           });
           
           const applyStyles = (el, styleStr) => {

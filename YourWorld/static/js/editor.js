@@ -632,13 +632,16 @@ if (workspace) {
 
     const activeItem = entryList.querySelector('.entry-item.active');
     if (activeItem && options.scroll !== false) {
-      const container = entryList;
-      const itemTop = activeItem.offsetTop;
-      const itemBottom = itemTop + activeItem.offsetHeight;
-      const scrollTop = container.scrollTop;
-      const scrollBottom = scrollTop + container.clientHeight;
-      if (itemTop < scrollTop || itemBottom > scrollBottom) {
-        activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const isMobile = window.innerWidth <= 900;
+      if (!isMobile) {
+        const container = entryList;
+        const itemTop = activeItem.offsetTop;
+        const itemBottom = itemTop + activeItem.offsetHeight;
+        const scrollTop = container.scrollTop;
+        const scrollBottom = scrollTop + container.clientHeight;
+        if (itemTop < scrollTop || itemBottom > scrollBottom) {
+          activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
       }
     }
   };
@@ -817,6 +820,10 @@ if (workspace) {
           saveStatus.style.transition = 'color 0.3s, transform 0.3s';
           saveStatus.style.color = 'var(--theme-accent, #5cb85c)';
           saveStatus.style.transform = 'scale(1.05)';
+          requestAnimationFrame(() => {
+            const pageScroll = document.querySelector('.page-scroll');
+            if (pageScroll && window.innerWidth > 900) pageScroll.scrollTop = 0;
+          });
           setTimeout(() => { 
             saveStatus.style.color = ''; 
             saveStatus.style.transform = ''; 
