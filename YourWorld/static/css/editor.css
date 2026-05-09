@@ -1433,7 +1433,12 @@ textarea.page-content {
   .page-content,
   #publicTitle,
   #publicContent {
-    padding: 0 12px !important;
+    padding-left: 12px !important;
+    padding-right: 6px !important;
+  }
+
+  .page-scroll {
+    padding-right: 0 !important;
   }
 
   /* Webkit Scrollbar Styling for Mobile Visibility */
