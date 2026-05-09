@@ -304,7 +304,7 @@
     filter: brightness(1.1);
     transform: scale(1.05) !important;
     box-shadow: 0 15px 45px rgba(0,0,0,0.4) !important;
-    transition: transform 0.1s ease !important;
+    transition: none !important;
   }
 
   /* Only block touch scroll when edit mode is active */
@@ -825,19 +825,16 @@
         function applyImageStyle(el, imgState) {
           if (!el || !imgState) return;
           const isMobile = window.innerWidth <= 900;
-          if (isMobile) {
-            el.style.position = 'relative';
-            el.style.inset = 'auto';
-            el.style.width = (imgState.width || 250) + 'px';
-            el.style.maxWidth = '100%';
-            el.style.height = imgState.height ? (imgState.height + 'px') : 'auto';
-            el.style.transform = `translate(${imgState.x || 0}px, ${imgState.y || 0}px)`;
-            return;
-          }
+          
+          // Force absolute positioning for consistent drag math on all devices
           el.style.position = 'absolute';
           el.style.width = (imgState.width || 250) + 'px';
           el.style.height = imgState.height ? (imgState.height + 'px') : 'auto';
           el.style.transform = `translate(${imgState.x || 0}px, ${imgState.y || 0}px)`;
+          
+          if (isMobile) {
+            el.style.maxWidth = '100%';
+          }
         }
 
         function render() {
