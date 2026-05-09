@@ -1440,6 +1440,7 @@ button:active:not(:disabled) {
     z-index: 20;
     overflow: hidden !important;
     border-radius: 16px !important;
+    order: -1 !important;
   }
 
   .page-illustration img {
@@ -1469,7 +1470,7 @@ button:active:not(:disabled) {
     max-width: 100% !important;
   }
 
-  #resizeHandle {
+  #resizeHandle, #publicResizeHandle {
     display: flex !important;
     width: 44px !important;
     height: 44px !important;
@@ -1481,10 +1482,21 @@ button:active:not(:disabled) {
     align-items: center !important;
     justify-content: center !important;
     cursor: nwse-resize !important;
+    pointer-events: auto !important;
   }
 
-  .page-illustration {
-    cursor: default !important;
+  .public-story[data-can-edit="true"] .page-illustration {
+    pointer-events: auto !important;
+    cursor: grab !important;
+  }
+  .public-story[data-can-edit="true"] .resize-handle,
+  .public-story[data-can-edit="true"] #publicResizeHandle {
+    pointer-events: auto !important;
+    display: flex !important;
+    width: 44px !important;
+    height: 44px !important;
+    bottom: 6px !important;
+    right: 6px !important;
   }
 }
 

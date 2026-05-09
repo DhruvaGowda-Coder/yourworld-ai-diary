@@ -487,6 +487,12 @@ if (workspace) {
   const updatePageIllustration = () => {
     if (!pageIllustration || !pageIllustrationImg) return;
     if (currentImageUrl && imageAttached) {
+      const pageScroll = document.querySelector('.page-scroll');
+      const illEl = document.getElementById('pageIllustration');
+      const contentEl = document.querySelector('.page-content');
+      if (pageScroll && illEl && contentEl) {
+        pageScroll.insertBefore(illEl, contentEl);
+      }
       pageIllustrationImg.src = currentImageUrl;
       pageIllustration.style.display = 'block';
       applyImageStyle();
