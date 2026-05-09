@@ -1283,6 +1283,8 @@ if (workspace) {
         if (dx > 20 || dy > 20) {
           isTouchActive = false;
           clearTimeout(touchTimer);
+          window.removeEventListener('touchmove', handleMove);
+          window.removeEventListener('touchend', handleEnd);
         }
       }
       if (!isDragging && !isResizing) return;
@@ -1319,11 +1321,11 @@ if (workspace) {
         document.documentElement.style.overflow = '';
         el.style.cursor = 'grab';
         el.classList.remove('is-dragging');
-        window.removeEventListener('mousemove', handleMove);
-        window.removeEventListener('touchmove', handleMove);
-        window.removeEventListener('mouseup', handleEnd);
-        window.removeEventListener('touchend', handleEnd);
       }
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchend', handleEnd);
     };
 
     el.addEventListener('mousedown', (e) => {
@@ -1347,13 +1349,15 @@ if (workspace) {
       startTX = currentImages[index].x || 0;
       startTY = currentImages[index].y || 0;
       isTouchActive = true;
+      
+      window.addEventListener('touchmove', handleMove, { passive: false });
+      window.addEventListener('touchend', handleEnd);
+
       if (touchTimer) clearTimeout(touchTimer);
       touchTimer = setTimeout(() => {
         if (isTouchActive) {
           isDragging = true;
           el.classList.add('is-dragging');
-          window.addEventListener('touchmove', handleMove, { passive: false });
-          window.addEventListener('touchend', handleEnd);
         }
       }, 150);
     }, { passive: false });
