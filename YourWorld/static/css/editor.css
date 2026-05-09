@@ -1398,8 +1398,8 @@ textarea.page-content {
   .book, 
   .public-story .book {
     padding: 12px 10px !important;
-    min-height: auto !important;
-    max-height: none !important; /* Move scroll constraint here */
+    min-height: 300px !important;
+    max-height: 75vh !important; /* Restore scroll constraint */
     max-width: 100% !important;
     overflow-x: hidden !important; /* No horizontal scroll — image is clamped */
     overflow-y: auto !important;
@@ -1407,13 +1407,16 @@ textarea.page-content {
     -webkit-overflow-scrolling: touch;
     
     /* Force visible scrollbars on mobile */
-    scrollbar-width: auto !important;
+    scrollbar-width: thin !important;
     scrollbar-color: var(--theme-accent) rgba(0,0,0,0.1) !important;
     
     /* Ensure background texture is stable and covers the entire visible area */
     background-attachment: scroll !important;
     background-size: cover !important;
     background-repeat: no-repeat !important;
+
+    border: 8px solid var(--book-cover) !important;
+    border-radius: 16px !important;
 
     /* Move important texture layers from ::before to the main background 
        to prevent them from scrolling and 'breaking' */
@@ -1424,6 +1427,25 @@ textarea.page-content {
       radial-gradient(circle at 12% 82%, rgba(120, 76, 38, 0.12), transparent 30%),
       radial-gradient(circle at 84% 24%, rgba(126, 78, 40, 0.1), transparent 30%),
       linear-gradient(180deg, #f0e2c4 0%, #dfc69b 100%) !important;
+  }
+
+  /* Force visible scrollbars for book content on mobile */
+  .book::-webkit-scrollbar, 
+  .page-scroll::-webkit-scrollbar {
+    width: 8px !important;
+    height: 8px !important;
+    display: block !important;
+  }
+  .book::-webkit-scrollbar-track,
+  .page-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.08) !important;
+    border-radius: 10px !important;
+  }
+  .book::-webkit-scrollbar-thumb,
+  .page-scroll::-webkit-scrollbar-thumb {
+    background: var(--theme-accent, #8b5a2b) !important;
+    border-radius: 10px !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
   }
 
   .book::before,
@@ -1568,9 +1590,10 @@ textarea.page-content {
 
   .book {
     height: auto !important;
-    min-height: auto !important;
-    max-height: none !important;
+    min-height: 300px !important;
+    max-height: 75vh !important;
     margin: 10px 0 !important;
+    overflow-y: auto !important;
   }
 
   .page,
@@ -1588,12 +1611,13 @@ textarea.page-content {
   .public-content,
   .page-scroll {
     max-width: 100% !important;
-    overflow-x: visible !important; 
-    overflow-y: visible !important;
+    overflow-x: hidden !important; 
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
     display: block !important;
-    height: auto !important;
+    height: 100% !important;
     min-height: 0 !important;
-    max-height: none !important;
+    max-height: 100% !important;
   }
 
   .page-scroll {
