@@ -1429,6 +1429,13 @@ textarea.page-content {
     display: none !important; /* Prevents the absolute positioned texture from scrolling away */
   }
 
+  .page-title,
+  .page-content,
+  #publicTitle,
+  #publicContent {
+    padding: 0 12px !important;
+  }
+
   /* Webkit Scrollbar Styling for Mobile Visibility */
   .book::-webkit-scrollbar, 
   .public-story .book::-webkit-scrollbar,
