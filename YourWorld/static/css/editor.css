@@ -733,7 +733,7 @@ textarea.page-content {
   min-height: 560px !important;
   field-sizing: content !important;
   overflow: hidden !important; /* page-scroll handles scrolling */
-  padding-bottom: 50px !important;
+  padding-bottom: 20px !important;
   resize: none !important;
   display: block !important;
   max-height: none !important; /* Let it grow, page-scroll clips */
@@ -777,7 +777,7 @@ textarea.page-content {
   overflow-y: auto !important;
   overflow-x: hidden !important;
   contain: paint layout;
-  padding: 0 30px 50px 0 !important;
+  padding: 0 30px 20px 0 !important;
   margin: 12px 0 !important;
   display: block !important; /* Back to block for pixel-perfect height stability */
   border-radius: 14px;
@@ -1783,7 +1783,7 @@ textarea.page-content {
   white-space: pre-wrap;
   line-height: 1.7;
   font-size: 1.05rem;
-  padding-bottom: 50px;
+  padding-bottom: 20px;
 }
 
 .public-controls {
