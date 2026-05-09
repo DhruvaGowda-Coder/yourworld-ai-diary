@@ -1621,8 +1621,14 @@ textarea.page-content {
     position: absolute !important;
     pointer-events: auto !important;
     z-index: 10;
-    overflow: hidden !important;
+    overflow: visible !important; /* Don't clip the delete button */
     border-radius: 16px !important;
+    touch-action: none; /* Prevent browser gestures during drag */
+  }
+
+  .page-illustration.is-dragging {
+    opacity: 0.85;
+    z-index: 100 !important;
   }
 
   .page-illustration img {
@@ -1630,6 +1636,18 @@ textarea.page-content {
     height: auto !important;
     object-fit: contain !important;
     display: block;
+    border-radius: 16px;
+  }
+
+  /* Bigger delete button for mobile touch targets */
+  .page-illustration .delete-ill-btn {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 22px !important;
+    top: -8px !important;
+    right: -8px !important;
+    z-index: 50 !important;
+    pointer-events: auto !important;
   }
 
   .public-controls {
