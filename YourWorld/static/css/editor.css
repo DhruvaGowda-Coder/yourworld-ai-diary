@@ -1403,11 +1403,9 @@ textarea.page-content {
     max-height: 75vh !important;
     max-width: 100% !important;
     overflow: hidden !important;
-    contain: paint layout !important;
+    contain: layout !important; /* Removed paint to avoid clipping scrollbars */
     
-    /* Force visible scrollbars on mobile */
-    scrollbar-width: auto !important;
-    scrollbar-color: var(--theme-accent) rgba(0,0,0,0.1) !important;
+    /* These will be moved to .page-scroll */
     
     /* Ensure background texture is stable and covers the entire visible area */
     background-attachment: scroll !important;
@@ -1571,7 +1569,7 @@ textarea.page-content {
     max-height: 75vh !important;
     margin: 10px 0 !important;
     overflow: hidden !important;
-    contain: paint layout !important;
+    contain: layout !important; /* Removed paint to avoid clipping scrollbars */
   }
 
   .page,
@@ -1592,6 +1590,8 @@ textarea.page-content {
     overflow-x: hidden !important; 
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--theme-accent, #8b5a2b) rgba(0,0,0,0.1) !important;
     display: block !important;
     height: 100% !important;
     min-height: 0 !important;
