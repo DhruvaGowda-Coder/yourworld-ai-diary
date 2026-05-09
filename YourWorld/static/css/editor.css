@@ -1337,7 +1337,7 @@ button:active:not(:disabled) {
 }
 
 /* Mobile responsive illustration - Restores original responsive text while allowing image overflow via bottom scroll */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .book, 
   .public-story .book {
     padding: 12px 10px !important;
@@ -1433,7 +1433,6 @@ button:active:not(:disabled) {
     position: relative !important;
     inset: auto !important;
     transform: none !important;
-    width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
     margin: 16px 0 !important;
@@ -1571,14 +1570,7 @@ button:active:not(:disabled) {
   scroll-margin-top: 96px;
 }
 
-.public-page {
-  position: relative;
-  min-height: 62vh;
-  max-height: 62vh;
-  overflow-y: auto;
-  padding: 8px 14px 8px 4px;
-  scrollbar-width: thin;
-}
+
 
 .public-title {
   font-size: 1.8rem;

@@ -104,8 +104,9 @@
     color: var(--ink);
     border-radius: 22px;
     padding: 34px !important;
-    min-height: 400px !important;
-    max-height: 85vh !important;
+    height: min(85vh, 780px) !important;
+    min-height: unset !important;
+    max-height: none !important;
     border: 12px solid var(--book-cover);
     box-shadow:
       0 28px 80px var(--shadow),
@@ -513,7 +514,7 @@
       <div class="book" id="publicBook">
         <div class="page public-page" id="publicPage" style="display: flex; flex-direction: column; position: relative;">
           <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none;" value="{{ pages[0].title if pages else 'Untitled' }}" />
-          <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: flex !important; flex-direction: column;">
+          <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
             <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;"></div>
           </div>
           <div class="page-illustration" id="publicIllustration" style="display: none;">
@@ -867,40 +868,38 @@
           try {
             const s = styleStr ? JSON.parse(styleStr) : { x: 0, y: 0, width: 250, height: null };
             
-            // Get the page container width for clamping
-            const page = document.getElementById('publicPage');
-            const pageW = page ? page.offsetWidth : 500;
-            
-            el.style.position = 'absolute';
-            el.style.left = '20px';
-            el.style.top = '60px';
-            
-            // Clamp width to fit within the page on mobile/small screens
-            let rawWidth = s.width || 250;
-            const maxAllowedWidth = Math.max(80, pageW - 40);
-            // On mobile, additionally cap at 65% of page width for better readability
-            const capWidth = isMobile ? Math.min(maxAllowedWidth, Math.floor(pageW * 0.65)) : maxAllowedWidth;
-            const clampedWidth = Math.min(rawWidth, capWidth);
-            el.style.width = clampedWidth + 'px';
-            el.style.maxWidth = 'calc(100% - 40px)';
-            
-            // Clamp x offset so the image stays within the page
-            const rawX = s.x || 0;
-            // Compute actual available width after the image is placed
-            const availableX = pageW - clampedWidth;
-            // Clamp x between 0 and availableX (never let image exceed page right edge)
-            const clampedX = Math.max(0, Math.min(rawX, Math.max(0, availableX)));
-            
-            // Clamp y so image stays within visible page scroll area
-            const pageScrollEl = document.querySelector('.page-scroll');
-            const scrollH = pageScrollEl ? pageScrollEl.clientHeight : 520;
-            // top: 60px baseline + y offset; clamp so image top never exceeds scrollable height - some margin
-            const rawY = s.y || 0;
-            const clampedY = Math.max(-60, Math.min(rawY, Math.max(0, scrollH - 80)));
-            el.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
-            
-            if (s.height) el.style.height = `${s.height}px`;
-            else el.style.height = 'auto';
+            requestAnimationFrame(() => {
+              // Get the page container width for clamping
+              const page = document.querySelector('.page-scroll') || document.getElementById('publicPage');
+              const pageW = page ? page.clientWidth : 500;
+              
+              // Clamp width to fit within the page on mobile/small screens
+              let rawWidth = s.width || 250;
+              const maxAllowedWidth = Math.max(80, pageW - 40);
+              // On mobile, additionally cap at 65% of page width for better readability
+              const capWidth = isMobile ? Math.min(maxAllowedWidth, Math.floor(pageW * 0.65)) : maxAllowedWidth;
+              const clampedWidth = Math.min(rawWidth, capWidth);
+              el.style.width = clampedWidth + 'px';
+              el.style.maxWidth = 'calc(100% - 40px)';
+              
+              // Clamp x offset so the image stays within the page
+              const rawX = s.x || 0;
+              // Compute actual available width after the image is placed
+              const availableX = pageW - clampedWidth;
+              // Clamp x between 0 and availableX (never let image exceed page right edge)
+              const clampedX = Math.max(0, Math.min(rawX, Math.max(0, availableX)));
+              
+              // Clamp y so image stays within visible page scroll area
+              const pageScrollEl = document.querySelector('.page-scroll');
+              const scrollH = pageScrollEl ? pageScrollEl.clientHeight : 520;
+              // top: 60px baseline + y offset; clamp so image top never exceeds scrollable height - some margin
+              const rawY = s.y || 0;
+              const clampedY = Math.max(-60, Math.min(rawY, Math.max(0, scrollH - 80)));
+              el.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+              
+              if (s.height) el.style.height = `${s.height}px`;
+              else el.style.height = 'auto';
+            });
             
           } catch(e) {
             el.style.position = 'absolute';

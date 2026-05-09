@@ -465,9 +465,21 @@ if (workspace) {
     if (!pageIllustration) return;
     const isMobile = window.innerWidth <= 900;
     if (isMobile) {
-      // On mobile: image is inline, no absolute positioning
-      pageIllustration.style.width = '100%';
-      pageIllustration.style.height = 'auto';
+      // On mobile: image is inline, but respects resizing, use margins for dragging
+      if (imageStyleState.width) {
+        pageIllustration.style.width = `${imageStyleState.width}px`;
+      } else {
+        pageIllustration.style.width = '100%';
+      }
+      if (imageStyleState.height) {
+        pageIllustration.style.height = `${imageStyleState.height}px`;
+      } else {
+        pageIllustration.style.height = 'auto';
+      }
+      
+      if (imageStyleState.y) pageIllustration.style.marginTop = `${imageStyleState.y}px`;
+      if (imageStyleState.x) pageIllustration.style.marginLeft = `${imageStyleState.x}px`;
+      
       pageIllustration.style.transform = 'none';
       return;
     }
@@ -1460,8 +1472,7 @@ if (workspace) {
     pageIllustration.addEventListener('touchstart', (e) => {
       // Check resize/delete FIRST
       if (e.target.id === 'resizeHandle' || e.target.id === 'deleteIllustrationBtn') return;
-      // Then block drag on mobile
-      if (window.innerWidth <= 900) return;
+      
       const touch = e.touches[0];
       startX = touch.clientX;
       startY = touch.clientY;
@@ -1488,8 +1499,8 @@ if (workspace) {
         isResizing = true;
         startX = e.clientX;
         startY = e.clientY;
-        startW = pageIllustration.offsetWidth;
-        startH = pageIllustration.offsetHeight;
+        startW = imageStyleState.width || pageIllustration.offsetWidth;
+        startH = imageStyleState.height || pageIllustration.offsetHeight;
         e.preventDefault();
         e.stopPropagation();
       });
@@ -1499,12 +1510,13 @@ if (workspace) {
         isResizing = true;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
-        startW = pageIllustration.offsetWidth;
-        startH = pageIllustration.offsetHeight;
+        startW = imageStyleState.width || pageIllustration.offsetWidth;
+        startH = imageStyleState.height || pageIllustration.offsetHeight;
         document.documentElement.style.overflow = 'hidden';
         document.documentElement.style.position = 'fixed';
         document.documentElement.style.width = '100%';
         e.stopPropagation();
+        e.preventDefault();
       }, { passive: false });
     }
 

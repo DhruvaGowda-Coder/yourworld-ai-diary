@@ -179,6 +179,19 @@ def api_entries():
 def api_entry(entry_id):
     row = firebase_db.get_entry(session["user_id"], entry_id)
     if not row: return jsonify({"error": "Not found"}), 404
+    share_code = row.get("share_code")
+    share_type = row.get("share_type")
+    can_edit = row.get("can_edit")
+
+    if row.get("type") == "story" and not share_code:
+        all_stories = firebase_db.get_story_entries_for_user(session["user_id"])
+        for s in all_stories:
+            if s.get("share_code"):
+                share_code = s.get("share_code")
+                share_type = s.get("share_type")
+                can_edit = s.get("can_edit")
+                break
+
     return jsonify({
         "id": row["id"], 
         "title": unescape(row.get("title", "")), 
@@ -190,9 +203,9 @@ def api_entry(entry_id):
         "image_prompt": row.get("image_prompt"),
         "title_style": row.get("title_style"),
         "content_style": row.get("content_style"),
-        "share_code": row.get("share_code"), 
-        "share_type": row.get("share_type"), 
-        "can_edit": row.get("can_edit"),
+        "share_code": share_code, 
+        "share_type": share_type, 
+        "can_edit": can_edit,
         "created_at": row.get("created_at"), 
         "updated_at": row.get("updated_at"),
     })
@@ -265,9 +278,19 @@ def api_entry_share_delete(entry_id):
     entry = firebase_db.get_entry(session["user_id"], entry_id)
     if not entry:
         return jsonify({"error": "Not found"}), 404
-    if firebase_db.update_share_code(session["user_id"], entry_id, None, None, False):
-        return jsonify({"deleted": True})
-    return jsonify({"error": "Update failed"}), 500
+        
+    if entry.get("type") == "story":
+        all_stories = firebase_db.get_story_entries_for_user(session["user_id"])
+        deleted = False
+        for s in all_stories:
+            if s.get("share_code"):
+                if firebase_db.update_share_code(session["user_id"], s["id"], None, None, False):
+                    deleted = True
+        return jsonify({"deleted": True}) if deleted else jsonify({"error": "No active share code found"}), 404
+    else:
+        if firebase_db.update_share_code(session["user_id"], entry_id, None, None, False):
+            return jsonify({"deleted": True})
+        return jsonify({"error": "Update failed"}), 500
 
 @api_bp.route("/api/entry/save", methods=["POST"])
 @ensure_session
