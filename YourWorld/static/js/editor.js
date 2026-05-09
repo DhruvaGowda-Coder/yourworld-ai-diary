@@ -576,7 +576,7 @@ if (workspace) {
     if (contentInput) contentInput.focus();
   };
 
-  const renderEntries = () => {
+  const renderEntries = (options = {}) => {
     if (!entryList) return;
     entryList.innerHTML = '';
     entries.forEach((entry, index) => {
@@ -616,7 +616,7 @@ if (workspace) {
     }
 
     const activeItem = entryList.querySelector('.entry-item.active');
-    if (activeItem) {
+    if (activeItem && options.scroll !== false) {
       const container = entryList;
       const itemTop = activeItem.offsetTop;
       const itemBottom = itemTop + activeItem.offsetHeight;
@@ -688,7 +688,7 @@ if (workspace) {
     animateTurn(direction, async () => {
       currentIndex = index;
       lastActiveIndex = index;
-      renderEntries();
+      renderEntries({ scroll: true });
       await loadEntry(entries[index].id);
     });
   };
@@ -720,7 +720,7 @@ if (workspace) {
     dirty = false;
     _lastSavedHash = _computeContentHash();
     setStatus('New page');
-    renderEntries();
+    renderEntries({ scroll: true });
     updatePageCount();
     updateDeleteButton();
   };
@@ -809,12 +809,12 @@ if (workspace) {
           entries[existingIndex].updated_at = data.updated_at;
           currentIndex = existingIndex;
           lastActiveIndex = existingIndex;
-          if (titleChanged) renderEntries(); // Only re-render if title changed
+          if (titleChanged) renderEntries({ scroll: false }); // Only re-render if title changed, but don't jump scroll during save
         } else {
           entries.push({ id: currentEntryId, title: data.title, updated_at: data.updated_at });
           currentIndex = entries.length - 1;
           lastActiveIndex = currentIndex;
-          renderEntries();
+          renderEntries({ scroll: true });
         }
         updatePageCount();
         updateDeleteButton();
@@ -850,7 +850,7 @@ if (workspace) {
     _hasMoreEntries = data.has_more || false;
     if (entries.length > 0) {
       currentIndex = entries.length - 1;
-      renderEntries();
+      renderEntries({ scroll: true });
       await loadEntry(entries[currentIndex].id);
     } else {
       createBlank();
@@ -869,7 +869,7 @@ if (workspace) {
       const newEntries = data.entries || [];
       _hasMoreEntries = data.has_more || false;
       entries = entries.concat(newEntries);
-      renderEntries();
+      renderEntries({ scroll: false });
     } finally {
       _loadingMore = false;
     }
@@ -909,7 +909,7 @@ if (workspace) {
         if (entries.length > 0) navigateToIndex(Math.min(indexToRemove, entries.length - 1));
         else createBlank();
         setStatus('Deleted');
-        renderEntries();
+        renderEntries({ scroll: true });
       } catch (err) {
         console.error('Delete failed:', err);
         setStatus('Delete failed');

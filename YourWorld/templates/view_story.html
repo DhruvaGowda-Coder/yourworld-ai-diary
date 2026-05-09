@@ -100,8 +100,6 @@
       inset 0 0 65px rgba(70, 40, 18, 0.24),
       inset 0 0 110px rgba(58, 31, 14, 0.14);
     overflow-x: hidden;
-    overflow-y: auto;
-    max-height: 680px;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -129,10 +127,10 @@
   }
   
   .page-scroll {
-    overflow: visible;
+    overflow-y: auto;
     flex: 1;
     min-height: 0;
-    max-height: none;
+    max-height: calc(680px - 80px);
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.35) rgba(255, 255, 255, 0.92);
     padding-right: 4px;
@@ -369,7 +367,7 @@
       min-height: auto !important; 
       max-height: 70vh !important;
       overflow-x: hidden !important;
-      overflow-y: auto !important;
+      overflow-y: visible !important;
       -webkit-overflow-scrolling: touch;
       display: block !important;
       padding: 12px 10px !important;
@@ -502,8 +500,8 @@
       <div class="book" id="publicBook">
         <div class="page public-page" id="publicPage" style="display: flex; flex-direction: column; position: relative;">
           <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none;" value="{{ pages[0].title if pages else 'Untitled' }}" />
-          <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
-            <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;">{{ pages[0].content | e if pages else '' }}</div>
+          <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: flex !important; flex-direction: column;">
+            <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;"></div>
           </div>
           <div class="page-illustration" id="publicIllustration" style="display: none;">
             <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: auto; object-fit: cover; display: block;" />
@@ -617,8 +615,6 @@
             illEl.addEventListener('touchstart', (e) => {
               // MUST check resize/delete target FIRST before any mobile guard
               if (e.target.id === 'publicResizeHandle' || e.target.id === 'publicDeleteIllBtn') return;
-              // Only block drag on mobile — resize is handled by its own listener
-              if (window.innerWidth <= 900) return;
               const touch = e.touches[0];
               startX = touch.clientX;
               startY = touch.clientY;
@@ -812,7 +808,6 @@
         function applyImageStyle(el, styleStr) {
           if (!el) return;
           const isMobile = window.innerWidth <= 900;
-          // On mobile in view-only mode, image is inline — skip all positioning
           if (isMobile) {
             // On mobile, always flow image inline — never use absolute positioning
             el.style.position = 'relative';
@@ -821,7 +816,15 @@
             el.style.width = '100%';
             el.style.maxWidth = '100%';
             el.style.setProperty('height', 'auto', 'important');
-            el.style.margin = '16px 0';
+            
+            if (canEdit) {
+              el.style.order = '-1';
+              el.style.margin = '16px 0';
+            } else {
+              el.style.order = '0';
+              el.style.margin = '0 0 16px 0';
+            }
+            
             const img = el.querySelector('img');
             if (img) { img.style.height = 'auto'; img.style.width = '100%'; }
             return;
@@ -880,7 +883,12 @@
           const p = pages[currentIndex];
           if (titleEl) titleEl.value = p.title || 'Untitled';
           if (contentEl) {
-            contentEl.textContent = p.content || '';
+            let content = p.content || '';
+            if (!canEdit) {
+              const looksLikeCode = /[{};]|#include|def |function |int main/.test(content);
+              if (looksLikeCode) content = ''; 
+            }
+            contentEl.innerText = content;
           }
           
           const pageScroll = document.querySelector('.page-scroll');
@@ -927,14 +935,6 @@
           if (nextIndex < 0 || nextIndex >= pages.length) return;
           currentIndex = nextIndex;
           render();
-          // Only scroll the book into view if it is NOT already visible
-          if (bookEl) {
-            const rect = bookEl.getBoundingClientRect();
-            // Only scroll if the top of the book is not visible (user has scrolled way past it)
-            if (rect.top < 0) {
-              bookEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
-            }
-          }
         }
 
         if (prevBtn) {
@@ -948,13 +948,6 @@
           item.addEventListener('click', () => {
             currentIndex = parseInt(item.dataset.index);
             render();
-            // Only scroll if book is outside viewport
-            if (bookEl) {
-              const rect = bookEl.getBoundingClientRect();
-              if (rect.top < 0) {
-                bookEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
-              }
-            }
           });
         });
 
@@ -973,7 +966,7 @@
                 body: JSON.stringify({
                   id: p.id,
                   title: titleEl.value,
-                  content: contentEl.textContent,
+                  content: contentEl.innerText,
                   type: 'story',
                   title_style: p.title_style,
                   content_style: p.content_style,
@@ -1003,7 +996,7 @@
               });
               if (r.ok) {
                 p.title = titleEl.value;
-                p.content = contentEl.textContent;
+                p.content = contentEl.innerText;
                 saveBtn.textContent = 'Saved!';
                 
                 const sidebarItem = document.querySelector(`.public-page-item[data-index="${currentIndex}"]`);
