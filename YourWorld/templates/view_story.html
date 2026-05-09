@@ -30,7 +30,74 @@
     background: var(--theme-accent, rgba(255, 255, 255, 0.4));
     border-radius: 10px;
   }
-  
+
+  /* Multi-Image Illustration System */
+  .page-illustrations {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(100% - 24px); /* Leave room for scrollbar interaction */
+    height: 100%;
+    pointer-events: none;
+    z-index: 20 !important; 
+  }
+  .page-illustration {
+    position: absolute;
+    pointer-events: auto;
+    cursor: default;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .page-illustration img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+  }
+  .resize-handle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 24px;
+    height: 24px;
+    background: rgba(0,0,0,0.5);
+    cursor: nwse-resize;
+    z-index: 10;
+    border-top-left-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .resize-handle::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid white;
+    border-bottom: 2px solid white;
+  }
+  .delete-ill-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    z-index: 11;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s;
+  }
+
   .public-page-list::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
@@ -40,21 +107,23 @@
   .workspace.public-story {
     display: flex !important;
     flex-direction: column !important;
-    gap: 16px !important;
+    gap: 24px !important;
     width: 100% !important;
-    max-width: none !important;
+    max-width: 1400px !important;
+    padding: 0 var(--gutter) !important;
+    margin: 0 auto !important;
+    align-items: stretch !important; /* Force children to take full width */
   }
 
   .public-sidebar {
     width: 100% !important;
-    min-width: unset !important;
-    max-width: none !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
     background: var(--theme-panel-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 18px;
-    padding: 18px;
+    padding: 16px 20px !important;
     border: 1px solid var(--theme-panel-border);
     height: fit-content;
     box-shadow: 0 8px 32px rgba(0,0,0,0.2);
@@ -64,31 +133,52 @@
     display: flex !important;
     flex-direction: row !important;
     overflow-x: auto !important;
-    gap: 8px !important;
-    max-height: none !important;
-    padding-bottom: 8px !important;
+    gap: 12px !important;
+    padding: 10px 0 !important;
     scrollbar-width: thin !important;
+    scrollbar-color: var(--theme-accent) rgba(255, 255, 255, 0.05) !important;
     scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .public-page-item {
     flex-shrink: 0 !important;
     scroll-snap-align: start !important;
-    min-width: 120px !important;
-    max-width: 180px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    min-width: 100px !important;
+    padding: 8px 16px !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 0.9rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-align: center !important;
+  }
+
+  .public-page-item:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+  }
+
+  .public-page-item.is-active {
+    background: var(--theme-accent-soft) !important;
+    border-color: var(--theme-accent) !important;
+    color: var(--theme-accent) !important;
+    font-weight: 600 !important;
   }
 
   .public-page {
+    width: 100% !important;
     height: 100%;
     min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
-    padding-bottom: 20px !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    transform: none !important; /* Disable 3D transforms to fix scrollbar hit-area */
   }
   
   .book, .public-story .book {
@@ -103,10 +193,10 @@
       linear-gradient(180deg, #f0e2c4 0%, #e8d4ad 46%, #dfc69b 100%);
     color: var(--ink);
     border-radius: 22px;
-    padding: 34px !important;
-    height: min(85vh, 780px) !important;
-    min-height: unset !important;
-    max-height: none !important;
+    padding: 0 !important;
+    height: 700px !important;
+    min-height: 700px !important;
+    max-height: 700px !important;
     border: 12px solid var(--book-cover);
     box-shadow:
       0 28px 80px var(--shadow),
@@ -114,10 +204,15 @@
       inset 0 0 65px rgba(70, 40, 18, 0.24),
       inset 0 0 110px rgba(58, 31, 14, 0.14);
     overflow: hidden !important;
-    width: 100%;
+    width: 100% !important;
+    min-width: 100% !important;
     display: flex;
     flex-direction: column;
     margin: 0;
+    transform: none !important;
+    perspective: none !important;
+    transform-style: flat !important;
+    transition: border-color 0.35s ease;
   }
 
   .book::before {
@@ -136,19 +231,24 @@
       inset 0 0 42px rgba(108, 64, 30, 0.26),
       inset 0 0 16px rgba(60, 34, 16, 0.18);
     pointer-events: none;
-    z-index: -1;
-    opacity: 0.9;
+    z-index: 0; /* Keep it above the book background but below content */
+    opacity: 0.95;
   }
   
   .page-scroll {
     overflow-y: auto !important;
-    flex: 1 !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.35) rgba(255, 255, 255, 0.92);
-    padding-right: 4px;
-    scrollbar-gutter: stable;
+    overflow-x: hidden !important;
+    height: 660px !important;
+    max-height: 660px !important;
+    min-height: 660px !important;
+    display: block !important;
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+    z-index: 100 !important; /* Lifted above illustrations layer (z-index 20) */
+    position: relative;
+    background: transparent !important;
+    margin: 12px 0 !important;
+    border-radius: 14px;
+    pointer-events: auto !important;
   }
 
   /* Interaction cursor for editable stories */
@@ -160,22 +260,6 @@
     cursor: grabbing !important;
   }
 
-  .page-scroll::-webkit-scrollbar {
-    width: 12px;
-  }
-  .page-scroll::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.92);
-    border-radius: 999px;
-  }
-  .page-scroll::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.35);
-    border-radius: 999px;
-    border: 3px solid rgba(255, 255, 255, 0.92);
-    background-clip: content-box;
-  }
-  .page-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.45);
-  }
 
   #publicIllustration,
   .page-illustration {
@@ -464,30 +548,6 @@
   }
 </style>
 
-<!-- Shared code badge — always visible, outside the grid -->
-<div class="public-meta" style="
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  color: #fff;
-  text-align: center;
-  font-size: 0.95rem;
-  font-family: var(--ui-font);
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  margin-bottom: 16px;
-">
-  Shared code: <strong>{{ code }}</strong>
-  <span class="public-mode" style="margin-left: 10px; padding: 4px 10px; background: rgba(255,255,255,0.1); border-radius: 20px; font-size: 0.8rem;">
-    {% if can_edit %}Editable{% else %}View Only{% endif %}
-  </span>
-  {% if can_edit %}
-    <div class="public-edit-warning" style="margin-top: 4px; font-size: 0.82rem; opacity: 0.8;">Anyone with this code can save changes to this shared canvas.</div>
-  {% endif %}
-</div>
 
 <section class="workspace public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}">
   {% if not_found %}
@@ -498,8 +558,19 @@
     </div>
   {% else %}
     <aside class="entry-sidebar public-sidebar">
-      <div class="sidebar-header">
-        <h3 style="color: var(--theme-accent); font-family: var(--ui-font); font-size: 1.1rem;">Story Pages</h3>
+      <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px;">
+        <h3 style="color: var(--theme-accent); font-family: var(--ui-font); font-size: 1.1rem; margin: 0;">Story Pages</h3>
+        <span class="mode-badge" style="
+          font-size: 0.7rem; 
+          padding: 3px 10px; 
+          background: rgba(255,255,255,0.06); 
+          border-radius: 20px; 
+          color: rgba(255,255,255,0.5);
+          border: 1px solid rgba(255,255,255,0.08);
+          white-space: nowrap;
+        ">
+          {% if can_edit %}Editable{% else %}View Only{% endif %}
+        </span>
       </div>
       <div class="public-page-list" id="publicPageList">
         {% for p in pages %}
@@ -510,19 +581,15 @@
       </div>
     </aside>
 
-    <div class="book-area">
+    <div class="book-area" style="flex: 1 !important; min-width: 0;">
       <div class="book" id="publicBook">
         <div class="page public-page" id="publicPage" style="display: flex; flex-direction: column; position: relative;">
-          <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none;" value="{{ pages[0].title if pages else 'Untitled' }}" />
-          <div class="page-scroll" style="flex-grow: 1; position: relative; scrollbar-gutter: stable; display: block !important;">
-            <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 10px 40px 0;"></div>
-          </div>
-          <div class="page-illustration" id="publicIllustration" style="display: none;">
-            <img id="publicIllustrationImg" alt="Story illustration" style="width: 100%; height: auto; object-fit: cover; display: block;" />
-            {% if can_edit %}
-            <div class="resize-handle" id="publicResizeHandle"></div>
-            <button type="button" id="publicDeleteIllBtn" style="position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.5); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 31; backdrop-filter: blur(4px); transition: all 0.2s;">&times;</button>
-            {% endif %}
+          <div class="page-scroll" id="publicPageScroll" style="background: transparent !important; padding-top: 0 !important;">
+            <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none; margin-bottom: 0; width: 100%; padding: 34px 45px 10px 34px; box-sizing: border-box;" value="{{ pages[0].title if pages else 'Untitled' }}" />
+            <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 45px 80px 34px; box-sizing: border-box; overflow: visible !important; background: transparent !important;"></div>
+            <div class="page-illustrations" id="publicIllustrations">
+              <!-- Multiple illustrations will be injected here -->
+            </div>
           </div>
         </div>
       </div>
@@ -556,8 +623,7 @@
 
         const titleEl = document.getElementById('publicTitle');
         const contentEl = document.getElementById('publicContent');
-        const illEl = document.getElementById('publicIllustration');
-        const illImg = document.getElementById('publicIllustrationImg');
+        const illContainer = document.getElementById('publicIllustrations');
         const countEl = document.getElementById('publicPageCount');
         const prevBtn = document.getElementById('publicPrevBtn');
         const nextBtn = document.getElementById('publicNextBtn');
@@ -566,177 +632,25 @@
         const pageListItems = document.querySelectorAll('.public-page-item');
 
         if (canEdit) {
-          if (titleEl) titleEl.readOnly = false;
-          if (contentEl) contentEl.contentEditable = "true";
-          if (titleEl) titleEl.style.pointerEvents = 'auto';
-          if (contentEl) contentEl.style.pointerEvents = 'auto';
-          if (illEl) illEl.style.pointerEvents = 'auto';
-          
-          let touchMoveController = null;
-
-          // Safety reset for body overflow
-          document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-              document.body.style.overflow = '';
-              isDragging = false;
-              isResizing = false;
-              isTouchActive = false;
-              if (touchTimer) clearTimeout(touchTimer);
-            }
-          });
-          window.addEventListener('blur', () => {
-            document.body.style.overflow = '';
-            isDragging = false;
-            isResizing = false;
-          });
-          
-          // --- Implementation of Drag and Resize for View Mode ---
-          let isDragging = false;
-          let isResizing = false;
-          let startX, startY, startW, startH, startTX, startTY;
-          let currentX = 0, currentY = 0;
-
-          function getTransformXY(el) {
-            const style = window.getComputedStyle(el);
-            const matrix = new WebKitCSSMatrix(style.transform);
-            return { x: matrix.m41, y: matrix.m42 };
+          if (titleEl) {
+            titleEl.readOnly = false;
+            titleEl.style.pointerEvents = 'auto';
+            titleEl.style.cursor = 'text';
           }
-
-          if (illEl) {
-            illEl.addEventListener('mousedown', (e) => {
-              if (e.target.id === 'publicResizeHandle' || e.target.id === 'publicDeleteIllBtn') return;
-              isDragging = true;
-              startX = e.clientX;
-              startY = e.clientY;
-              const style = window.getComputedStyle(illEl);
-              const transform = style.transform;
-              if (transform && transform !== 'none') {
-                const matrix = transform.match(/matrix.*\((.+)\)/);
-                if (matrix) {
-                  const values = matrix[1].split(', ');
-                  startTX = parseFloat(values[4]);
-                  startTY = parseFloat(values[5]);
-                } else { startTX = 0; startTY = 0; }
-              } else { startTX = 0; startTY = 0; }
+          if (contentEl) {
+            contentEl.contentEditable = "true";
+            contentEl.style.pointerEvents = 'auto';
+            contentEl.style.cursor = 'text';
+            contentEl.style.minHeight = '500px'; // Makes the whole parchment clickable
+          }
+          if (illContainer) illContainer.style.pointerEvents = 'auto';
+          
+          function setupPublicInteractions(el, imgState) {
+            let isDragging = false;
+            let isResizing = false;
+            let startX, startY, startW, startH, startTX, startTY;
             
-              // On mobile, read margin instead of transform
-              if (window.innerWidth <= 900) {
-                startTX = parseFloat(illEl.style.marginLeft) || 0;
-                startTY = parseFloat(illEl.style.marginTop) || 0;
-              }
-            
-              illEl.style.cursor = 'grabbing';
-              e.preventDefault();
-            });
-
-            let touchTimer = null;
-            let isTouchActive = false;
-
-            // Touch support for dragging with hold-to-drag prevention
-            illEl.addEventListener('touchstart', (e) => {
-              e.preventDefault();
-              // MUST check resize/delete target FIRST before any mobile guard
-              if (e.target.id === 'publicResizeHandle' || e.target.id === 'publicDeleteIllBtn') return;
-              const touch = e.touches[0];
-              startX = touch.clientX;
-              startY = touch.clientY;
-              const style = window.getComputedStyle(illEl);
-              const transform = style.transform;
-              if (transform && transform !== 'none') {
-                const matrix = transform.match(/matrix.*\((.+)\)/);
-                if (matrix) {
-                  const values = matrix[1].split(', ');
-                  startTX = parseFloat(values[4]);
-                  startTY = parseFloat(values[5]);
-                } else { startTX = 0; startTY = 0; }
-              } else { startTX = 0; startTY = 0; }
-              
-              // On mobile, read margin instead of transform
-              if (window.innerWidth <= 900) {
-                startTX = parseFloat(illEl.style.marginLeft) || 0;
-                startTY = parseFloat(illEl.style.marginTop) || 0;
-              }
-
-              if (illImg && illImg.naturalWidth > 0) {
-                // Potential placeholder for "Full illustration view" UI logic if needed
-              }
-
-              document.body.style.overflow = 'hidden';
-
-              isTouchActive = true;
-              if (touchTimer) clearTimeout(touchTimer);
-              touchTimer = setTimeout(() => {
-                if (isTouchActive) {
-                  isDragging = true;
-                  illEl.classList.add('is-dragging');
-                  if (navigator.vibrate) navigator.vibrate(5);
-                  // Strict suppression of body scrolling
-                  document.body.style.overflow = 'hidden';
-
-                  if (touchMoveController) touchMoveController.abort();
-                  touchMoveController = new AbortController();
-                  window.addEventListener('touchmove', handleMove, { 
-                    passive: false, 
-                    signal: touchMoveController.signal 
-                  });
-                }
-              }, 200);
-            }, { passive: false });
-
-            const resizeH = document.getElementById('publicResizeHandle');
-            if (resizeH) {
-              resizeH.addEventListener('mousedown', (e) => {
-                isResizing = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                startW = illEl.offsetWidth;
-                startH = illEl.offsetHeight;
-                e.preventDefault();
-                e.stopPropagation();
-              });
-              // Touch support for resizing
-              resizeH.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                isResizing = true;
-                isTouchActive = false;
-                if (touchTimer) clearTimeout(touchTimer);
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-                startW = illEl.offsetWidth;
-                startH = illEl.offsetHeight;
-                document.body.style.overflow = 'hidden';
-                if (touchMoveController) touchMoveController.abort();
-                touchMoveController = new AbortController();
-                window.addEventListener('touchmove', handleMove, {
-                  passive: false,
-                  signal: touchMoveController.signal
-                });
-              }, { passive: false });
-            }
-
-            const delIllBtn = document.getElementById('publicDeleteIllBtn');
-            if (delIllBtn) {
-              delIllBtn.addEventListener('click', (e) => {
-                if (confirm('Remove this illustration?')) {
-                  const p = pages[currentIndex];
-                  p.image_attached = false;
-                  illEl.style.display = 'none';
-                }
-                e.stopPropagation();
-              });
-            }
-
             const handleMove = (e) => {
-              if (e.touches && !isDragging && isTouchActive) {
-                const dx = Math.abs(e.touches[0].clientX - startX);
-                const dy = Math.abs(e.touches[0].clientY - startY);
-                if (dx > 20 || dy > 20) { // Increased threshold to 20px for safer scrolling
-                  isTouchActive = false;
-                  clearTimeout(touchTimer);
-                }
-              }
-
               if (!isDragging && !isResizing) return;
               const clientX = e.touches ? e.touches[0].clientX : e.clientX;
               const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -744,74 +658,110 @@
               if (isDragging) {
                 const dx = clientX - startX;
                 const dy = clientY - startY;
-                currentX = startTX + dx;
-                currentY = startTY + dy;
+                const currentX = startTX + dx;
+                const currentY = startTY + dy;
                 
+                imgState.x = currentX;
+                imgState.y = currentY;
+                
+                el.style.transform = `translate(${currentX}px, ${currentY}px)`;
                 if (window.innerWidth <= 900) {
-                  // On mobile, image is in flow — use margins for visible movement
-                  illEl.style.marginLeft = Math.max(0, currentX) + 'px';
-                  illEl.style.marginTop = Math.max(0, currentY) + 'px';
-                } else {
-                  illEl.style.transform = `translate(${currentX}px, ${currentY}px)`;
+                    el.style.marginLeft = '0';
+                    el.style.marginTop = '0';
                 }
               } else if (isResizing) {
                 const dx = clientX - startX;
                 const dy = clientY - startY;
-                illEl.style.width = Math.max(80, startW + dx) + 'px';
-                illEl.style.height = Math.max(80, startH + dy) + 'px';
-                // No transform — works for both absolute (desktop) and relative (mobile)
+                imgState.width = Math.max(80, startW + dx);
+                imgState.height = Math.max(80, startH + dy);
+                el.style.width = imgState.width + 'px';
+                el.style.height = imgState.height + 'px';
               }
               if (e.cancelable && (isDragging || isResizing)) e.preventDefault();
             };
 
-            window.addEventListener('mousemove', handleMove);
-            window.addEventListener('touchmove', handleMove, { passive: false });
-
             const handleEnd = () => {
               isTouchActive = false;
               if (touchTimer) clearTimeout(touchTimer);
-              if (touchMoveController) {
-                touchMoveController.abort();
-                touchMoveController = null;
-              }
               if (isDragging || isResizing) {
                 isDragging = false;
                 isResizing = false;
-                document.body.style.overflow = ''; // Restore page scroll
-                document.documentElement.style.overflow = '';
-                document.documentElement.style.position = '';
-                document.documentElement.style.width = '';
-                if (illEl) {
-                  illEl.style.cursor = 'grab';
-                  illEl.classList.remove('is-dragging');
-                }
+                document.body.style.overflow = '';
+                el.style.touchAction = '';
+                el.style.cursor = 'grab';
+                el.classList.remove('is-dragging');
+                window.removeEventListener('mousemove', handleMove);
+                window.removeEventListener('mouseup', handleEnd);
+                window.removeEventListener('touchmove', handleMove);
+                window.removeEventListener('touchend', handleEnd);
               }
             };
 
-            window.addEventListener('mouseup', handleEnd);
-            window.addEventListener('touchend', handleEnd);
-            window.addEventListener('touchcancel', () => {
-              isTouchActive = false;
-              if (touchTimer) clearTimeout(touchTimer);
-              if (touchMoveController) {
-                touchMoveController.abort();
-                touchMoveController = null;
-              }
-              isDragging = false;
-              isResizing = false;
-              document.body.style.overflow = '';
-              document.documentElement.style.overflow = '';
-              document.documentElement.style.position = '';
-              document.documentElement.style.width = '';
-              if (illEl) {
-                illEl.style.cursor = 'grab';
-                illEl.classList.remove('is-dragging');
-              }
+            el.addEventListener('mousedown', (e) => {
+              if (e.target.classList.contains('resize-handle') || e.target.classList.contains('delete-ill-btn')) return;
+              isDragging = true;
+              startX = e.clientX;
+              startY = e.clientY;
+              startTX = imgState.x || 0;
+              startTY = imgState.y || 0;
+              el.style.cursor = 'grabbing';
+              window.addEventListener('mousemove', handleMove);
+              window.addEventListener('mouseup', handleEnd);
+              e.preventDefault();
             });
+
+            let touchTimer = null;
+            let isTouchActive = false;
+
+            el.addEventListener('touchstart', (e) => {
+              if (e.target.classList.contains('resize-handle') || e.target.classList.contains('delete-ill-btn')) return;
+              const touch = e.touches[0];
+              startX = touch.clientX;
+              startY = touch.clientY;
+              startTX = imgState.x || 0;
+              startTY = imgState.y || 0;
+              isTouchActive = true;
+              
+              if (touchTimer) clearTimeout(touchTimer);
+              touchTimer = setTimeout(() => {
+                if (isTouchActive) {
+                   isDragging = true;
+                   el.classList.add('is-dragging');
+                   el.style.touchAction = 'none';
+                   if (navigator.vibrate) navigator.vibrate(10); // Subtle haptic feedback
+                   window.addEventListener('touchmove', handleMove, { passive: false });
+                   window.addEventListener('touchend', handleEnd);
+                }
+              }, 200);
+            }, { passive: false });
+
+            const resizeH = el.querySelector('.resize-handle');
+            if (resizeH) {
+              resizeH.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startW = el.offsetWidth;
+                startH = el.offsetHeight;
+                window.addEventListener('mousemove', handleMove);
+                window.addEventListener('mouseup', handleEnd);
+                e.preventDefault(); e.stopPropagation();
+              });
+              resizeH.addEventListener('touchstart', (e) => {
+                isResizing = true;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                startW = el.offsetWidth;
+                startH = el.offsetHeight;
+                window.addEventListener('touchmove', handleMove, { passive: false });
+                window.addEventListener('touchend', handleEnd);
+                e.preventDefault(); e.stopPropagation();
+              }, { passive: false });
+            }
           }
         } else {
           if (titleEl) titleEl.style.pointerEvents = 'none';
-          if (illEl) illEl.style.pointerEvents = 'none';
+          if (illContainer) illContainer.style.pointerEvents = 'none';
           if (contentEl) {
             contentEl.style.pointerEvents = 'none';
             contentEl.contentEditable = "false";
@@ -835,80 +785,22 @@
           });
         }
 
-        function applyImageStyle(el, styleStr) {
-          if (!el) return;
+        function applyImageStyle(el, imgState) {
+          if (!el || !imgState) return;
           const isMobile = window.innerWidth <= 900;
           if (isMobile) {
             el.style.position = 'relative';
             el.style.inset = 'auto';
-            el.style.transform = 'none';
-            el.style.marginLeft = '0px';
-            el.style.marginTop = '0px';
-            
-            // Use saved width on mobile too, capped at 100%
-            try {
-              const s = styleStr ? JSON.parse(styleStr) : {};
-              const savedW = s.width || null;
-              if (savedW) {
-                el.style.width = Math.min(savedW, window.innerWidth - 40) + 'px';
-              } else {
-                el.style.width = '100%';
-              }
-            } catch(e) {
-              el.style.width = '100%';
-            }
+            el.style.width = (imgState.width || 250) + 'px';
             el.style.maxWidth = '100%';
-            el.style.setProperty('height', 'auto', 'important');
-            el.style.margin = '16px 0';
-            const img = el.querySelector('img');
-            if (img) { img.style.height = 'auto'; img.style.width = '100%'; }
+            el.style.height = imgState.height ? (imgState.height + 'px') : 'auto';
+            el.style.transform = `translate(${imgState.x || 0}px, ${imgState.y || 0}px)`;
             return;
           }
-
-          try {
-            const s = styleStr ? JSON.parse(styleStr) : { x: 0, y: 0, width: 250, height: null };
-            
-            requestAnimationFrame(() => {
-              // Get the page container width for clamping
-              const page = document.querySelector('.page-scroll') || document.getElementById('publicPage');
-              const pageW = page ? page.clientWidth : 500;
-              
-              // Clamp width to fit within the page on mobile/small screens
-              let rawWidth = s.width || 250;
-              const maxAllowedWidth = Math.max(80, pageW - 40);
-              // On mobile, additionally cap at 65% of page width for better readability
-              const capWidth = isMobile ? Math.min(maxAllowedWidth, Math.floor(pageW * 0.65)) : maxAllowedWidth;
-              const clampedWidth = Math.min(rawWidth, capWidth);
-              el.style.width = clampedWidth + 'px';
-              el.style.maxWidth = 'calc(100% - 40px)';
-              
-              // Clamp x offset so the image stays within the page
-              const rawX = s.x || 0;
-              // Compute actual available width after the image is placed
-              const availableX = pageW - clampedWidth;
-              // Clamp x between 0 and availableX (never let image exceed page right edge)
-              const clampedX = Math.max(0, Math.min(rawX, Math.max(0, availableX)));
-              
-              // Clamp y so image stays within visible page scroll area
-              const pageScrollEl = document.querySelector('.page-scroll');
-              const scrollH = pageScrollEl ? pageScrollEl.clientHeight : 520;
-              // top: 60px baseline + y offset; clamp so image top never exceeds scrollable height - some margin
-              const rawY = s.y || 0;
-              const clampedY = Math.max(-60, Math.min(rawY, Math.max(0, scrollH - 80)));
-              el.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
-              
-              if (s.height) el.style.height = `${s.height}px`;
-              else el.style.height = 'auto';
-            });
-            
-          } catch(e) {
-            el.style.position = 'absolute';
-            el.style.top = '60px';
-            el.style.left = '20px';
-            el.style.width = '250px';
-            el.style.maxWidth = 'calc(100% - 40px)';
-            el.style.transform = 'translate(0px, 0px)';
-          }
+          el.style.position = 'absolute';
+          el.style.width = (imgState.width || 250) + 'px';
+          el.style.height = imgState.height ? (imgState.height + 'px') : 'auto';
+          el.style.transform = `translate(${imgState.x || 0}px, ${imgState.y || 0}px)`;
         }
 
         function render() {
@@ -917,11 +809,6 @@
           if (titleEl) titleEl.value = p.title || 'Untitled';
           if (contentEl) {
             let content = p.content || '';
-            if (!canEdit) {
-              const codePatterns = [/#include/, /int main/, /def \w+\(/, /function \w+\(/, /\bpublic class\b/, /\bimport java\b/];
-              const codeScore = codePatterns.filter(p => p.test(content)).length;
-              if (codeScore >= 2) content = '[Content hidden in view mode]';
-            }
             contentEl.innerText = content;
           }
           
@@ -945,18 +832,49 @@
           applyStyles(titleEl, p.title_style);
           applyStyles(contentEl, p.content_style);
 
-          if (p.image_url && (p.image_attached === true || p.image_attached === 1 || p.image_attached === 'true' || p.image_attached === '1')) {
-            if (illImg) illImg.src = p.image_url;
-            if (illEl) {
-              illEl.style.display = 'block';
-              applyImageStyle(illEl, p.image_style);
+          if (illContainer) {
+            illContainer.innerHTML = '';
+            const images = p.images || [];
+            // Backward compatibility
+            if (images.length === 0 && p.image_url && p.image_attached) {
+              let oldStyle = { x: 0, y: 0, width: 250, height: null };
+              try { oldStyle = JSON.parse(p.image_style) || oldStyle; } catch(e) {}
+              images.push({ url: p.image_url, ...oldStyle });
             }
-          } else {
-            if (illEl) illEl.style.setProperty('display', 'none', 'important');
-            if (illImg) {
-                illImg.src = '';
-                illImg.removeAttribute('src');
-            }
+            
+            images.forEach((imgState, idx) => {
+                const ill = document.createElement('div');
+                ill.className = 'page-illustration';
+                ill.dataset.index = idx;
+                ill.style.display = 'block';
+                
+                const img = document.createElement('img');
+                img.src = imgState.url;
+                img.alt = "Story illustration";
+                ill.appendChild(img);
+                
+                if (canEdit) {
+                    const handle = document.createElement('div');
+                    handle.className = 'resize-handle';
+                    ill.appendChild(handle);
+                    
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'delete-ill-btn';
+                    delBtn.innerHTML = '&times;';
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (confirm('Remove this illustration?')) {
+                            images.splice(idx, 1);
+                            render();
+                        }
+                    };
+                    ill.appendChild(delBtn);
+                    setupPublicInteractions(ill, imgState);
+                }
+                
+                illContainer.appendChild(ill);
+                applyImageStyle(ill, imgState);
+            });
           }
 
           if (countEl) countEl.textContent = (currentIndex + 1) + " / " + pages.length;
@@ -1009,33 +927,10 @@
                   type: 'story',
                   title_style: p.title_style,
                   content_style: p.content_style,
-                  image_url: p.image_url,
-                  image_attached: p.image_attached,
-                  image_style: (function() {
-                    if (illEl.style.display === 'none') return p.image_style;
-                    let tx = 0, ty = 0;
-                    if (window.innerWidth <= 900) {
-                      tx = parseFloat(illEl.style.marginLeft) || 0;
-                      ty = parseFloat(illEl.style.marginTop) || 0;
-                    } else {
-                      const style = window.getComputedStyle(illEl);
-                      const transform = style.transform;
-                      if (transform && transform !== 'none') {
-                        const matrix = transform.match(/matrix.*\((.+)\)/);
-                        if (matrix) {
-                          const values = matrix[1].split(', ');
-                          tx = parseFloat(values[4]);
-                          ty = parseFloat(values[5]);
-                        }
-                      }
-                    }
-                    return JSON.stringify({
-                      x: tx,
-                      y: ty,
-                      width: illEl.offsetWidth,
-                      height: illEl.offsetHeight
-                    });
-                  })()
+                  image_url: p.images && p.images.length ? p.images[0].url : null,
+                  image_attached: p.images && p.images.length ? true : false,
+                  image_style: p.images && p.images.length ? JSON.stringify(p.images[0]) : null,
+                  images: p.images || []
                 })
               });
               if (r.ok) {

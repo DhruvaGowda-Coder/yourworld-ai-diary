@@ -187,15 +187,17 @@ if (workspace) {
   let entries = [];
   let currentIndex = -1;
   let currentEntryId = null;
-  let currentImageUrl = null;
-  let imageAttached = false;
-  let imageStyleState = { x: 0, y: 0, width: null, height: null };
+  let currentImages = []; // Array of {url, x, y, width, height}
+  let generatedImageUrl = null; // The URL of the most recently generated/uploaded image (not yet attached)
   const resizeHandle = document.getElementById('resizeHandle');
   document.addEventListener('imageStyleUpdate', (e) => {
-    if (e.detail.x !== undefined) imageStyleState.x = e.detail.x;
-    if (e.detail.y !== undefined) imageStyleState.y = e.detail.y;
-    if (e.detail.width !== undefined) imageStyleState.width = e.detail.width;
-    if (e.detail.height !== undefined) imageStyleState.height = e.detail.height;
+    const idx = e.detail.index;
+    if (idx === undefined || !currentImages[idx]) return;
+    const img = currentImages[idx];
+    if (e.detail.x !== undefined) img.x = e.detail.x;
+    if (e.detail.y !== undefined) img.y = e.detail.y;
+    if (e.detail.width !== undefined) img.width = e.detail.width;
+    if (e.detail.height !== undefined) img.height = e.detail.height;
     dirty = true;
     scheduleAutosave();
   });
@@ -302,9 +304,8 @@ if (workspace) {
               '|' + JSON.stringify(titleStyleState) +
               '|' + JSON.stringify(contentStyleState) +
               '|' + (imagePrompt ? imagePrompt.value : '') +
-              '|' + (currentImageUrl || '') +
-              '|' + (imageAttached ? '1' : '0') +
-              '|' + JSON.stringify(imageStyleState);
+              '|' + JSON.stringify(currentImages) +
+              '|' + (generatedImageUrl || '');
     let h = 0;
     for (let i = 0; i < t.length; i++) { h = ((h << 5) - h + t.charCodeAt(i)) | 0; }
     return String(h);
@@ -332,11 +333,8 @@ if (workspace) {
     scheduleAutosave();
   };
 
-  const resizeContentInput = () => {
-    if (!contentInput) return;
-    contentInput.style.height = 'auto';
-    contentInput.style.height = `${Math.max(520, contentInput.scrollHeight)}px`;
-  };
+  // Browser handles resizing natively now via CSS field-sizing: content
+  const resizeContentInput = () => {};
 
   const animateTurn = (direction, callback) => {
     if (!pageTurn) {
@@ -409,35 +407,20 @@ if (workspace) {
     imagePreview.innerHTML = '';
     
     let clearBtn = null;
-    if (currentImageUrl) {
+    if (generatedImageUrl) {
       clearBtn = document.createElement('button');
       clearBtn.innerHTML = '&times;';
       clearBtn.title = 'Remove Image';
       clearBtn.type = 'button';
-      clearBtn.style.position = 'absolute';
-      clearBtn.style.top = '6px';
-      clearBtn.style.right = '6px';
-      clearBtn.style.background = 'rgba(0,0,0,0.6)';
-      clearBtn.style.color = 'white';
-      clearBtn.style.border = 'none';
-      clearBtn.style.borderRadius = '50%';
-      clearBtn.style.width = '24px';
-      clearBtn.style.height = '24px';
-      clearBtn.style.cursor = 'pointer';
-      clearBtn.style.display = 'flex';
-      clearBtn.style.alignItems = 'center';
-      clearBtn.style.justifyContent = 'center';
-      clearBtn.style.fontSize = '16px';
-      clearBtn.style.zIndex = '10';
+      clearBtn.className = 'preview-clear-btn';
+      clearBtn.style.cssText = 'position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:10;';
       clearBtn.onclick = (e) => {
         e.stopPropagation();
         if (confirm("Are you sure you want to discard this image?")) {
-          currentImageUrl = null;
-          imageAttached = false;
+          generatedImageUrl = null;
           dirty = true;
           renderImagePreview();
           updateImageActions();
-          updatePageIllustration();
         }
       };
     }
@@ -447,9 +430,9 @@ if (workspace) {
       placeholder.className = 'image-placeholder error';
       placeholder.textContent = imageError;
       imagePreview.appendChild(placeholder);
-    } else if (currentImageUrl) {
+    } else if (generatedImageUrl) {
       const img = document.createElement('img');
-      img.src = currentImageUrl;
+      img.src = generatedImageUrl;
       imagePreview.style.position = 'relative';
       imagePreview.appendChild(img);
       imagePreview.appendChild(clearBtn);
@@ -461,66 +444,80 @@ if (workspace) {
     }
   };
 
-  const applyImageStyle = () => {
-    if (!pageIllustration) return;
+  const applyImageStyle = (el, state) => {
+    if (!el || !state) return;
     const isMobile = window.innerWidth <= 900;
+    
+    // Ensure absolute positioning is applied
+    el.style.position = 'absolute';
+    
     if (isMobile) {
-      // On mobile: image is inline, but respects resizing, use margins for dragging
-      if (imageStyleState.width) {
-        pageIllustration.style.width = `${imageStyleState.width}px`;
-      } else {
-        pageIllustration.style.width = '100%';
-      }
-      if (imageStyleState.height) {
-        pageIllustration.style.height = `${imageStyleState.height}px`;
-      } else {
-        pageIllustration.style.height = 'auto';
-      }
-      
-      if (imageStyleState.y) pageIllustration.style.marginTop = `${imageStyleState.y}px`;
-      if (imageStyleState.x) pageIllustration.style.marginLeft = `${imageStyleState.x}px`;
-      
-      pageIllustration.style.transform = 'none';
-      return;
-    }
-    if (imageStyleState.width) {
-      pageIllustration.style.width = `${imageStyleState.width}px`;
+      // On mobile, we still allow dragging but respect the small viewport
+      el.style.left = (state.x || 0) + 'px';
+      el.style.top = (state.y || 0) + 'px';
+      el.style.width = (state.width || 250) + 'px';
+      el.style.height = state.height ? (state.height + 'px') : 'auto';
+      el.style.transform = 'none';
     } else {
-      pageIllustration.style.width = '250px';
+      el.style.width = state.width ? `${state.width}px` : '250px';
+      el.style.height = state.height ? `${state.height}px` : 'auto';
+      el.style.transform = `translate(${state.x || 0}px, ${state.y || 0}px)`;
     }
-    if (imageStyleState.height) {
-      pageIllustration.style.height = `${imageStyleState.height}px`;
-    } else {
-      pageIllustration.style.height = 'auto';
-    }
-    pageIllustration.style.transform = `translate(${imageStyleState.x}px, ${imageStyleState.y}px)`;
   };
 
   const updatePageIllustration = () => {
-    if (!pageIllustration || !pageIllustrationImg) return;
-    if (currentImageUrl && imageAttached) {
-      const pageScroll = document.querySelector('.page-scroll');
-      const illEl = document.getElementById('pageIllustration');
-      const contentEl = document.querySelector('.page-content');
-      if (pageScroll && illEl && contentEl) {
-        pageScroll.insertBefore(illEl, contentEl);
-      }
-      pageIllustrationImg.src = currentImageUrl;
-      pageIllustration.style.display = 'block';
-      applyImageStyle();
-    } else {
-      pageIllustrationImg.removeAttribute('src');
-      pageIllustration.style.display = 'none';
-    }
+    const container = document.getElementById('pageIllustrations');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    currentImages.forEach((imgState, index) => {
+      const ill = document.createElement('div');
+      ill.className = 'page-illustration';
+      ill.dataset.index = index;
+      
+      const img = document.createElement('img');
+      img.src = imgState.url;
+      ill.appendChild(img);
+      
+      const handle = document.createElement('div');
+      handle.className = 'resize-handle';
+      handle.id = `resizeHandle_${index}`;
+      ill.appendChild(handle);
+      
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'delete-ill-btn';
+      delBtn.innerHTML = '&times;';
+      
+      // Stop drag/resize interference by killing these events before they bubble to the parent
+      delBtn.addEventListener('mousedown', e => e.stopPropagation());
+      delBtn.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+      
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        console.log('Delete button clicked for index:', index);
+        if (confirm('Remove this image from page?')) {
+          currentImages.splice(index, 1);
+          markDirty();
+          updatePageIllustration();
+        }
+      });
+      ill.appendChild(delBtn);
+      
+      container.appendChild(ill);
+      applyImageStyle(ill, imgState);
+      setupIllustrationInteractions(ill, index);
+    });
   };
 
   const updateImageActions = () => {
-    const hasImage = Boolean(currentImageUrl);
-    if (imageViewBtn) imageViewBtn.disabled = !hasImage;
-    if (imageDownloadBtn) imageDownloadBtn.disabled = !hasImage;
+    const hasGenerated = Boolean(generatedImageUrl);
+    if (imageViewBtn) imageViewBtn.disabled = !hasGenerated;
+    if (imageDownloadBtn) imageDownloadBtn.disabled = !hasGenerated;
     if (imageAttachBtn) {
-      imageAttachBtn.disabled = !hasImage;
-      imageAttachBtn.textContent = imageAttached ? 'Remove from Page' : 'Insert in Page';
+      imageAttachBtn.disabled = !hasGenerated;
+      imageAttachBtn.textContent = 'Insert in Page';
     }
   };
 
@@ -655,10 +652,9 @@ if (workspace) {
     const data = await response.json();
     titleInput.value = data.title || '';
     contentInput.value = data.content || '';
-    resizeContentInput();
     Object.assign(titleStyleState, parseStyleState(data.title_style, defaultTitleStyle));
     Object.assign(contentStyleState, parseStyleState(data.content_style, defaultContentStyle));
-    applyEditorStyle();
+    applyEditorStyle(); 
     currentEntryId = data.id;
     const resolvedIndex = entries.findIndex((entry) => entry.id === currentEntryId);
     if (resolvedIndex >= 0) {
@@ -667,19 +663,20 @@ if (workspace) {
     } else {
       lastActiveIndex = getActiveIndex();
     }
-    imageError = null;
-    currentImageUrl = data.image_url || null;
-    imageAttached = Boolean(data.image_attached);
-    if (data.image_style) {
-      try {
-        const parsed = JSON.parse(data.image_style);
-        imageStyleState = { x: parsed.x || 0, y: parsed.y || 0, width: parsed.width || null, height: parsed.height || null };
-      } catch(e) {
-        imageStyleState = { x: 0, y: 0, width: null, height: null };
+    currentImages = data.images || [];
+    // Backward compatibility
+    if (data.image_url && data.image_attached && currentImages.length === 0) {
+      let oldStyle = { x: 0, y: 0, width: null, height: null };
+      if (data.image_style) {
+        try {
+          const parsed = JSON.parse(data.image_style);
+          oldStyle = { x: parsed.x || 0, y: parsed.y || 0, width: parsed.width || null, height: parsed.height || null };
+        } catch(e) {}
       }
-    } else {
-      imageStyleState = { x: 0, y: 0, width: null, height: null };
+      currentImages.push({ url: data.image_url, ...oldStyle });
     }
+    
+    generatedImageUrl = null;
     shareCode = data.share_code || null;
     shareCanEditValue = data.can_edit || false;
     if (shareModeSelect) {
@@ -720,15 +717,13 @@ if (workspace) {
     currentIndex = -1;
     titleInput.value = '';
     contentInput.value = '';
-    resizeContentInput();
     Object.assign(titleStyleState, defaultTitleStyle);
     Object.assign(contentStyleState, defaultContentStyle);
     applyEditorStyle();
     if (imagePrompt) imagePrompt.value = '';
     imageError = null;
-    currentImageUrl = null;
-    imageAttached = false;
-    imageStyleState = { x: 0, y: 0, width: null, height: null };
+    currentImages = [];
+    generatedImageUrl = null;
     shareCode = null;
     shareCanEditValue = false;
     renderImagePreview();
@@ -778,9 +773,19 @@ if (workspace) {
         };
         if (entryType === 'story') {
           payload.image_prompt = imagePrompt ? imagePrompt.value : null;
-          payload.image_url = currentImageUrl;
-          payload.image_attached = imageAttached;
-          payload.image_style = JSON.stringify(imageStyleState);
+          payload.images = currentImages;
+          // Legacy fields for older viewers (first image only)
+          if (currentImages.length > 0) {
+            payload.image_url = currentImages[0].url;
+            payload.image_attached = true;
+            payload.image_style = JSON.stringify({
+                x: currentImages[0].x, y: currentImages[0].y, 
+                width: currentImages[0].width, height: currentImages[0].height
+            });
+          } else {
+            payload.image_url = null;
+            payload.image_attached = false;
+          }
         }
 
         const response = await fetch('/api/entry/save', {
@@ -973,6 +978,12 @@ if (workspace) {
       markDirty();
       updateActiveTitleLabel();
     });
+    titleInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (contentInput) contentInput.focus();
+      }
+    });
   }
   if (contentInput) {
     contentInput.addEventListener('focus', () => {
@@ -981,6 +992,7 @@ if (workspace) {
     });
     contentInput.addEventListener('input', () => {
       markDirty();
+      resizeContentInput();
     });
   }
   if (imagePrompt) imagePrompt.addEventListener('input', markDirty);
@@ -1062,7 +1074,6 @@ if (workspace) {
       event.preventDefault();
       const text = plain || htmlToText(html);
       insertAtCursor(contentInput, text);
-      resizeContentInput();
       markDirty();
     });
   }
@@ -1099,11 +1110,9 @@ if (workspace) {
           updatePageIllustration();
           return;
         }
-        currentImageUrl = data.image_url;
-        imageAttached = false;
+        generatedImageUrl = data.image_url;
         renderImagePreview();
         updateImageActions();
-        updatePageIllustration();
         markDirty();
       } catch (err) {
         setStatus('Image failed. Try again in a moment.');
@@ -1160,11 +1169,9 @@ if (workspace) {
           return;
         }
         
-        currentImageUrl = data.url;
-        imageAttached = false;
+        generatedImageUrl = data.url;
         renderImagePreview();
         updateImageActions();
-        updatePageIllustration();
         markDirty();
       } catch (err) {
         setStatus('Upload failed. Try again.');
@@ -1178,12 +1185,10 @@ if (workspace) {
 
   if (imageViewBtn && imageModal && imageModalImg) {
     imageViewBtn.addEventListener('click', () => {
-      if (!currentImageUrl) return;
-      if (pageIllustrationImg && pageIllustrationImg.naturalWidth > 0) {
-        imageModalImg.src = currentImageUrl;
-        imageModal.classList.add('open');
-        imageModal.setAttribute('aria-hidden', 'false');
-      }
+      if (!generatedImageUrl) return;
+      imageModalImg.src = generatedImageUrl;
+      imageModal.classList.add('open');
+      imageModal.setAttribute('aria-hidden', 'false');
     });
   }
 
@@ -1233,25 +1238,147 @@ if (workspace) {
     };
 
     imageDownloadBtn.addEventListener('click', async () => {
-      if (!currentImageUrl) return;
+      if (!generatedImageUrl) return;
       try {
-        const pngBlob = await toPngBlob(currentImageUrl);
+        const pngBlob = await toPngBlob(generatedImageUrl);
         if (!pngBlob) throw new Error('PNG failed');
         downloadBlob(pngBlob, 'story-illustration.png');
       } catch (err) {
-        window.open(currentImageUrl, '_blank', 'noopener');
+        window.open(generatedImageUrl, '_blank', 'noopener');
       }
     });
   }
 
   if (imageAttachBtn) {
     imageAttachBtn.addEventListener('click', () => {
-      if (!currentImageUrl) return;
-      imageAttached = !imageAttached;
+      if (!generatedImageUrl) return;
+      console.log('Inserting image into page:', generatedImageUrl);
+      currentImages.push({
+        url: generatedImageUrl,
+        x: 0,
+        y: 0,
+        width: 250,
+        height: null
+      });
+      generatedImageUrl = null;
+      renderImagePreview();
       updateImageActions();
       updatePageIllustration();
       markDirty();
     });
+  }
+
+  function setupIllustrationInteractions(el, index) {
+    let isDragging = false;
+    let isResizing = false;
+    let startX, startY, startW, startH, startTX, startTY;
+    let touchTimer = null;
+    let isTouchActive = false;
+
+    const handleMove = (e) => {
+      if (e.touches && !isDragging && isTouchActive) {
+        const dx = Math.abs(e.touches[0].clientX - startX);
+        const dy = Math.abs(e.touches[0].clientY - startY);
+        if (dx > 20 || dy > 20) {
+          isTouchActive = false;
+          clearTimeout(touchTimer);
+        }
+      }
+      if (!isDragging && !isResizing) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const imgState = currentImages[index];
+      if (!imgState) return;
+
+      if (isDragging) {
+        const dx = clientX - startX;
+        const dy = clientY - startY;
+        imgState.x = startTX + dx;
+        imgState.y = startTY + dy;
+        applyImageStyle(el, imgState);
+        markDirty();
+      } else if (isResizing) {
+        const dx = clientX - startX;
+        const dy = clientY - startY;
+        imgState.width = Math.max(50, startW + dx);
+        imgState.height = Math.max(50, startH + dy);
+        applyImageStyle(el, imgState);
+        markDirty();
+      }
+      if (e.cancelable && (isDragging || isResizing)) e.preventDefault();
+    };
+
+    const handleEnd = () => {
+      isTouchActive = false;
+      if (touchTimer) clearTimeout(touchTimer);
+      if (isDragging || isResizing) {
+        isDragging = false;
+        isResizing = false;
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        el.style.cursor = 'grab';
+        el.classList.remove('is-dragging');
+        window.removeEventListener('mousemove', handleMove);
+        window.removeEventListener('touchmove', handleMove);
+        window.removeEventListener('mouseup', handleEnd);
+        window.removeEventListener('touchend', handleEnd);
+      }
+    };
+
+    el.addEventListener('mousedown', (e) => {
+      if (e.target.classList.contains('resize-handle') || e.target.classList.contains('delete-ill-btn')) return;
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startTX = currentImages[index].x || 0;
+      startTY = currentImages[index].y || 0;
+      el.style.cursor = 'grabbing';
+      window.addEventListener('mousemove', handleMove);
+      window.addEventListener('mouseup', handleEnd);
+      e.preventDefault();
+    });
+
+    el.addEventListener('touchstart', (e) => {
+      if (e.target.classList.contains('resize-handle') || e.target.classList.contains('delete-ill-btn')) return;
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startTX = currentImages[index].x || 0;
+      startTY = currentImages[index].y || 0;
+      isTouchActive = true;
+      if (touchTimer) clearTimeout(touchTimer);
+      touchTimer = setTimeout(() => {
+        if (isTouchActive) {
+          isDragging = true;
+          el.classList.add('is-dragging');
+          window.addEventListener('touchmove', handleMove, { passive: false });
+          window.addEventListener('touchend', handleEnd);
+        }
+      }, 200);
+    }, { passive: false });
+
+    const resizeH = el.querySelector('.resize-handle');
+    if (resizeH) {
+      const startResize = (clientX, clientY) => {
+        isResizing = true;
+        startX = clientX;
+        startY = clientY;
+        startW = el.offsetWidth;
+        startH = el.offsetHeight;
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('touchmove', handleMove, { passive: false });
+        window.addEventListener('mouseup', handleEnd);
+        window.addEventListener('touchend', handleEnd);
+      };
+      resizeH.addEventListener('mousedown', (e) => {
+        startResize(e.clientX, e.clientY);
+        e.preventDefault(); e.stopPropagation();
+      });
+      resizeH.addEventListener('touchstart', (e) => {
+        startResize(e.touches[0].clientX, e.touches[0].clientY);
+        e.preventDefault(); e.stopPropagation();
+      }, { passive: false });
+    }
   }
 
 
@@ -1447,176 +1574,9 @@ if (workspace) {
     });
   }
 
-  // --- Implementation of Drag, Resize, and Delete for Shared Canvas Editor ---
-  if (pageIllustration) {
-    let isDragging = false;
-    let isResizing = false;
-    let startX, startY, startW, startH, startTX, startTY;
-
-    // Mouse support
-    pageIllustration.addEventListener('mousedown', (e) => {
-      if (e.target.id === 'resizeHandle' || e.target.id === 'deleteIllustrationBtn') return;
-      isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startTX = imageStyleState.x || 0;
-      startTY = imageStyleState.y || 0;
-      pageIllustration.style.cursor = 'grabbing';
-      e.preventDefault();
-    });
-
-    let touchTimer = null;
-    let isTouchActive = false;
-
-    // Touch support for dragging with hold-to-drag prevention
-    pageIllustration.addEventListener('touchstart', (e) => {
-      // Check resize/delete FIRST
-      if (e.target.id === 'resizeHandle' || e.target.id === 'deleteIllustrationBtn') return;
-      
-      const touch = e.touches[0];
-      startX = touch.clientX;
-      startY = touch.clientY;
-      startTX = imageStyleState.x || 0;
-      startTY = imageStyleState.y || 0;
-      isTouchActive = true;
-
-      if (touchTimer) clearTimeout(touchTimer);
-      touchTimer = setTimeout(() => {
-        if (isTouchActive) {
-          document.documentElement.style.overflow = 'hidden';
-          document.documentElement.style.position = 'fixed';
-          document.documentElement.style.width = '100%';
-          isDragging = true;
-          pageIllustration.classList.add('is-dragging');
-          if (navigator.vibrate) navigator.vibrate(5); // Subtle haptic feedback
-        }
-      }, 200);
-    }, { passive: false });
-
-    const resizeH = document.getElementById('resizeHandle');
-    if (resizeH) {
-      resizeH.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        startW = imageStyleState.width || pageIllustration.offsetWidth;
-        startH = imageStyleState.height || pageIllustration.offsetHeight;
-        e.preventDefault();
-        e.stopPropagation();
-      });
-
-      // Touch support for resizing
-      resizeH.addEventListener('touchstart', (e) => {
-        isResizing = true;
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        startW = imageStyleState.width || pageIllustration.offsetWidth;
-        startH = imageStyleState.height || pageIllustration.offsetHeight;
-        document.documentElement.style.overflow = 'hidden';
-        document.documentElement.style.position = 'fixed';
-        document.documentElement.style.width = '100%';
-        e.stopPropagation();
-        e.preventDefault();
-      }, { passive: false });
-    }
-
-    const deleteIllBtn = document.getElementById('deleteIllustrationBtn');
-    if (deleteIllBtn) {
-      deleteIllBtn.addEventListener('click', (e) => {
-        if (confirm('Remove this illustration from the page?')) {
-          imageAttached = false;
-          updateImageActions();
-          updatePageIllustration();
-          markDirty();
-        }
-        e.stopPropagation();
-      });
-    }
-
-    const handleMove = (e) => {
-      if (e.touches && !isDragging && isTouchActive) {
-        const dx = Math.abs(e.touches[0].clientX - startX);
-        const dy = Math.abs(e.touches[0].clientY - startY);
-        if (dx > 20 || dy > 20) { // Increased threshold to 20px for safer scrolling
-          isTouchActive = false;
-          clearTimeout(touchTimer);
-        }
-      }
-
-      if (!isDragging && !isResizing) return;
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      
-      if (isDragging) {
-        const dx = clientX - startX;
-        const dy = clientY - startY;
-        
-        const rawX = startTX + dx;
-        const rawY = startTY + dy;
-        
-        // Boundary Clamping (Ensure image stays within visible page bounds)
-        const page = document.getElementById('pageContent') || document.querySelector('.page');
-        const pageW = page ? page.offsetWidth : 500;
-        const imgW = pageIllustration.offsetWidth;
-        
-        // Allow slight overflow for artistic effect, but keep core within bounds
-        imageStyleState.x = Math.max(-20, Math.min(rawX, pageW - imgW + 20));
-        imageStyleState.y = Math.max(-100, Math.min(rawY, 1200)); // Reasonable vertical limit
-        
-        applyImageStyle();
-        markDirty();
-      } else if (isResizing) {
-        const dx = clientX - startX;
-        const dy = clientY - startY;
-        
-        const page = document.getElementById('pageContent') || document.querySelector('.page');
-        const pageW = page ? page.offsetWidth : 500;
-        const maxW = Math.max(100, pageW - 40);
-        
-        imageStyleState.width = Math.max(50, Math.min(startW + dx, maxW));
-        imageStyleState.height = Math.max(50, startH + dy);
-        applyImageStyle();
-        markDirty();
-      }
-      if (e.cancelable && (isDragging || isResizing)) e.preventDefault();
-    };
-
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('touchmove', handleMove, { passive: false });
-
-    const handleEnd = () => {
-      isTouchActive = false;
-      if (touchTimer) clearTimeout(touchTimer);
-      if (isDragging || isResizing) {
-        isDragging = false;
-        isResizing = false;
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-        document.documentElement.style.position = '';
-        document.documentElement.style.width = '';
-        pageIllustration.style.cursor = 'grab';
-        pageIllustration.classList.remove('is-dragging');
-      }
-    };
-
-    window.addEventListener('mouseup', handleEnd);
-    window.addEventListener('touchend', handleEnd);
-    window.addEventListener('touchcancel', () => {
-      isTouchActive = false;
-      if (touchTimer) clearTimeout(touchTimer);
-      isDragging = false;
-      isResizing = false;
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-      document.documentElement.style.position = '';
-      document.documentElement.style.width = '';
-      pageIllustration.style.cursor = 'grab';
-      pageIllustration.classList.remove('is-dragging');
-    });
-  }
+  // Replaced by setupIllustrationInteractions
 
   applyEditorStyle();
-  resizeContentInput();
   loadEntries();
 
   // Keyboard Shortcuts

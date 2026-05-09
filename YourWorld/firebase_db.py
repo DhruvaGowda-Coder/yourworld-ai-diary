@@ -241,6 +241,7 @@ def save_entry(user_id, entry_id, data):
         'image_url': data.get('image_url'),
         'image_attached': data.get('image_attached', 0),
         'image_style': data.get('image_style'),
+        'images': data.get('images', []), # Support for multiple images
         'title_style': data.get('title_style'),
         'content_style': data.get('content_style'),
         'updated_at': now
@@ -311,33 +312,42 @@ def get_activity_counts(user_id, days):
     cutoff_date = (datetime.now(timezone.utc).date() - timedelta(days=days)).isoformat()
     docs = (db.collection('activity')
             .where(filter=FieldFilter('user_id', '==', str(user_id)))
-            .where(filter=FieldFilter('day', '>=', cutoff_date))
             .limit(2000)
             .stream())
+    
     counts = {}
-    for doc in docs:
-        data = doc.to_dict()
+    total_pages = 0
+    for d in docs:
+        data = d.to_dict()
         day = data.get('day')
-        if day:
+        if day and day >= cutoff_date:
             counts[day] = data.get('count', 0)
-    return counts
+            total_pages += data.get('count', 0)
+    return counts, total_pages
 
 def increment_activity(user_id, day):
     db = get_db()
-    docs = list(db.collection('activity').where(filter=FieldFilter('user_id', '==', str(user_id))).where(filter=FieldFilter('day', '==', day)).limit(1).stream())
+    # Use a deterministic ID to avoid query indexes and improve performance
+    doc_id = f"act_{user_id}_{day}"
+    doc_ref = db.collection('activity').document(doc_id)
     
-    if docs:
-        db.collection('activity').document(docs[0].id).update({
-            'count': Increment(1),
-            'updated_at': utc_now_iso()
-        })
-    else:
-        db.collection('activity').add({
-            'user_id': str(user_id),
-            'day': day,
-            'count': 1,
-            'updated_at': utc_now_iso()
-        })
+    try:
+        doc = doc_ref.get()
+        if doc.exists:
+            doc_ref.update({
+                'count': Increment(1),
+                'updated_at': utc_now_iso()
+            })
+        else:
+            doc_ref.set({
+                'user_id': str(user_id),
+                'day': day,
+                'count': 1,
+                'updated_at': utc_now_iso()
+            })
+    except Exception as e:
+        print(f"Error incrementing activity for {user_id} on {day}: {e}")
+        raise e
 
 def cleanup_guest_data():
     """Delete guest user entries and activity older than 48 hours."""

@@ -201,6 +201,7 @@ def api_entry(entry_id):
         "image_attached": row.get("image_attached"),
         "image_style": row.get("image_style"),
         "image_prompt": row.get("image_prompt"),
+        "images": row.get("images", []),
         "title_style": row.get("title_style"),
         "content_style": row.get("content_style"),
         "share_code": share_code, 
@@ -307,13 +308,17 @@ def api_entry_save():
         current_app.logger.info("Saving entry %s for user %s", entry_id, session.get("user_id"))
         
         content = data.get("content", "").strip()
-        allowed_tags = ['b', 'i', 'u', 'div', 'br', 'span', 'strike', 'strong', 'em', 'p', 'ul', 'ol', 'li']
+        allowed_tags = ['b', 'i', 'u', 'div', 'br', 'span', 'strike', 'strong', 'em', 'p', 'ul', 'ol', 'li', 'img']
+        allowed_attrs = {
+            '*': ['class', 'style'],
+            'img': ['src', 'alt', 'width', 'height', 'style']
+        }
         try:
             from bleach.css_sanitizer import CSSSanitizer
-            css_sanitizer = CSSSanitizer(allowed_css_properties=['color', 'background-color', 'text-align', 'font-size', 'font-family'])
-            content = bleach.clean(content, tags=allowed_tags, attributes={'*': ['class']}, css_sanitizer=css_sanitizer)
+            css_sanitizer = CSSSanitizer(allowed_css_properties=['color', 'background-color', 'text-align', 'font-size', 'font-family', 'width', 'height', 'margin', 'padding', 'border-radius', 'transform'])
+            content = bleach.clean(content, tags=allowed_tags, attributes=allowed_attrs, css_sanitizer=css_sanitizer)
         except ImportError:
-            content = bleach.clean(content, tags=allowed_tags, attributes={'*': ['class']})
+            content = bleach.clean(content, tags=allowed_tags, attributes=allowed_attrs)
 
         title = (data.get("title") or "").strip()
         if not title:
@@ -326,6 +331,11 @@ def api_entry_save():
         
         if len(content.encode("utf-8")) > 100_000:
             return jsonify({"error": "Content exceeds 100KB limit"}), 400
+
+        # Support for multiple images
+        images = data.get("images")
+        if isinstance(images, list):
+            data['images'] = images[:10] # Limit to 10 images per page
         
         saved = firebase_db.save_entry(session["user_id"], entry_id, data)
         if not saved: return jsonify({"error": "Not found"}), 404
@@ -463,24 +473,19 @@ def api_activity():
     if days is None:
         return jsonify({"error": "Invalid days"}), 400
     try:
-        counts = firebase_db.get_activity_counts(session["user_id"], days)
+        counts, total_pages = firebase_db.get_activity_counts(session["user_id"], days)
+        
+        streak = 0
+        today = datetime.now(timezone.utc).date()
+        check_day = today if today.isoformat() in counts else (today - timedelta(days=1))
+        while check_day.isoformat() in counts:
+            streak += 1
+            check_day -= timedelta(days=1)
+            
+        return jsonify({"days": days, "counts": counts, "total_pages": total_pages, "streak": streak, "active_days": len(counts)})
     except Exception as e:
         current_app.logger.warning("get_activity_counts failed: %s", e)
-        counts = {}
-    try:
-        total_pages = firebase_db.get_entry_count(session["user_id"])
-    except Exception as e:
-        current_app.logger.warning("get_entry_count failed: %s", e)
-        total_pages = 0
-    
-    streak = 0
-    today = datetime.now(timezone.utc).date()
-    check_day = today if today.isoformat() in counts else (today - timedelta(days=1))
-    while check_day.isoformat() in counts:
-        streak += 1
-        check_day -= timedelta(days=1)
-        
-    return jsonify({"days": days, "counts": counts, "total_pages": total_pages, "streak": streak, "active_days": len(counts)})
+        return jsonify({"error": "Activity fetch failed"}), 500
 
 @api_bp.route("/api/story/image", methods=["POST"])
 @auth_required

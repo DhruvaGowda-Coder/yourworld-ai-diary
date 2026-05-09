@@ -97,6 +97,7 @@
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 36px;
   align-items: center;
+  padding: 0 12px;
   margin-top: 30px;
 }
 
@@ -415,6 +416,7 @@ button:active:not(:disabled) {
   display: grid;
   grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
   gap: 24px;
+  padding: 0 12px;
   align-items: start;
 }
 
@@ -455,9 +457,15 @@ button:active:not(:disabled) {
 .entry-list {
   display: grid;
   gap: 8px;
-  max-height: 360px;
+  max-height: 194px; /* Force scroll after exactly 4 items */
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 6px;
+  scrollbar-width: none; /* Hide scrollbar for cleaner look as requested */
+  -ms-overflow-style: none;
+}
+
+.entry-list::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome/Safari */
 }
 
 .entry-item {
@@ -632,8 +640,12 @@ button:active:not(:disabled) {
     linear-gradient(180deg, #f0e2c4 0%, #e8d4ad 46%, #dfc69b 100%);
   color: var(--ink);
   border-radius: 22px;
-  padding: 34px;
-  min-height: 680px;
+  padding: 0 !important;
+  height: 700px !important; /* Precisely aligned with View Mode for layout consistency */
+  min-height: 700px !important;
+  max-height: 700px !important;
+  display: flex !important;
+  flex-direction: column !important;
   border: 12px solid var(--book-cover);
   box-shadow:
     0 28px 80px var(--shadow),
@@ -642,7 +654,7 @@ button:active:not(:disabled) {
     inset 0 0 110px rgba(58, 31, 14, 0.14);
   overflow: hidden;
   width: 100%;
-  perspective: 1200px;
+  perspective: none;
   transition: border-color 0.35s ease;
 }
 
@@ -689,43 +701,86 @@ button:active:not(:disabled) {
 .page {
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .page-title {
-  width: 100%;
-  font-size: 1.6rem;
-  font-family: var(--title-font);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-family: var(--editor-font);
+  font-size: 1.8rem;
+  font-weight: 700;
   border: none;
   background: transparent;
-  margin-bottom: 18px;
+  margin-bottom: 0;
   color: var(--ink);
+  caret-color: #1a1a1a;
+  padding: 34px 45px 10px 34px;
+  box-sizing: border-box;
+  width: 100% !important;
 }
 
+/* Editor Textarea Specific - Optimized for Modern Native Sizing */
+textarea.page-content {
+  height: auto !important;
+  min-height: 40px !important;
+  field-sizing: content !important;
+  overflow: hidden !important; /* Prevents double scrollbars in editor */
+  padding-bottom: 20px !important;
+  resize: none !important;
+  display: block !important;
+}
+
+/* Base styles for both View and Edit modes */
 .page-content {
-  width: 100%;
-  min-height: 100%;
-  height: auto;
-  border: none;
-  background: transparent;
+  width: 100% !important;
+  border: none !important;
+  background: transparent !important;
   font-family: var(--editor-font);
   font-size: 1.08rem;
   line-height: 1.85;
-  color: var(--ink);
-  white-space: pre-wrap;
-  resize: none;
-  overflow: hidden;
-  padding-right: 12px;
+  color: #1a1a1a !important;
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  padding: 0 45px 0 34px !important;
+  box-sizing: border-box;
+  margin-top: 15px !important;
+  margin-bottom: 0 !important;
   letter-spacing: 0.01em;
+  caret-color: #1a1a1a;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important; /* Ensure View Mode div is never clipped */
+}
+
+.page-title::selection,
+.page-content::selection,
+.page *::selection {
+  background: rgba(0, 120, 215, 0.15) !important; /* Professional light blue, feels more transparent */
+  color: inherit !important;
 }
 
 .page-scroll {
-  min-height: 520px;
-  max-height: 520px;
-  overflow-y: scroll;
-  padding-right: 4px;
-  scrollbar-gutter: stable;
+  height: 660px !important;
+  max-height: 660px !important;
+  min-height: 660px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0 30px 20px 0 !important;
+  margin: 12px 0 !important;
+  display: block !important; /* Back to block for pixel-perfect height stability */
+  border-radius: 14px;
+  z-index: 50 !important;
+  pointer-events: auto !important;
+  position: relative;
 }
 
 .page-title:focus,
@@ -1309,7 +1364,7 @@ button:active:not(:disabled) {
   top: 60px;
   left: 20px;
   width: 250px;
-  display: none;
+  display: block;
   border-radius: 24px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: rgba(0, 0, 0, 0.04);
@@ -1376,39 +1431,142 @@ button:active:not(:disabled) {
 
   /* Webkit Scrollbar Styling for Mobile Visibility */
   .book::-webkit-scrollbar, 
-  .public-story .book::-webkit-scrollbar {
-    width: 8px !important; /* Slightly wider for touch */
+  .public-story .book::-webkit-scrollbar,
+  .page-scroll::-webkit-scrollbar {
+    width: 8px !important;
     height: 8px !important;
     display: block !important;
   }
   .book::-webkit-scrollbar-track,
-  .public-story .book::-webkit-scrollbar-track {
+  .public-story .book::-webkit-scrollbar-track,
+  .page-scroll::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.08) !important;
     border-radius: 10px !important;
-    margin: 10px !important;
+    margin: 2px !important;
   }
   .book::-webkit-scrollbar-thumb,
-  .public-story .book::-webkit-scrollbar-thumb {
-    background: var(--theme-accent) !important;
+  .public-story .book::-webkit-scrollbar-thumb,
+  .page-scroll::-webkit-scrollbar-thumb {
+    background: var(--theme-accent, #8b5a2b) !important;
     border-radius: 10px !important;
     border: 2px solid rgba(255, 255, 255, 0.1) !important;
     box-shadow: 0 0 10px rgba(0,0,0,0.2) !important;
   }
+}
 
-  .public-main,
-  .public-layout {
-    max-width: 100% !important;
-    overflow-x: hidden !important; /* Prevent the entire layout from swiping */
+/* ─── Multi-Image Illustration System ─── */
+.page-illustrations {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000; /* Ensure it's above everything */
+}
+
+.page-illustration {
+  position: absolute;
+  pointer-events: auto;
+  cursor: grab;
+  transition: box-shadow 0.2s ease, filter 0.2s ease;
+  user-select: none;
+  touch-action: none;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1001;
+}
+
+.page-illustration.is-dragging {
+  cursor: grabbing;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+  z-index: 2000;
+  filter: brightness(1.05);
+}
+
+.page-illustration img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 24px;
+  height: 24px;
+  background: rgba(0,0,0,0.5);
+  cursor: nwse-resize;
+  z-index: 10;
+  border-top-left-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resize-handle::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid white;
+  border-bottom: 2px solid white;
+}
+
+.delete-ill-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  z-index: 11;
+  backdrop-filter: blur(4px);
+  transition: all 0.2s;
+}
+
+.delete-ill-btn:hover {
+  background: rgba(255, 60, 60, 0.8);
+  transform: scale(1.1);
+}
+
+  @media (max-width: 900px) {
+    .public-layout {
+      padding: 0 12px;
+    }
+    .public-main,
+    .public-layout {
+      max-width: 100% !important;
+      overflow-x: hidden !important; /* Prevent the entire layout from swiping */
+    }
+
+  .book {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    margin: 10px 0 !important;
   }
 
   .page,
   .public-page {
     width: 100% !important;
-    height: auto !important; /* Let content determine height */
+    height: auto !important;
     min-height: none !important;
     max-height: none !important;
     position: relative !important;
-    overflow: visible !important; /* Let parent .book handle scrolling */
+    overflow: visible !important;
     display: block !important;
     padding: 20px 16px !important;
   }
@@ -1967,40 +2125,108 @@ button:active:not(:disabled) {
 }
 
 .activity-card {
-  margin-top: 20px;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 24px;
-  border-radius: 18px;
+  margin-top: 24px;
+  background: rgba(35, 31, 29, 0.45);
+  backdrop-filter: blur(24px);
+  padding: 32px;
+  border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.activity-card h3 {
+  margin: 0;
+  font-family: var(--ui-font);
+  font-size: 1.25rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .activity-sub {
-  color: #f3d1b2;
-  margin-top: 6px;
+  color: var(--theme-accent);
+  opacity: 0.85;
+  margin: 8px 0 20px;
+  font-family: var(--ui-font);
+  font-size: 0.9rem;
 }
 
 .heatmap-scroll {
-  margin-top: 16px;
   overflow-x: auto;
-  padding-bottom: 6px;
+  padding-bottom: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-scroll-thumb) transparent;
+}
+
+.heatmap-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.heatmap-scroll::-webkit-scrollbar-thumb {
+  background: var(--theme-scroll-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.heatmap-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-scroll-thumb-hover);
+  background-clip: content-box;
+}
+
+.heatmap-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 999px;
 }
 
 .heatmap,
 #activityHeatmap {
   display: grid;
   grid-auto-flow: column;
-  grid-template-rows: repeat(7, 12px);
-  gap: 4px;
-  --columns: 52;
+  grid-template-rows: repeat(7, 13px); /* Slightly larger cells for better touch */
+  gap: 5px;
   width: max-content;
 }
 
 .heatmap-cell {
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.06);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
   cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.3);
+  z-index: 10;
+  box-shadow: 0 0 10px rgba(255,255,255,0.2);
+}
+
+/* ─── Micro Global Tooltip ─── */
+.heatmap-global-tooltip {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  background: rgba(10, 8, 6, 0.98);
+  color: #fff;
+  padding: 4px 8px; /* Slightly larger padding */
+  border-radius: 5px;
+  font-size: 0.62rem; /* Increased font size for readability */
+  font-family: 'Space Grotesk', sans-serif;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+}
+
+.heatmap-global-tooltip.visible {
+  opacity: 1;
 }
 
 .heatmap-cell.empty {
@@ -2014,13 +2240,14 @@ button:active:not(:disabled) {
 .heatmap-cell.level-4 { background: var(--heat-4); }
 
 .heatmap-legend {
-  margin-top: 12px;
+  margin-top: 16px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.75rem;
-  color: #f3cda2;
+  gap: 12px;
+  font-family: var(--ui-font);
+  font-size: 0.8rem;
+  color: var(--text-color, #fff);
+  opacity: 0.8;
 }
 
 .legend-scale {

@@ -70,7 +70,7 @@ def add_security_headers(response):
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
     response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
     return response
 
 @app.context_processor

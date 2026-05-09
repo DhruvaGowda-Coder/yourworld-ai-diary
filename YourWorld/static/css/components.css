@@ -390,32 +390,39 @@ body[data-theme="cherry"] .chat-bubble.bot {
 .page-scroll,
 .public-page {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.35) rgba(255, 255, 255, 0.92);
+  scrollbar-color: var(--theme-scroll-thumb, rgba(0,0,0,0.2)) transparent;
 }
 
-.page-scroll::-webkit-scrollbar,
-.public-page::-webkit-scrollbar {
-  width: 12px;
-}
+@media (min-width: 901px) {
+  .page-scroll,
+  .public-page {
+    scrollbar-width: auto;
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+  }
 
-.page-scroll::-webkit-scrollbar-track,
-.public-page::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 999px;
-}
+  .page-scroll::-webkit-scrollbar,
+  .public-page::-webkit-scrollbar {
+    width: 18px;
+    display: block !important;
+  }
 
-.page-scroll::-webkit-scrollbar-thumb,
-.public-page::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 999px;
-  border: 3px solid rgba(255, 255, 255, 0.92);
-  background-clip: content-box;
-}
+  .page-scroll::-webkit-scrollbar-track,
+  .public-page::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-.page-scroll::-webkit-scrollbar-thumb:hover,
-.public-page::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.45);
-  background-clip: content-box;
+  .page-scroll::-webkit-scrollbar-thumb,
+  .public-page::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
+  .page-scroll::-webkit-scrollbar-thumb:hover,
+  .public-page::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

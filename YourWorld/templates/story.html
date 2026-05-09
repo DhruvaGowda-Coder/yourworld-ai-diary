@@ -67,7 +67,6 @@
             <input type="hidden" id="shareModeSelect" value="story" />
           </div>
           <button class="btn ghost" id="shareRandomBtn" type="button">Random Code</button>
-          <button class="btn ghost" id="shareRemoveBtn" type="button" disabled>Remove</button>
         </div>
       </div>
     </div>
@@ -113,14 +112,12 @@
     </div>
     <div class="book" id="book">
       <div class="page" id="page">
-        <input id="entryTitle" class="page-title" placeholder="Canvas title..." />
         <div class="page-scroll">
+          <input id="entryTitle" class="page-title" placeholder="Canvas title..." />
           <textarea id="entryContent" class="page-content" placeholder="Start typing your shared content..."></textarea>
         </div>
-        <div class="page-illustration" id="pageIllustration">
-          <img id="pageIllustrationImg" alt="Story illustration" />
-          <div class="resize-handle" id="resizeHandle"></div>
-          <button type="button" id="deleteIllustrationBtn" class="delete-ill-btn" title="Remove from page">&times;</button>
+        <div class="page-illustrations" id="pageIllustrations">
+          <!-- Multiple illustrations will be injected here -->
         </div>
       </div>
       <div class="page-turn" id="pageTurn"></div>

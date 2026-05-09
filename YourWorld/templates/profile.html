@@ -115,9 +115,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const cell = document.createElement('div');
             cell.className = `heatmap-cell ${getLevel(count)}`;
-            cell.title = `${dateStr}: ${count} updates`;
+            
+            const options = { month: 'short', day: 'numeric', year: 'numeric' };
+            const niceDate = date.toLocaleDateString('en-US', options);
+            const tooltipText = `${niceDate}: ${count} ${count === 1 ? 'page' : 'pages'}`;
+            
+            cell.addEventListener('mouseenter', (e) => {
+                showGlobalTooltip(e.target, tooltipText);
+            });
+            cell.addEventListener('mouseleave', hideGlobalTooltip);
+            
             container.appendChild(cell);
         }
+    }
+
+    const globalTooltip = document.createElement('div');
+    globalTooltip.className = 'heatmap-global-tooltip';
+    document.body.appendChild(globalTooltip);
+
+    function showGlobalTooltip(target, text) {
+        globalTooltip.textContent = text;
+        globalTooltip.classList.add('visible');
+        const rect = target.getBoundingClientRect();
+        
+        // Position above the cell
+        const x = rect.left + (rect.width / 2);
+        const y = rect.top - 8;
+        
+        globalTooltip.style.left = `${x}px`;
+        globalTooltip.style.top = `${y}px`;
+    }
+
+    function hideGlobalTooltip() {
+        globalTooltip.classList.remove('visible');
     }
 
     function getLevel(count) {

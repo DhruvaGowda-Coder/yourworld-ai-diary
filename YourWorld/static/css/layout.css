@@ -553,9 +553,9 @@ html {
 .profile-header-card {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 24px;
-  border-radius: 20px;
+  gap: 24px;
+  padding: 32px;
+  border-radius: 24px;
   background: rgba(35, 31, 29, 0.5);
   backdrop-filter: blur(20px) saturate(1.2);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
@@ -599,16 +599,19 @@ html {
 }
 
 .profile-header-info h2 {
-  margin: 0 0 2px;
+  margin: 0 0 4px;
   font-family: var(--ui-font);
-  font-size: 1.3rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #fff;
 }
 
 .profile-email {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   font-family: var(--ui-font);
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--theme-accent);
+  opacity: 0.7;
 }
 
 .profile-theme-badge {
@@ -643,11 +646,12 @@ html {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 18px 12px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 8px;
+  padding: 24px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 }
 
@@ -671,9 +675,11 @@ html {
 .profile-stat-label {
   font-family: var(--ui-font);
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+  opacity: 0.5;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
+  font-weight: 500;
 }
 
 @media (max-width: 500px) {

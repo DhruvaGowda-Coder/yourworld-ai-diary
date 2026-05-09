@@ -10,7 +10,7 @@
   --glow: rgba(255, 183, 131, 0.35);
   --gold: #e9c349;
   --shadow: rgba(10, 4, 2, 0.4);
-  --gutter: clamp(16px, 5vw, 80px);
+  --gutter: clamp(24px, 5vw, 90px);
   --theme-bg: radial-gradient(circle at 20% 15%, #3b1b11 0%, #161311 55%, #0a0706 100%);
   --ambient-a: rgba(255, 183, 131, 0.20);
   --ambient-b: rgba(233, 195, 73, 0.14);

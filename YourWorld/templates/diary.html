@@ -10,6 +10,23 @@
       </div>
     </div>
     <div class="entry-list" id="entryList"></div>
+    <div class="story-image-panel">
+      <h4>Scene Illustration</h4>
+      <input id="imagePrompt" type="text" placeholder="Describe the scene..." />
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <button class="btn primary" id="imageGenBtn" type="button" style="flex: 1;">Generate AI Image</button>
+        <button class="btn ghost" id="imageUploadTriggerBtn" type="button" style="flex: 1;" title="Upload from PC">Upload</button>
+        <input type="file" id="imageUploadInput" accept="image/*" style="display: none;" />
+      </div>
+      <div class="image-actions">
+        <button class="btn ghost" id="imageViewBtn" type="button" disabled>View Full</button>
+        <button class="btn ghost" id="imageDownloadBtn" type="button" disabled>Download PNG</button>
+        <button class="btn ghost" id="imageAttachBtn" type="button" disabled>Insert in Page</button>
+      </div>
+      <div class="image-preview" id="imagePreview">
+        <div class="image-placeholder">No image yet</div>
+      </div>
+    </div>
   </aside>
 
   <div class="book-area">
@@ -43,9 +60,12 @@
     </div>
     <div class="book" id="book">
       <div class="page" id="page">
-        <input id="entryTitle" class="page-title" placeholder="Note title..." />
         <div class="page-scroll">
+          <input id="entryTitle" class="page-title" placeholder="Note title..." />
           <textarea id="entryContent" class="page-content" placeholder="Start writing..."></textarea>
+        </div>
+        <div class="page-illustrations" id="pageIllustrations">
+          <!-- Multiple illustrations will be injected here -->
         </div>
       </div>
       <div class="page-turn" id="pageTurn"></div>

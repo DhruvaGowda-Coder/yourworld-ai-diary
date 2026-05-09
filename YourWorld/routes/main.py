@@ -123,6 +123,7 @@ def view_story(code):
                 "image_url": r.get("image_url"),
                 "image_attached": bool(r.get("image_attached")),
                 "image_style": r.get("image_style"),
+                "images": r.get("images", []),
                 "title_style": r.get("title_style"),
                 "content_style": r.get("content_style"),
                 "updated_at": r.get("updated_at"),
