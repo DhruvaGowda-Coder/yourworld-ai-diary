@@ -1416,6 +1416,7 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
     max-height: none !important;
     overflow: visible !important;
     display: block !important;
+    margin: 0 !important; /* Zero out desktop margin so mesh fills from top edge */
   }
 
   /* ─── Mesh Texture Applied via Pseudo-element for Rounded Corners & Bottom Buffer ─── */
@@ -1434,14 +1435,14 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    bottom: 20px !important; /* Creates the requested 20px gap at the bottom */
+    bottom: 4px !important; /* Minimal gap at the bottom for a tight fit */
     background-image:
       repeating-linear-gradient(43deg, rgba(108, 72, 38, 0.08) 0 2px, transparent 2px 5px),
       repeating-linear-gradient(-38deg, rgba(90, 58, 28, 0.06) 0 3px, transparent 3px 7px),
       repeating-linear-gradient(0deg, rgba(255, 244, 215, 0.06) 0 1px, transparent 1px 2px) !important;
     background-attachment: local !important;
-    border-radius: 22px !important; /* Perfect rounded corners for the mesh itself */
-    z-index: -1 !important; /* Stays behind the title and text content */
+    border-radius: 10px !important; /* Matches the page border-radius */
+    z-index: -1 !important;
     pointer-events: none !important;
   }
 
