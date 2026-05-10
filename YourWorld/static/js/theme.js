@@ -7,10 +7,11 @@
   const savedTime = parseFloat(localStorage.getItem('yw_sound_time') || '0');
   
   const themeAudioExtensions = {
-    earth: 'mp3',
-    garden: 'mp3',
-    storm: 'mp3',
-    wind: 'mp3'
+    earth: 'wav',
+    garden: 'wav',
+    storm: 'wav',
+    wind: 'wav',
+    space: 'wav'
   };
 
   const themeVolumes = {
