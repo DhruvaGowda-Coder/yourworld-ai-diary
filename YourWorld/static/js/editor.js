@@ -333,8 +333,12 @@ if (workspace) {
     scheduleAutosave();
   };
 
-  // Browser handles resizing natively now via CSS field-sizing: content
-  const resizeContentInput = () => {};
+  /** Auto-resizes the textarea to fit content height. */
+  const resizeContentInput = () => {
+    if (!contentInput) return;
+    contentInput.style.height = 'auto';
+    contentInput.style.height = (contentInput.scrollHeight + 4) + 'px';
+  };
 
   const animateTurn = (direction, callback) => {
     if (!pageTurn) {
@@ -691,6 +695,7 @@ if (workspace) {
     updatePageCount();
     updateDeleteButton();
     updateNavButtons();
+    resizeContentInput();
   };
 
   const navigateToIndex = (index) => {
@@ -733,6 +738,7 @@ if (workspace) {
     renderEntries({ scroll: true });
     updatePageCount();
     updateDeleteButton();
+    resizeContentInput();
   };
 
   const saveEntry = async (options = {}) => {
@@ -873,7 +879,7 @@ if (workspace) {
     entries = data.entries || data;  // Support both new paginated and legacy format
     _hasMoreEntries = data.has_more || false;
     if (entries.length > 0) {
-      currentIndex = entries.length - 1;
+      currentIndex = 0;
       renderEntries({ scroll: true });
       await loadEntry(entries[currentIndex].id);
     } else {
@@ -1076,6 +1082,7 @@ if (workspace) {
       const text = plain || htmlToText(html);
       insertAtCursor(contentInput, text);
       markDirty();
+      resizeContentInput();
     });
   }
 
@@ -1253,6 +1260,14 @@ if (workspace) {
   if (imageAttachBtn) {
     imageAttachBtn.addEventListener('click', () => {
       if (!generatedImageUrl) return;
+      
+      // Mobile check as requested
+      if (window.innerWidth <= 900) {
+        alert("Please view in desktop to see the image and to insert in page for better experience.");
+        setStatus("Switch to desktop to insert images");
+        return;
+      }
+      
       console.log('Inserting image into page:', generatedImageUrl);
       currentImages.push({
         url: generatedImageUrl,
@@ -1329,6 +1344,7 @@ if (workspace) {
     };
 
     el.addEventListener('mousedown', (e) => {
+      if (window.innerWidth <= 900) return; // Disable interactions on mobile
       if (e.target.classList.contains('resize-handle') || e.target.classList.contains('delete-ill-btn')) return;
       isDragging = true;
       startX = e.clientX;
@@ -1342,6 +1358,7 @@ if (workspace) {
     });
 
     el.addEventListener('touchstart', (e) => {
+      if (window.innerWidth <= 900) return; // Disable interactions on mobile
       if (e.target.classList.contains('resize-handle') || e.target.classList.contains('delete-ill-btn')) return;
       const touch = e.touches[0];
       startX = touch.clientX;
@@ -1365,6 +1382,7 @@ if (workspace) {
     const resizeH = el.querySelector('.resize-handle');
     if (resizeH) {
       const startResize = (clientX, clientY) => {
+        if (window.innerWidth <= 900) return; // Disable on mobile
         isResizing = true;
         startX = clientX;
         startY = clientY;

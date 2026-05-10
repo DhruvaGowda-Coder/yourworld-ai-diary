@@ -17,9 +17,9 @@
 
   <div class="profile-stats-row">
     <div class="profile-stat">
-      <span class="profile-stat-icon">📖</span>
+      <span class="profile-stat-icon">✍️</span>
       <span class="profile-stat-value" id="profilePageCount">—</span>
-      <span class="profile-stat-label">Pages</span>
+      <span class="profile-stat-label">Edits</span>
     </div>
     <div class="profile-stat">
       <span class="profile-stat-icon">🔥</span>
@@ -35,7 +35,7 @@
 
   <div class="activity-card">
     <h3>📈 Writing Activity</h3>
-    <p class="activity-sub">Colors show how often you updated your pages.</p>
+    <p class="activity-sub">Colors show how often you made edits.</p>
     <div class="heatmap-scroll">
       <div class="heatmap" id="activityHeatmap" aria-label="Writing activity heatmap"></div>
     </div>
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const options = { month: 'short', day: 'numeric', year: 'numeric' };
             const niceDate = date.toLocaleDateString('en-US', options);
-            const tooltipText = `${niceDate}: ${count} ${count === 1 ? 'page' : 'pages'}`;
+            const tooltipText = `${niceDate}: ${count} ${count === 1 ? 'edit' : 'edits'}`;
             
             cell.addEventListener('mouseenter', (e) => {
                 showGlobalTooltip(e.target, tooltipText);
@@ -139,8 +139,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const rect = target.getBoundingClientRect();
         
         // Position above the cell
-        const x = rect.left + (rect.width / 2);
+        let x = rect.left + (rect.width / 2);
         const y = rect.top - 8;
+        
+        // Stay within viewport
+        const tipWidth = globalTooltip.offsetWidth;
+        const padding = 10;
+        const minX = (tipWidth / 2) + padding;
+        const maxX = window.innerWidth - (tipWidth / 2) - padding;
+        
+        x = Math.max(minX, Math.min(x, maxX));
         
         globalTooltip.style.left = `${x}px`;
         globalTooltip.style.top = `${y}px`;

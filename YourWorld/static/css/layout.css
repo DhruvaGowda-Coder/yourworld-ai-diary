@@ -1338,9 +1338,93 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
     display: none;
   }
 
-  .book {
-    min-height: 420px;
-    padding: 20px;
+  .book, 
+  .public-story .book {
+    height: 75vh !important;
+    min-height: 450px !important;
+    max-height: 80vh !important;
+    margin: 12px 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: scroll !important; /* Force scroll for testing and consistency */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    /* Enhanced background with desktop gradients + mobile texture, all set to local scroll */
+    background:
+      /* Texture Gradients */
+      radial-gradient(circle at 12% 82%, rgba(120, 76, 38, 0.12), transparent 30%),
+      radial-gradient(circle at 84% 24%, rgba(126, 78, 40, 0.1), transparent 30%),
+      radial-gradient(circle at 48% 52%, rgba(92, 56, 28, 0.06), transparent 44%),
+      repeating-linear-gradient(0deg, rgba(255, 244, 215, 0.02) 0 1px, rgba(95, 60, 30, 0.02) 1px 2px),
+      /* Desktop Parchment Gradients */
+      radial-gradient(circle at 14% 12%, rgba(255, 240, 205, 0.44), transparent 28%),
+      radial-gradient(circle at 80% 18%, rgba(134, 84, 40, 0.18), transparent 34%),
+      radial-gradient(circle at 30% 76%, rgba(118, 74, 36, 0.15), transparent 38%),
+      radial-gradient(circle at 66% 58%, rgba(98, 62, 30, 0.11), transparent 40%),
+      repeating-linear-gradient(43deg, rgba(108, 72, 38, 0.04) 0 2px, rgba(255, 246, 224, 0.02) 2px 5px),
+      repeating-linear-gradient(-38deg, rgba(90, 58, 28, 0.03) 0 3px, rgba(255, 245, 220, 0.015) 3px 7px),
+      linear-gradient(180deg, #f0e2c4 0%, #e8d4ad 46%, #dfc69b 100%) !important;
+    
+    background-attachment: local !important;
+    box-sizing: border-box !important;
+    
+    /* Re-add border and radius for mobile */
+    border: 12px solid var(--book-cover) !important;
+    border-radius: 22px !important;
+    
+    /* Combined outer shadow + inner shadows (moved from ::before to stay fixed to frame) */
+    box-shadow: 
+      0 10px 30px rgba(0,0,0,0.4),
+      inset 0 0 0 1px rgba(255, 230, 185, 0.28),
+      inset 0 0 42px rgba(108, 64, 30, 0.26),
+      inset 0 0 16px rgba(60, 34, 16, 0.18) !important;
+    
+    position: relative !important;
+    
+    /* Scrollbar styling - THEME BASED */
+    scrollbar-width: auto !important;
+    scrollbar-color: var(--theme-accent) rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Webkit scrollbar styling — Theme Colored and More Visible */
+  .book::-webkit-scrollbar,
+  .public-story .book::-webkit-scrollbar {
+    width: 12px !important; /* Wider for touch */
+    display: block !important;
+  }
+  .book::-webkit-scrollbar-track,
+  .public-story .book::-webkit-scrollbar-track {
+    background: transparent !important; /* Transparent track so the rounded book background shows through */
+    border-radius: 10px !important; 
+    margin: 15px 2px !important; /* More vertical margin to clear the corner curves */
+  }
+  .book::-webkit-scrollbar-thumb,
+  .public-story .book::-webkit-scrollbar-thumb {
+    background: var(--theme-accent) !important;
+    border: 3px solid transparent !important; /* Create some space around the thumb */
+    background-clip: content-box !important;
+    border-radius: 12px !important;
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.2) !important;
+  }
+
+  /* Hide scrollbar buttons to prevent sharp square arrows at the corners */
+  .book::-webkit-scrollbar-button,
+  .public-story .book::-webkit-scrollbar-button {
+    display: none !important;
+  }
+
+  /* Force child containers to grow so they trigger the book scrollbar */
+  .page, .public-page, .page-scroll, .public-story .page, .public-story .page-scroll {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* Hide previous overlay as it's now consolidated into .book for perfect scrolling */
+  .book::before {
+    display: none !important;
   }
 
   .page-title {

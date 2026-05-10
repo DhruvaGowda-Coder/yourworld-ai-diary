@@ -105,14 +105,23 @@
 
 
   .workspace.public-story {
-    display: flex !important;
-    flex-direction: column !important;
+    display: grid !important;
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr) !important;
     gap: 24px !important;
     width: 100% !important;
-    max-width: 1400px !important;
-    padding: 0 var(--gutter) !important;
+    max-width: 100% !important;
+    padding: 0 12px !important;
     margin: 0 auto !important;
-    align-items: stretch !important; /* Force children to take full width */
+    align-items: start !important;
+  }
+
+  .workspace.public-story.is-not-found {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 70vh !important;
+    grid-template-columns: none !important;
   }
 
   .public-sidebar {
@@ -131,14 +140,14 @@
 
   .public-page-list {
     display: flex !important;
-    flex-direction: row !important;
-    overflow-x: auto !important;
-    gap: 12px !important;
-    padding: 10px 0 !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    gap: 8px !important;
+    padding: 4px 0 !important;
+    max-height: calc(100vh - 200px) !important;
     scrollbar-width: thin !important;
     scrollbar-color: var(--theme-accent) rgba(255, 255, 255, 0.05) !important;
-    scroll-snap-type: x mandatory !important;
-    -webkit-overflow-scrolling: touch;
   }
 
   .public-page-item {
@@ -168,58 +177,65 @@
     font-weight: 600 !important;
   }
 
-  .public-page {
-    width: 100% !important;
-    height: 100%;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-    padding: 0 !important;
-    box-sizing: border-box !important;
-    transform: none !important; /* Disable 3D transforms to fix scrollbar hit-area */
+  @media (min-width: 901px) {
+    .public-page {
+      width: 100% !important;
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+      transform: none !important; /* Disable 3D transforms to fix scrollbar hit-area */
+    }
   }
   
-  .book, .public-story .book {
-    position: relative;
-    background:
-      radial-gradient(circle at 14% 12%, rgba(255, 240, 205, 0.44), transparent 28%),
-      radial-gradient(circle at 80% 18%, rgba(134, 84, 40, 0.18), transparent 34%),
-      radial-gradient(circle at 30% 76%, rgba(118, 74, 36, 0.15), transparent 38%),
-      radial-gradient(circle at 66% 58%, rgba(98, 62, 30, 0.11), transparent 40%),
-      repeating-linear-gradient(43deg, rgba(108, 72, 38, 0.04) 0 2px, rgba(255, 246, 224, 0.02) 2px 5px),
-      repeating-linear-gradient(-38deg, rgba(90, 58, 28, 0.03) 0 3px, rgba(255, 245, 220, 0.015) 3px 7px),
-      linear-gradient(180deg, #f0e2c4 0%, #e8d4ad 46%, #dfc69b 100%);
-    color: var(--ink);
-    border-radius: 22px;
-    padding: 0 !important;
-    height: 700px !important;
-    min-height: 700px !important;
-    max-height: 700px !important;
-    border: 12px solid var(--book-cover);
-    box-shadow:
-      0 28px 80px var(--shadow),
-      inset 0 0 0 2px rgba(30, 14, 7, 0.45),
-      inset 0 0 65px rgba(70, 40, 18, 0.24),
-      inset 0 0 110px rgba(58, 31, 14, 0.14);
-    overflow: hidden !important;
-    width: 100% !important;
-    min-width: 100% !important;
-    display: flex;
-    flex-direction: column;
-    margin: 0;
-    transform: none !important;
-    perspective: none !important;
-    transform-style: flat !important;
-    transition: border-color 0.35s ease;
+  @media (min-width: 901px) {
+    .book, .public-story .book {
+      position: relative;
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      background:
+        radial-gradient(circle at 14% 12%, rgba(255, 240, 205, 0.44), transparent 28%),
+        radial-gradient(circle at 80% 18%, rgba(134, 84, 40, 0.18), transparent 34%),
+        radial-gradient(circle at 30% 76%, rgba(118, 74, 36, 0.15), transparent 38%),
+        radial-gradient(circle at 66% 58%, rgba(98, 62, 30, 0.11), transparent 40%),
+        repeating-linear-gradient(43deg, rgba(108, 72, 38, 0.04) 0 2px, rgba(255, 246, 224, 0.02) 2px 5px),
+        repeating-linear-gradient(-38deg, rgba(90, 58, 28, 0.03) 0 3px, rgba(255, 245, 220, 0.015) 3px 7px),
+        linear-gradient(180deg, #f0e2c4 0%, #e8d4ad 46%, #dfc69b 100%);
+      color: var(--ink);
+      border-radius: 22px;
+      padding: 0 !important;
+      height: 700px !important;
+      min-height: 700px !important;
+      max-height: 700px !important;
+      border: 12px solid var(--book-cover);
+      box-shadow:
+        0 28px 80px var(--shadow),
+        inset 0 0 0 2px rgba(30, 14, 7, 0.45),
+        inset 0 0 65px rgba(70, 40, 18, 0.24),
+        inset 0 0 110px rgba(58, 31, 14, 0.14);
+      overflow: hidden !important;
+      width: 100% !important;
+      min-width: 100% !important;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      transform: none !important;
+      perspective: none !important;
+      transform-style: flat !important;
+      transition: border-color 0.35s ease;
+    }
   }
 
   .book::before {
     content: "";
     position: absolute;
     inset: 10px;
-    border-radius: 14px;
+    border-radius: 10px;
     border: 1px solid rgba(80, 48, 24, 0.42);
     background:
       radial-gradient(circle at 12% 82%, rgba(120, 76, 38, 0.12), transparent 30%),
@@ -235,20 +251,22 @@
     opacity: 0.95;
   }
   
-  .page-scroll {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    height: 660px !important;
-    max-height: 660px !important;
-    min-height: 660px !important;
-    display: block !important;
-    scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
-    z-index: 100 !important; /* Lifted above illustrations layer (z-index 20) */
-    position: relative;
-    background: transparent !important;
-    margin: 12px 0 !important;
-    border-radius: 14px;
-    pointer-events: auto !important;
+  @media (min-width: 901px) {
+    .page-scroll {
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      height: 660px !important;
+      max-height: 660px !important;
+      min-height: 660px !important;
+      display: block !important;
+      scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+      z-index: 100 !important; /* Lifted above illustrations layer (z-index 20) */
+      position: relative;
+      background: transparent !important;
+      margin: 12px 0 !important;
+      border-radius: 14px;
+      pointer-events: auto !important;
+    }
   }
 
   .page-illustrations {
@@ -461,25 +479,6 @@
       border-radius: 10px !important;
     }
 
-    /* Force visible scrollbars for book content on mobile */
-    .book::-webkit-scrollbar, 
-    .page-scroll::-webkit-scrollbar {
-      width: 8px !important;
-      height: 8px !important;
-      display: block !important;
-    }
-    .book::-webkit-scrollbar-track,
-    .page-scroll::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.08) !important;
-      border-radius: 10px !important;
-    }
-    .book::-webkit-scrollbar-thumb,
-    .page-scroll::-webkit-scrollbar-thumb {
-      background: var(--theme-accent, #8b5a2b) !important;
-      border-radius: 10px !important;
-      border: 2px solid rgba(255, 255, 255, 0.1) !important;
-    }
-
     .public-page-item {
       flex: 0 0 auto;
       white-space: nowrap;
@@ -501,53 +500,48 @@
       background: var(--theme-accent-soft) !important;
     }
 
-    .book, .public-story .book {
-      height: auto !important;
-      min-height: 300px !important; 
-      max-height: 75vh !important;
-      overflow-x: hidden !important;
-      overflow-y: auto !important;
-      -webkit-overflow-scrolling: touch;
-      display: block !important;
-      padding: 12px 10px !important;
-      scroll-behavior: smooth;
-      width: 100% !important;
-      background-attachment: scroll !important;
-      border: 12px solid var(--book-cover) !important; 
-      border-radius: 22px !important; 
-      margin: 0 !important;
-    }
-
     .public-page {
       width: 100% !important;
-      padding: 20px 0 !important; /* Remove side padding to match editor's edge-to-edge look */
-      position: relative;
+      min-height: 100% !important;
+      height: auto !important;
+      flex: 1 1 auto !important;
+      margin: 0 !important;
+      padding: 24px 28px !important; 
+      position: relative !important;
+      background: transparent !important; 
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      border: none !important;
+      border-radius: 10px !important;
+      box-shadow: none !important;
+      box-sizing: border-box !important;
+      display: flex !important;
+      flex-direction: column !important;
     }
     
     .public-story {
       padding: 0 !important; 
     }
 
-    .page-scroll {
-      overflow-y: visible !important;
-      height: auto !important;
-      max-height: none !important;
+    #publicPageScroll {
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: visible !important;
       min-height: 0 !important;
-      padding-right: 0 !important;
-    }
-
-    #publicTitle,
-    #publicContent {
-      padding-left: 12px !important;
-      padding-right: 6px !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
+      height: auto !important;
+      background: transparent !important; /* Restore texture transparency */
     }
 
     #publicTitle {
-      padding-top: 15px !important;
+      padding-top: 10px !important; /* Tightened from 15px */
       padding-bottom: 5px !important;
-      font-size: 1.4rem !important;
+      font-size: 1.3rem !important; /* Slightly smaller title for mobile */
+      order: 1 !important;
+    }
+    #publicContent {
+      padding-top: 5px !important;
+      padding-bottom: 15px !important; /* Tightened from 20px */
+      order: 3 !important;
     }
 
     .public-view-controls {
@@ -593,21 +587,52 @@
       border: 2px solid rgba(255, 255, 255, 0.7) !important;
     }
 
-    .public-story[data-can-edit="true"] #publicDeleteIllBtn {
+    /* Compact size for Shared Canvas (editable) */
+    .workspace.public-story[data-can-edit="true"] .page-illustrations {
       display: flex !important;
-      width: 36px !important;
-      height: 36px !important;
-      font-size: 22px !important;
-      top: 6px !important;
-      right: 6px !important;
+      order: -1 !important; /* Move to top on mobile flex containers */
+      align-items: center;
+      justify-content: center;
+      min-height: 36px !important;
+      margin: 8px 0 40px 0 !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px dashed rgba(0, 0, 0, 0.1) !important;
+      border-radius: 8px !important;
+      position: relative !important;
+      inset: auto !important;
+      width: 100% !important;
+      height: auto !important;
+      max-height: none !important;
+      box-sizing: border-box !important;
+      padding: 6px !important;
+    }
+
+    /* Override: Larger size for View Mode (non-editable) only */
+    .public-story[data-can-edit="false"] .page-illustrations {
+      min-height: 60px !important;
+      margin: 15px 0 !important;
+      background: rgba(255, 255, 255, 0.04) !important;
+      border: 1px dashed rgba(255, 255, 255, 0.15) !important;
+      border-radius: 14px !important;
+      padding: 12px !important;
+    }
+    .public-story[data-can-edit="false"] .page-illustrations::after {
+      content: "🖼️ Image is present — please view on desktop for better experience.";
+      font-size: 0.85rem !important;
+      color: black !important;
+    }
+
+    .page-illustration, 
+    .page-content img {
+      display: none !important;
     }
   }
 </style>
 
 
-<section class="workspace public-story" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}">
+<section class="workspace public-story {% if not_found %}is-not-found{% endif %}" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}">
   {% if not_found %}
-    <div class="public-notice" style="text-align: center; padding: 100px 20px;">
+    <div class="public-notice" style="text-align: center; padding: 40px 20px; width: 100%; max-width: 500px; margin: 30px auto;">
       <h2 style="font-family: var(--ui-font); margin-bottom: 20px;">Story not found</h2>
       <p style="opacity: 0.8; margin-bottom: 30px;">The code <strong>{{ code }}</strong> does not match any shared story.</p>
       <a href="/" class="btn primary">Go Home</a>
@@ -639,7 +664,7 @@
 
     <div class="book-area" style="flex: 1 !important; min-width: 0;">
       <div class="book" id="publicBook">
-        <div class="page public-page" id="publicPage" style="display: flex; flex-direction: column; position: relative;">
+        <div class="page public-page" id="publicPage">
           <div class="page-scroll" id="publicPageScroll" style="background: transparent !important; padding-top: 0 !important;">
             <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none; margin-bottom: 0; width: 100%; padding: 34px 45px 10px 34px; box-sizing: border-box;" value="{{ pages[0].title if pages else 'Untitled' }}" />
             <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 45px 80px 34px; box-sizing: border-box; overflow: visible !important; background: transparent !important;"></div>
@@ -888,7 +913,9 @@
 
           if (illContainer) {
             illContainer.innerHTML = '';
-            const images = p.images || [];
+            if (!p.images) p.images = [];
+            const images = p.images;
+            
             // Backward compatibility
             if (images.length === 0 && p.image_url && p.image_attached) {
               let oldStyle = { x: 0, y: 0, width: 250, height: null };
@@ -918,9 +945,25 @@
                     delBtn.onclick = (e) => {
                         e.stopPropagation();
                         if (confirm('Remove this illustration?')) {
+                            // 1. Remove from the local array
                             images.splice(idx, 1);
+                            
+                            // 2. Synchronize back to the page object
+                            p.images = [...images];
+                            
+                            // 3. Clear legacy fields if this was the only image or matches the legacy one
+                            // This prevents the backward compatibility logic from re-adding it
+                            if (p.images.length === 0) {
+                                p.image_url = null;
+                                p.image_attached = 0;
+                            }
+                            
                             render();
                         }
+                    };
+                    // Also support touch for mobile users
+                    delBtn.ontouchstart = (e) => {
+                        e.stopPropagation();
                     };
                     ill.appendChild(delBtn);
                     setupPublicInteractions(ill, imgState);
