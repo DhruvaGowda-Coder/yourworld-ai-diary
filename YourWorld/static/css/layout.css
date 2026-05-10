@@ -1351,18 +1351,14 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
     scroll-behavior: smooth;
     /* Enhanced background with desktop gradients + mobile texture, all set to local scroll */
     background:
-      /* Texture Gradients */
-      radial-gradient(circle at 12% 82%, rgba(120, 76, 38, 0.12), transparent 30%),
-      radial-gradient(circle at 84% 24%, rgba(126, 78, 40, 0.1), transparent 30%),
-      radial-gradient(circle at 48% 52%, rgba(92, 56, 28, 0.06), transparent 44%),
-      repeating-linear-gradient(0deg, rgba(255, 244, 215, 0.02) 0 1px, rgba(95, 60, 30, 0.02) 1px 2px),
-      /* Desktop Parchment Gradients */
+      /* Texture & Spotlight Gradients - Consolidated base */
+      radial-gradient(circle at 12% 82%, rgba(120, 76, 38, 0.15), transparent 30%),
+      radial-gradient(circle at 84% 24%, rgba(126, 78, 40, 0.12), transparent 30%),
+      radial-gradient(circle at 48% 52%, rgba(92, 56, 28, 0.08), transparent 44%),
       radial-gradient(circle at 14% 12%, rgba(255, 240, 205, 0.44), transparent 28%),
       radial-gradient(circle at 80% 18%, rgba(134, 84, 40, 0.18), transparent 34%),
       radial-gradient(circle at 30% 76%, rgba(118, 74, 36, 0.15), transparent 38%),
       radial-gradient(circle at 66% 58%, rgba(98, 62, 30, 0.11), transparent 40%),
-      repeating-linear-gradient(43deg, rgba(108, 72, 38, 0.04) 0 2px, rgba(255, 246, 224, 0.02) 2px 5px),
-      repeating-linear-gradient(-38deg, rgba(90, 58, 28, 0.03) 0 3px, rgba(255, 245, 220, 0.015) 3px 7px),
       linear-gradient(180deg, #f0e2c4 0%, #e8d4ad 46%, #dfc69b 100%) !important;
     
     background-attachment: scroll !important;
@@ -1422,7 +1418,34 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
     display: block !important;
   }
 
-  /* Hide previous overlay as it's now consolidated into .book for perfect scrolling */
+  /* ─── Mesh Texture Applied via Pseudo-element for Rounded Corners & Bottom Buffer ─── */
+  .page-scroll, #publicPageScroll {
+    position: relative !important;
+    background: transparent !important;
+    min-height: 100% !important; /* Ensure it fills the parent .page container */
+    display: flex !important;
+    flex-direction: column !important;
+    flex-grow: 1 !important;
+  }
+
+  .page-scroll::after, #publicPageScroll::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 20px !important; /* Creates the requested 20px gap at the bottom */
+    background-image:
+      repeating-linear-gradient(43deg, rgba(108, 72, 38, 0.08) 0 2px, transparent 2px 5px),
+      repeating-linear-gradient(-38deg, rgba(90, 58, 28, 0.06) 0 3px, transparent 3px 7px),
+      repeating-linear-gradient(0deg, rgba(255, 244, 215, 0.06) 0 1px, transparent 1px 2px) !important;
+    background-attachment: local !important;
+    border-radius: 22px !important; /* Perfect rounded corners for the mesh itself */
+    z-index: -1 !important; /* Stays behind the title and text content */
+    pointer-events: none !important;
+  }
+
+  /* Hide the overlay as the mesh is now handled by the scroll container */
   .book::before {
     display: none !important;
   }
@@ -1515,4 +1538,11 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
   height: 2px;
   background: var(--theme-accent);
   border-radius: 2px;
+}
+
+@media (max-width: 900px) {
+  /* Hide editor navigation buttons on mobile, but keep public view controls (Save button) visible */
+  .page-controls:not(.public-view-controls) {
+    display: none !important;
+  }
 }

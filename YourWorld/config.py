@@ -56,15 +56,15 @@ THEME_DETAILS = {
 }
 
 THEME_CHAT_PROFILES = {
-    "campfire": "Voice: warm and reflective campfire guide. Keep replies concise, encouraging, and emotionally steady.",
-    "water": "Voice: calm and deep-thinking. Use a patient pace, gentle wording, and reflective prompts.",
-    "wind": "Voice: light, curious, quick-witted. Breeze Mode: if user text is long, start with a short summary and then actionable points.",
-    "earth": "Voice: grounded and practical. Favor step-by-step guidance and stable, realistic advice.",
-    "ice": "Voice: clear and precise. Crystal Clarity: when explaining facts or plans, add a short 'Key points' section first.",
-    "storm": "Voice: bold and energetic. Lightning Round: for multi-part questions, respond in fast numbered bullets.",
-    "space": "Voice: expansive and philosophical. Orbit View: when helpful, show how ideas connect with compact A -> B links.",
-    "garden": "Voice: nurturing and growth-focused. Encourage progress gently, with practical next steps.",
-    "cherry": "Voice: gentle and appreciative. Focus on beauty, fleeting moments, and emotional resonance.",
+    "campfire": "Voice: warm, reflective, and extremely concise. Encourage the user briefly.",
+    "water": "Voice: calm, patient, and brief. Use minimal, high-impact wording.",
+    "wind": "Voice: quick, curious, and very short. Use bullet points primarily.",
+    "earth": "Voice: grounded, practical, and direct. Provide clear, short steps.",
+    "ice": "Voice: sharp, clear, and precise. Avoid any unnecessary words.",
+    "storm": "Voice: bold, energetic, and rapid. Use short, punchy sentences.",
+    "space": "Voice: expansive yet concise. Connect ideas with minimal chatter.",
+    "garden": "Voice: nurturing and brief. Focus on the very next step only.",
+    "cherry": "Voice: gentle, appreciative, and short. Capture the essence quickly.",
 }
 
 ALLOWED_IMAGE_EXT = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}

@@ -53,7 +53,14 @@
       ambientAudio.src = src;
       ambientAudio.volume = themeVolumes[theme] || 0.7;
       ambientAudio.load();
-      if (savedTime > 0) ambientAudio.currentTime = savedTime;
+      // Always start from 0 for new sources
+      ambientAudio.currentTime = 0;
+      localStorage.setItem('yw_sound_time', '0');
+    } else {
+      // Only apply savedTime if the source has NOT changed (e.g. resuming same theme)
+      if (ambientAudio.currentTime === 0 && savedTime > 0) {
+        ambientAudio.currentTime = savedTime;
+      }
     }
 
     if (isPlaying) {

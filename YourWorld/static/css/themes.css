@@ -13,6 +13,7 @@
   pointer-events: none !important;
   z-index: -10;
   overflow: hidden;
+  display: none; /* Hidden by default */
 }
 
 .fire-band-canvas {
@@ -25,109 +26,8 @@
   z-index: -2;
 }
 
-body[data-theme="campfire"] .ember-field-canvas,
-body[data-theme="campfire"] .fire-band-canvas {
-  display: none;
-}
 
-body[data-theme="campfire"] .fire-band-canvas {
-  display: block;
-}
-
-body[data-theme="campfire"] .water-canvas,
-body[data-theme="campfire"] .wind-canvas,
-body[data-theme="campfire"] .earth-canvas,
-body[data-theme="campfire"] .ice-canvas,
-body[data-theme="campfire"] .storm-canvas,
-body[data-theme="campfire"] .space-canvas,
-body[data-theme="campfire"] .garden-canvas,
-body[data-theme="campfire"] .cherry-canvas {
-  display: none;
-}
-
-body[data-theme="water"] .ember-field-canvas,
-body[data-theme="water"] .fire-band-canvas,
-body[data-theme="water"] .wind-canvas,
-body[data-theme="water"] .earth-canvas,
-body[data-theme="water"] .ice-canvas,
-body[data-theme="water"] .storm-canvas,
-body[data-theme="water"] .space-canvas,
-body[data-theme="water"] .garden-canvas,
-body[data-theme="water"] .cherry-canvas {
-  display: none;
-}
-
-body[data-theme="wind"] .ember-field-canvas,
-body[data-theme="wind"] .fire-band-canvas,
-body[data-theme="wind"] .water-canvas,
-body[data-theme="wind"] .earth-canvas,
-body[data-theme="wind"] .ice-canvas,
-body[data-theme="wind"] .storm-canvas,
-body[data-theme="wind"] .space-canvas,
-body[data-theme="wind"] .garden-canvas,
-body[data-theme="wind"] .cherry-canvas {
-  display: none;
-}
-
-body[data-theme="earth"] .ember-field-canvas,
-body[data-theme="earth"] .fire-band-canvas,
-body[data-theme="earth"] .water-canvas,
-body[data-theme="earth"] .wind-canvas,
-body[data-theme="earth"] .ice-canvas,
-body[data-theme="earth"] .storm-canvas,
-body[data-theme="earth"] .space-canvas,
-body[data-theme="earth"] .garden-canvas,
-body[data-theme="earth"] .cherry-canvas {
-  display: none;
-}
-
-body[data-theme="ice"] .ember-field-canvas,
-body[data-theme="ice"] .fire-band-canvas,
-body[data-theme="ice"] .water-canvas,
-body[data-theme="ice"] .wind-canvas,
-body[data-theme="ice"] .earth-canvas,
-body[data-theme="ice"] .storm-canvas,
-body[data-theme="ice"] .space-canvas,
-body[data-theme="ice"] .garden-canvas,
-body[data-theme="ice"] .cherry-canvas {
-  display: none;
-}
-
-body[data-theme="storm"] .ember-field-canvas,
-body[data-theme="storm"] .fire-band-canvas,
-body[data-theme="storm"] .water-canvas,
-body[data-theme="storm"] .wind-canvas,
-body[data-theme="storm"] .earth-canvas,
-body[data-theme="storm"] .ice-canvas,
-body[data-theme="storm"] .space-canvas,
-body[data-theme="storm"] .garden-canvas,
-body[data-theme="storm"] .cherry-canvas {
-  display: none;
-}
-
-body[data-theme="space"] .ember-field-canvas,
-body[data-theme="space"] .fire-band-canvas,
-body[data-theme="space"] .water-canvas,
-body[data-theme="space"] .wind-canvas,
-body[data-theme="space"] .earth-canvas,
-body[data-theme="space"] .ice-canvas,
-body[data-theme="space"] .storm-canvas,
-body[data-theme="space"] .garden-canvas,
-body[data-theme="space"] .cherry-canvas {
-  display: none;
-}
-
-body[data-theme="garden"] .ember-field-canvas,
-body[data-theme="garden"] .fire-band-canvas,
-body[data-theme="garden"] .water-canvas,
-body[data-theme="garden"] .wind-canvas,
-body[data-theme="garden"] .earth-canvas,
-body[data-theme="garden"] .ice-canvas,
-body[data-theme="garden"] .storm-canvas,
-body[data-theme="garden"] .space-canvas,
-body[data-theme="garden"] .cherry-canvas {
-  display: none;
-}
+/* Theme Variables & Configuration */
 
 body[data-theme-preview="campfire"] {
   --theme-bg: radial-gradient(circle at 20% 15%, #3b1b11 0%, #161311 55%, #0a0706 100%);
@@ -328,126 +228,34 @@ body[data-theme-preview="cherry"] .theme-motion {
   opacity: 1;
 }
 
-/* Theme preview on hover - higher specificity */
-body[data-theme-preview="campfire"] .water-canvas,
-body[data-theme-preview="campfire"] .wind-canvas,
-body[data-theme-preview="campfire"] .earth-canvas,
-body[data-theme-preview="campfire"] .ice-canvas,
-body[data-theme-preview="campfire"] .storm-canvas,
-body[data-theme-preview="campfire"] .space-canvas,
-body[data-theme-preview="campfire"] .garden-canvas,
-body[data-theme-preview="campfire"] .cherry-canvas {
-  display: none !important;
-}
 
-body[data-theme-preview="water"] .ember-field-canvas,
-body[data-theme-preview="water"] .fire-band-canvas,
-body[data-theme-preview="water"] .wind-canvas,
-body[data-theme-preview="water"] .earth-canvas,
-body[data-theme-preview="water"] .ice-canvas,
-body[data-theme-preview="water"] .storm-canvas,
-body[data-theme-preview="water"] .space-canvas,
-body[data-theme-preview="water"] .garden-canvas,
-body[data-theme-preview="water"] .cherry-canvas {
-  display: none !important;
-}
+/* Show correct canvas per theme */
+body[data-theme="campfire"] .fire-band-canvas,
+body[data-theme-preview="campfire"] .fire-band-canvas { display: block !important; }
 
-body[data-theme-preview="wind"] .ember-field-canvas,
-body[data-theme-preview="wind"] .fire-band-canvas,
-body[data-theme-preview="wind"] .water-canvas,
-body[data-theme-preview="wind"] .earth-canvas,
-body[data-theme-preview="wind"] .ice-canvas,
-body[data-theme-preview="wind"] .storm-canvas,
-body[data-theme-preview="wind"] .space-canvas,
-body[data-theme-preview="wind"] .garden-canvas,
-body[data-theme-preview="wind"] .cherry-canvas {
-  display: none !important;
-}
+body[data-theme="water"] .water-canvas,
+body[data-theme-preview="water"] .water-canvas { display: block !important; }
 
-body[data-theme-preview="earth"] .ember-field-canvas,
-body[data-theme-preview="earth"] .fire-band-canvas,
-body[data-theme-preview="earth"] .water-canvas,
-body[data-theme-preview="earth"] .wind-canvas,
-body[data-theme-preview="earth"] .ice-canvas,
-body[data-theme-preview="earth"] .storm-canvas,
-body[data-theme-preview="earth"] .space-canvas,
-body[data-theme-preview="earth"] .garden-canvas,
-body[data-theme-preview="earth"] .cherry-canvas {
-  display: none !important;
-}
+body[data-theme="wind"] .wind-canvas,
+body[data-theme-preview="wind"] .wind-canvas { display: block !important; }
 
-body[data-theme-preview="ice"] .ember-field-canvas,
-body[data-theme-preview="ice"] .fire-band-canvas,
-body[data-theme-preview="ice"] .water-canvas,
-body[data-theme-preview="ice"] .wind-canvas,
-body[data-theme-preview="ice"] .earth-canvas,
-body[data-theme-preview="ice"] .storm-canvas,
-body[data-theme-preview="ice"] .space-canvas,
-body[data-theme-preview="ice"] .garden-canvas,
-body[data-theme-preview="ice"] .cherry-canvas {
-  display: none !important;
-}
+body[data-theme="earth"] .earth-canvas,
+body[data-theme-preview="earth"] .earth-canvas { display: block !important; }
 
-body[data-theme-preview="storm"] .ember-field-canvas,
-body[data-theme-preview="storm"] .fire-band-canvas,
-body[data-theme-preview="storm"] .water-canvas,
-body[data-theme-preview="storm"] .wind-canvas,
-body[data-theme-preview="storm"] .earth-canvas,
-body[data-theme-preview="storm"] .ice-canvas,
-body[data-theme-preview="storm"] .space-canvas,
-body[data-theme-preview="storm"] .garden-canvas,
-body[data-theme-preview="storm"] .cherry-canvas {
-  display: none !important;
-}
+body[data-theme="ice"] .ice-canvas,
+body[data-theme-preview="ice"] .ice-canvas { display: block !important; }
 
-body[data-theme-preview="space"] .ember-field-canvas,
-body[data-theme-preview="space"] .fire-band-canvas,
-body[data-theme-preview="space"] .water-canvas,
-body[data-theme-preview="space"] .wind-canvas,
-body[data-theme-preview="space"] .earth-canvas,
-body[data-theme-preview="space"] .ice-canvas,
-body[data-theme-preview="space"] .storm-canvas,
-body[data-theme-preview="space"] .garden-canvas,
-body[data-theme-preview="space"] .cherry-canvas {
-  display: none !important;
-}
+body[data-theme="storm"] .storm-canvas,
+body[data-theme-preview="storm"] .storm-canvas { display: block !important; }
 
-body[data-theme-preview="garden"] .ember-field-canvas,
-body[data-theme-preview="garden"] .fire-band-canvas,
-body[data-theme-preview="garden"] .water-canvas,
-body[data-theme-preview="garden"] .wind-canvas,
-body[data-theme-preview="garden"] .earth-canvas,
-body[data-theme-preview="garden"] .ice-canvas,
-body[data-theme-preview="garden"] .storm-canvas,
-body[data-theme-preview="garden"] .space-canvas,
-body[data-theme-preview="garden"] .cherry-canvas {
-  display: none !important;
-}
+body[data-theme="space"] .space-canvas,
+body[data-theme-preview="space"] .space-canvas { display: block !important; }
 
-/* Force display of correct canvas during preview */
-body[data-theme-preview="campfire"] .fire-band-canvas,
-body[data-theme-preview="water"] .water-canvas,
-body[data-theme-preview="wind"] .wind-canvas,
-body[data-theme-preview="earth"] .earth-canvas,
-body[data-theme-preview="ice"] .ice-canvas,
-body[data-theme-preview="storm"] .storm-canvas,
-body[data-theme-preview="space"] .space-canvas,
-body[data-theme-preview="garden"] .garden-canvas,
-body[data-theme-preview="cherry"] .cherry-canvas {
-  display: block !important;
-}
+body[data-theme="garden"] .garden-canvas,
+body[data-theme-preview="garden"] .garden-canvas { display: block !important; }
 
-body[data-theme-preview="cherry"] .ember-field-canvas,
-body[data-theme-preview="cherry"] .fire-band-canvas,
-body[data-theme-preview="cherry"] .water-canvas,
-body[data-theme-preview="cherry"] .wind-canvas,
-body[data-theme-preview="cherry"] .earth-canvas,
-body[data-theme-preview="cherry"] .ice-canvas,
-body[data-theme-preview="cherry"] .storm-canvas,
-body[data-theme-preview="cherry"] .space-canvas,
-body[data-theme-preview="cherry"] .garden-canvas {
-  display: none !important;
-}
+body[data-theme="cherry"] .cherry-canvas,
+body[data-theme-preview="cherry"] .cherry-canvas { display: block !important; }
 
 .theme-motion,
 .theme-particle-layer {

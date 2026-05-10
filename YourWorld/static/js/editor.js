@@ -680,6 +680,10 @@ if (workspace) {
     generatedImageUrl = null;
     shareCode = data.share_code || null;
     shareCanEditValue = data.can_edit || false;
+    
+    // Keep entries list in sync
+    const entryIdx = entries.findIndex(e => e.id === currentEntryId);
+    if (entryIdx >= 0) entries[entryIdx].share_code = shareCode;
     if (shareModeSelect) {
       const nextMode = data.share_type || 'story';
       setShareMode(nextMode, nextMode === 'single' ? 'Single page' : 'Full story');
@@ -1412,6 +1416,13 @@ if (workspace) {
       setStatus('Save page first');
       return;
     }
+
+    // Check if another story is already shared
+    const otherShared = entries.find(e => e.share_code && e.id !== targetId);
+    if (!shareCode && otherShared) {
+      const confirmMsg = `This will disable your previous share link for "${otherShared.title || 'Untitled'}". Continue?`;
+      if (!window.confirm(confirmMsg)) return;
+    }
     const mode = shareModeSelect ? shareModeSelect.value : 'story';
     const shareCanEdit = document.getElementById('shareCanEdit');
     const canEdit = shareCanEdit ? shareCanEdit.checked : false;
@@ -1458,6 +1469,12 @@ if (workspace) {
       }
       shareCode = data.share_code;
       shareCanEditValue = data.can_edit;
+
+      // Update local entries list state (only one active code per user)
+      entries.forEach(e => {
+        if (e.id === targetId) e.share_code = shareCode;
+        else e.share_code = null;
+      });
       if (!useRandom && shareCustomCodeInput) {
         shareCustomCodeInput.placeholder = customCodePlaceholder;
         shareCustomCodeInput.title = '';
@@ -1540,6 +1557,11 @@ if (workspace) {
         if (!response.ok) throw new Error('Remove failed');
         shareCode = null;
         shareCanEditValue = false;
+        
+        // Update local entries list
+        const entryIdx = entries.findIndex(e => e.id === targetId);
+        if (entryIdx >= 0) entries[entryIdx].share_code = null;
+        
         updateShareUI();
       } catch (err) {
         setStatus('Remove failed');

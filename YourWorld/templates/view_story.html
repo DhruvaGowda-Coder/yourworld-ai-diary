@@ -527,9 +527,28 @@
       display: flex !important;
       flex-direction: column !important;
       overflow: visible !important;
-      min-height: 0 !important;
+      min-height: 100% !important;
       height: auto !important;
-      background: transparent !important; /* Restore texture transparency */
+      background: transparent !important;
+      position: relative !important;
+      flex-grow: 1 !important;
+    }
+    
+    #publicPageScroll::after {
+      content: "" !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 20px !important;
+      background-image:
+        repeating-linear-gradient(43deg, rgba(108, 72, 38, 0.08) 0 2px, transparent 2px 5px),
+        repeating-linear-gradient(-38deg, rgba(90, 58, 28, 0.06) 0 3px, transparent 3px 7px),
+        repeating-linear-gradient(0deg, rgba(255, 244, 215, 0.06) 0 1px, transparent 1px 2px) !important;
+      background-attachment: local !important;
+      border-radius: 22px !important;
+      z-index: -1 !important;
+      pointer-events: none !important;
     }
 
     #publicTitle {

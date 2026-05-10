@@ -170,7 +170,7 @@ def api_entries():
     last_doc_id = request.args.get("after")
     rows, has_more = firebase_db.get_entries(session["user_id"], entry_type, limit=limit, last_doc_id=last_doc_id or None)
     return jsonify({
-        "entries": [{"id": r["id"], "title": r.get("title", "Untitled"), "updated_at": r.get("updated_at"), "created_at": r.get("created_at")} for r in rows],
+        "entries": [{"id": r["id"], "title": r.get("title", "Untitled"), "updated_at": r.get("updated_at"), "created_at": r.get("created_at"), "share_code": r.get("share_code")} for r in rows],
         "has_more": has_more
     })
 
@@ -382,18 +382,7 @@ def api_chat():
             snippet = strip_html(r.get("content") or "").replace("\n", " ")[:170]
             related_pages.append(f"- {r.get('title', 'Untitled')}: {snippet}")
 
-    theme_profiles = {
-        "campfire": "Voice: warm, reflective, and extremely concise. Encourage the user briefly.",
-        "water": "Voice: calm, patient, and brief. Use minimal, high-impact wording.",
-        "wind": "Voice: quick, curious, and very short. Use bullet points primarily.",
-        "earth": "Voice: grounded, practical, and direct. Provide clear, short steps.",
-        "ice": "Voice: sharp, clear, and precise. Avoid any unnecessary words.",
-        "storm": "Voice: bold, energetic, and rapid. Use short, punchy sentences.",
-        "space": "Voice: expansive yet concise. Connect ideas with minimal chatter.",
-        "garden": "Voice: nurturing and brief. Focus on the very next step only.",
-        "cherry": "Voice: gentle, appreciative, and short. Capture the essence quickly.",
-    }
-    theme_profile = theme_profiles.get(active_theme, theme_profiles["campfire"])
+    theme_profile = THEME_CHAT_PROFILES.get(active_theme, THEME_CHAT_PROFILES["campfire"])
     system_prompt = f"You are Aura, a professional AI assistant. CRITICAL: Always use double newlines (\\n\\n) between every point, paragraph, and section. Use Markdown lists and bold text. For code, always use triple-backtick code blocks. Never group points into a single dense block of text. {theme_profile}"
     
     messages = [{"role": "system", "content": system_prompt}]
