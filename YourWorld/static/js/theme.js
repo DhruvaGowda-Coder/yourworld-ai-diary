@@ -3,39 +3,67 @@
   const toggleBtn = document.getElementById('audioToggleBtn');
   if (!ambientAudio || !toggleBtn) return;
   
-  let isPlaying = localStorage.getItem('yw_sound_enabled') === 'true';
+  let isPlaying = localStorage.getItem('yw_sound_enabled') !== 'false';
   const savedTime = parseFloat(localStorage.getItem('yw_sound_time') || '0');
   
+  const themeAudioExtensions = {
+    earth: 'mp3',
+    garden: 'mp3',
+    storm: 'mp3',
+    wind: 'mp3'
+  };
+
+  const themeVolumes = {
+    cherry: 1.0,
+    campfire: 0.7,
+    water: 0.7,
+    wind: 0.7,
+    earth: 0.7,
+    ice: 0.7,
+    storm: 0.7,
+    space: 0.7,
+    garden: 0.7
+  };
+
   const getAudioSrc = (theme) => {
     if (window.UserAudio && window.UserAudio[theme]) {
       return window.UserAudio[theme];
     }
-    return `/static/audio/${theme}.wav`;
+    const ext = themeAudioExtensions[theme] || 'wav';
+    return `/static/audio/${theme}.${ext}`;
   };
 
   let playPromise = null;
+  let lastRequestTime = 0;
 
   const loadAndPlay = async () => {
+    const requestTime = Date.now();
+    lastRequestTime = requestTime;
+
     const theme = typeof activeTheme !== 'undefined' ? activeTheme : (document.body.dataset.theme || 'campfire');
     const src = getAudioSrc(theme);
     if (!src) return;
 
     const targetUrl = new URL(src, window.location.origin).href;
     
-    // 1. Explicitly stop and reset before loading a new source to prevent overlaps
+    // 1. Stop and reset if source changed
     if (ambientAudio.src !== targetUrl) {
       ambientAudio.pause();
-      console.log('Audio: Loading source:', src);
+      console.log('Audio: Switching source to:', src);
       ambientAudio.src = src;
+      ambientAudio.volume = themeVolumes[theme] || 0.7;
       ambientAudio.load();
       if (savedTime > 0) ambientAudio.currentTime = savedTime;
     }
 
     if (isPlaying) {
       try {
-        // 2. Prevent concurrent play() requests which can cause race conditions/overlapping
+        // 2. Wait for any pending play operation to settle
         if (playPromise) await playPromise;
         
+        // 3. Concurrency check: If a newer request was made while we were waiting, abort this one
+        if (lastRequestTime !== requestTime) return;
+
         if (ambientAudio.paused) {
           playPromise = ambientAudio.play();
           await playPromise;
@@ -43,12 +71,12 @@
           
           toggleBtn.textContent = '🔊 Sound';
           toggleBtn.classList.add('is-active');
-          console.log('Audio: Playing', theme);
+          console.log('Audio: Now playing', theme);
         }
       } catch (err) {
         playPromise = null;
         if (err.name !== 'AbortError') {
-          console.warn('Audio: Playback blocked or failed:', err.name);
+          console.warn('Audio: Playback error:', err.name);
           toggleBtn.textContent = '🔇 Sound';
         }
       }

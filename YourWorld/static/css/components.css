@@ -445,10 +445,12 @@ body[data-theme="cherry"] .chat-bubble.bot {
 @media (max-width: 900px) {
   .workspace {
     grid-template-columns: 1fr;
+    gap: 32px; /* Increased gap to separate sidebar from book area */
   }
 
   .entry-sidebar {
     order: -1;
+    padding-bottom: 24px; /* Extra padding for dropdown space */
   }
 
   .public-layout {
@@ -1161,11 +1163,11 @@ body[data-theme="cherry"] ::selection { background: rgba(255, 182, 197, 0.3); }
 
 /* ─── Share Mode Menu Enhancement ─── */
 .share-mode-menu {
-  background: rgba(15, 10, 8, 0.96);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(16px) saturate(1.8) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* ─── Accessible Focus Enhancement ─── */

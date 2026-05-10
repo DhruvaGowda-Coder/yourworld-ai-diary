@@ -774,21 +774,19 @@ if (workspace) {
           title_style: JSON.stringify(titleStyleState),
           content_style: JSON.stringify(contentStyleState),
         };
-        if (entryType === 'story') {
-          payload.image_prompt = imagePrompt ? imagePrompt.value : null;
-          payload.images = currentImages;
-          // Legacy fields for older viewers (first image only)
-          if (currentImages.length > 0) {
-            payload.image_url = currentImages[0].url;
-            payload.image_attached = true;
-            payload.image_style = JSON.stringify({
-                x: currentImages[0].x, y: currentImages[0].y, 
-                width: currentImages[0].width, height: currentImages[0].height
-            });
-          } else {
-            payload.image_url = null;
-            payload.image_attached = false;
-          }
+        payload.image_prompt = imagePrompt ? imagePrompt.value : null;
+        payload.images = currentImages;
+        // Legacy fields for older viewers (first image only)
+        if (currentImages.length > 0) {
+          payload.image_url = currentImages[0].url;
+          payload.image_attached = true;
+          payload.image_style = JSON.stringify({
+              x: currentImages[0].x, y: currentImages[0].y, 
+              width: currentImages[0].width, height: currentImages[0].height
+          });
+        } else {
+          payload.image_url = null;
+          payload.image_attached = false;
         }
 
         const response = await fetch('/api/entry/save', {

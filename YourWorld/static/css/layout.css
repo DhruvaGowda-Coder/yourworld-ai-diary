@@ -1365,7 +1365,7 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
       repeating-linear-gradient(-38deg, rgba(90, 58, 28, 0.03) 0 3px, rgba(255, 245, 220, 0.015) 3px 7px),
       linear-gradient(180deg, #f0e2c4 0%, #e8d4ad 46%, #dfc69b 100%) !important;
     
-    background-attachment: local !important;
+    background-attachment: scroll !important;
     box-sizing: border-box !important;
     
     /* Re-add border and radius for mobile */

@@ -40,7 +40,7 @@
     <p class="settings-theme-hint">Create a custom library for each theme. Upload multiple songs and choose your favorite for the atmosphere.</p>
     
     <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; margin-top: 16px;">
-      <div id="themeAudioList" style="display: flex; flex-direction: column; gap: 12px;">
+      <div id="themeAudioList" style="display: flex; flex-direction: column; gap: 12px; max-height: 450px; overflow-y: auto; padding-right: 4px;">
         <!-- Filled dynamically -->
       </div>
       <div id="audioUploadStatus" style="margin-top: 16px; font-size: 0.85em; color: var(--text-2); min-height: 1.2em; text-align: center;"></div>
@@ -58,6 +58,8 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    max-height: 250px;
+    overflow-y: auto;
   }
   .song-item {
     display: flex;
@@ -93,6 +95,33 @@
     font-weight: 600 !important;
     letter-spacing: 0.02em;
     font-size: 0.72em !important;
+  }
+  
+  /* Custom Scrollbar for Audio List */
+  #themeAudioList::-webkit-scrollbar {
+    width: 5px;
+  }
+  #themeAudioList::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  #themeAudioList::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+  #themeAudioList::-webkit-scrollbar-thumb:hover,
+  .library-section::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .library-section::-webkit-scrollbar {
+    width: 4px;
+  }
+  .library-section::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .library-section::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
   }
 </style>
 
