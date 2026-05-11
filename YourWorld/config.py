@@ -25,7 +25,7 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
 # Site Meta
 SITE_URL = os.environ.get("SITE_URL", "https://worldbyyou.com").rstrip("/")
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "elementaldiary@gmail.com").strip()
-SITEMAP_LASTMOD = "2026-05-05"
+SITEMAP_LASTMOD = "2026-05-11"
 SHARE_CODE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.~-]{3,31}$")
 
 # Firebase Web Config
@@ -69,5 +69,6 @@ THEME_CHAT_PROFILES = {
 
 ALLOWED_IMAGE_EXT = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
 ALLOWED_AUDIO_EXT = {'.mp3', '.wav', '.ogg', '.m4a', '.flac'}
+ALLOWED_FILE_EXT = {'.pdf', '.doc', '.docx', '.txt', '.zip', '.7z', '.rar', '.xls', '.xlsx', '.ppt', '.pptx', '.csv', '.md', '.js', '.py', '.html', '.css', '.json', '.sql', '.java', '.cpp', '.svg', '.epub', '.yaml', '.xml'}
 GUEST_EMAIL_PREFIX = "guest-"
 GUEST_EMAIL_DOMAIN = "guest.local"

@@ -901,6 +901,80 @@ body[data-theme="cherry"] .chat-bubble.bot {
   transform: translateY(-1px);
 }
 
+.chat-upload-btn {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  opacity: 0.9;
+  padding: 0 8px !important;
+  cursor: pointer;
+  transition: color 0.25s ease !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-upload-btn:hover {
+  color: var(--theme-accent) !important;
+  transform: none !important;
+}
+
+.chat-file-preview {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.chat-file-preview .preview-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-file-preview .preview-remove {
+  cursor: pointer;
+  color: #ff4d4d;
+  font-weight: bold;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.chat-bubble .bubble-image {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-top: 8px;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-bubble .bubble-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 8px;
+  text-decoration: none;
+  color: var(--theme-accent);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+}
+
+.chat-bubble .bubble-file:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* ─── Enhanced Sidebar ─── */
 .entry-sidebar {
   box-shadow:

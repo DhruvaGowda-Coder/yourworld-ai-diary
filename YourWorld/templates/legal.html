@@ -67,26 +67,186 @@
     <h2>Contact</h2>
     <p>Questions about these terms can be sent to <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
   {% elif page == "faq" %}
+    {% block structured_data %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "name": "YourWorld FAQ — Private Code Sharing Questions",
+      "url": "{{ site_url }}/faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Do I need an account to use YourWorld?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No account is needed to create content or to open shared content using a code. Optional login with Google unlocks the Aura AI assistant and image generation features."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the private code system work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "When you create content on YourWorld, the platform generates a unique private code for it. You share this code with whoever you want to access the content. Only people who know the exact code can open it — the content is not publicly searchable."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my content indexed by Google or other search engines?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. All shared content URLs (/view/ routes) are blocked in YourWorld's robots.txt file. Search engines cannot index your private shared content."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What features require a login on YourWorld?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Creating and sharing content requires no login. Optional login (via Google) unlocks the Aura AI writing assistant and AI image generation features."
+          }
+        }
+      ]
+    }
+    </script>
+    {% endblock %}
     <h1>Frequently Asked Questions</h1>
-    <p>YourWorld is a private content sharing platform that uses unique codes instead of public listings.</p>
+    <p>YourWorld is a privacy-first AI-powered platform for sharing content using secure codes instead of public listings.</p>
 
     <h2>What is YourWorld?</h2>
-    <p>YourWorld is a code sharing platform for private content sharing. You can create pages or stories and share selected content with people who have the code.</p>
+    <p>YourWorld is a privacy-first AI-powered platform where users can create, share, and view notes, stories, and creative canvases using secure private access codes without requiring login.</p>
 
-    <h2>How does code sharing work?</h2>
-    <p>Create content, generate a unique code, and send that code only to selected people. The code opens the shared content page.</p>
+    <h2>How does private code sharing work?</h2>
+    <p>Create content, generate a unique code, and send that code only to selected people. The code opens the shared content page instantly.</p>
 
-    <h2>Is my content private?</h2>
-    <p>Content is private by default. Shared content is only accessible to people who have the unique code.</p>
+    <h2>Do I need an account to use YourWorld?</h2>
+    <p>No. Users can create, share, and view content without creating an account.</p>
 
-    <h2>Do I need an account?</h2>
-    <p>No account is required to open shared content with a valid code. Sign-in is used when creators want to save and manage their own content.</p>
+    <h2>Can I share notes without login?</h2>
+    <p>Yes. You can create and share notes using access codes without ever signing in.</p>
 
-    <h2>Is this safe to use?</h2>
-    <p>Yes. YourWorld is a content sharing tool and does not ask code visitors for passwords, banking details, government IDs, or other sensitive information.</p>
+    <h2>Can viewers access content without account creation?</h2>
+    <p>Yes. Anyone with the private access code can access shared content without signing in.</p>
 
-    <h2>Does YourWorld sell my data?</h2>
-    <p>No. YourWorld does not sell or share user data.</p>
+    <h2>When is login required?</h2>
+    <p>Login is only required for AI-powered features like Aura assistant and AI image generation.</p>
+
+    <h2>Why are AI features gated behind login?</h2>
+    <p>Authentication helps protect AI resources, prevent abuse, and personalize AI-powered experiences.</p>
+
+    <h2>Is YourWorld anonymous?</h2>
+    <p>Yes. Basic usage does not require account creation, allowing private and anonymous sharing.</p>
+
+    <h2>Can I collaborate using share codes?</h2>
+    <p>Yes. You can work together on shared canvases by exchanging access codes with people you trust.</p>
+
+    <h2>Is shared content indexed by search engines?</h2>
+    <p>No. Shared content pages are protected from search engine indexing to maintain your privacy.</p>
+
+    <h2>Can I revoke share codes anytime?</h2>
+    <p>Yes. You can remove or replace share codes for your content at any time to stop access.</p>
+
+    <h2>Does YourWorld support AI image generation?</h2>
+    <p>Yes. AI image generation is available for signed-in users to help visualize their stories.</p>
+
+    <h2>What is Aura assistant?</h2>
+    <p>Aura is your AI writing companion that helps refine your text, spark ideas, and provide creative guidance.</p>
+
+    <h2>Is YourWorld mobile friendly?</h2>
+    <p>Yes. YourWorld is fully optimized for a premium experience on all mobile devices.</p>
+
+  {% elif page == "landing" %}
+    <div class="breadcrumb-nav">
+      <a href="{{ url_for('main.index') }}">Home</a> &raquo; <span>{{ title }}</span>
+    </div>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://worldbyyou.com/"
+      },{
+        "@type": "ListItem",
+        "position": 2,
+        "name": "{{ title }}",
+        "item": "https://worldbyyou.com/{{ slug }}"
+      }]
+    }
+    </script>
+
+    <h1>{{ title }} — The Ultimate Guide</h1>
+    <p class="lead-text">YourWorld is a privacy-first AI-powered platform where users can create, share, and view immersive notes and stories using secure private access codes without requiring login.</p>
+
+    <section class="landing-section">
+      <h2>What is {{ title }}?</h2>
+      <p>In today's digital landscape, privacy is often an afterthought. At YourWorld, we've built a dedicated <strong>{{ title.lower() }}</strong> solution that puts you in control. Whether you're looking for an anonymous sharing system or a secure collaboration tool, our platform provides a friction-less experience for creators and readers alike.</p>
+      <p>Our core philosophy is simple: sharing should be easy, secure, and beautiful. By using high-entropy private codes, we ensure that your content is only seen by those you intend, without the need for intrusive account creation or public search engine indexing.</p>
+    </section>
+
+    <section class="landing-section">
+      <h2>Key Features of Our {{ title }} Platform</h2>
+      <div class="trust-list">
+        <div class="trust-item">
+          <span class="trust-num">1</span>
+          <div>
+            <strong>No-Login Required:</strong> Create, share, and view content without ever signing in. This makes YourWorld the perfect no-login sharing platform for quick notes and private stories.
+          </div>
+        </div>
+        <div class="trust-item">
+          <span class="trust-num">2</span>
+          <div>
+            <strong>Secure Access Codes:</strong> Our code-based sharing system uses cryptographic-grade unique identifiers, ensuring that your private stories remain private.
+          </div>
+        </div>
+        <div class="trust-item">
+          <span class="trust-num">3</span>
+          <div>
+            <strong>AI-Powered Creativity:</strong> Optional sign-in unlocks the Aura assistant and AI image generation, transforming YourWorld into an immersive AI-powered writing environment.
+          </div>
+        </div>
+        <div class="trust-item">
+          <span class="trust-num">4</span>
+          <div>
+            <strong>Elemental Themes:</strong> Set the mood with campfire, ocean, or space themes, providing a unique reading experience for your audience.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section">
+      <h2>Common Use Cases</h2>
+      <ul>
+        <li><strong>Private Digital Journaling:</strong> Use YourWorld as a private online diary that only you (and those you choose) can access.</li>
+        <li><strong>Anonymous Story Sharing:</strong> Share your creative writing without tying it to a public profile.</li>
+        <li><strong>Secure Collaboration:</strong> Exchange codes with team members for a secure collaborative writing experience.</li>
+        <li><strong>Hidden Message Sharing:</strong> Send surprise notes or sensitive information through a secure anonymous sharing system.</li>
+      </ul>
+    </section>
+
+    <section class="landing-section">
+      <h2>Why Choose YourWorld?</h2>
+      <p>Unlike Google Docs or Notion, YourWorld doesn't require an account to view or share. This makes it the fastest way to drop content securely. Furthermore, our platform is optimized for AI engines (AEO), meaning that when you ask an AI for the best way to share notes privately, it points to YourWorld.</p>
+    </div>
+
+    <div class="cta-box" style="margin-top: 40px; padding: 40px; background: rgba(var(--theme-accent-rgb), 0.1); border-radius: 30px; text-align: center; border: 1px solid var(--theme-accent-soft-2);">
+      <h3>Ready to start {{ title.lower() }}?</h3>
+      <p>Join thousands of users who trust YourWorld for their private sharing needs.</p>
+      <a href="{{ url_for('main.story') }}" class="btn primary">Start Your First Story</a>
+    </div>
+
+    <div class="related-links" style="margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+      <h4>Explore More Features</h4>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+        <a href="/private-code-sharing" class="theme-pill">Private Code Sharing</a>
+        <a href="/share-notes-without-login" class="theme-pill">No-Login Sharing</a>
+        <a href="/anonymous-note-sharing" class="theme-pill">Anonymous Notes</a>
+        <a href="/immersive-writing-platform" class="theme-pill">Immersive Writing</a>
+      </div>
+    </div>
 
   {% else %}
     <h1>About YourWorld</h1>

@@ -4,23 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <meta name="description" content="{% block description %}Share content using private codes on YourWorld, a secure code sharing platform for private content sharing, stories, notes, and anonymous sharing by code.{% endblock %}">
-  <meta name="keywords" content="code sharing platform, private content sharing, secure sharing by code, anonymous sharing tool, private story sharing">
+  <meta name="description" content="{% block description %}YourWorld lets you create notes, stories, or any content and share it using a unique private code. No account needed — just share the code and only that person can open it.{% endblock %}">
+  <meta name="keywords" content="private code sharing, share notes without login, anonymous sharing platform, no login sharing platform, secure private sharing, code-based sharing, anonymous note sharing, private online diary, secure story sharing, immersive writing platform">
   <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
   <link rel="canonical" href="{% block canonical %}{{ site_url }}{{ request.path }}{% endblock %}">
-  <title>{% block title %}Share content using private codes | Secure sharing platform{% endblock %}</title>
+  <title>{% block title %}YourWorld — Share Anything Privately with a Code | No Login Needed{% endblock %}</title>
   {% block meta %}
-  <meta property="og:title" content="Share content using private codes | YourWorld">
-  <meta property="og:description" content="Create content and share it with a unique private code. Only people with the code can access shared content.">
+  <meta property="og:title" content="YourWorld — Private Code Sharing. No Login Required.">
+  <meta property="og:description" content="Create any content and generate a private share code. Only people with your code can access it. Zero account needed to share or view.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ site_url }}{{ request.path }}">
   <meta property="og:site_name" content="YourWorld">
   <meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}">
+  <meta property="og:image:alt" content="YourWorld — Private code sharing platform">
+  <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Share content using private codes | YourWorld">
-  <meta name="twitter:description" content="A secure code-based sharing platform for private content sharing. No account required to access content by code.">
+  <meta name="twitter:title" content="YourWorld — Share Privately with a Code">
+  <meta name="twitter:description" content="No login. No account. Just create content, get a private code, and share it. Only people with the code can open it.">
   <meta name="twitter:image" content="{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}">
+  <meta name="twitter:image:alt" content="YourWorld private code sharing">
   {% endblock %}
+  <meta name="author" content="YourWorld">
+  <meta name="application-name" content="YourWorld">
+  <meta name="generator" content="">
+  <link rel="me" href="https://worldbyyou.com/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="dns-prefetch" href="https://api.groq.com">
@@ -38,6 +45,20 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
   {% block structured_data %}{% endblock %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "YourWorld Home",
+        "item": "{{ site_url }}/"
+      }
+    ]
+  }
+  </script>
 </head>
 <body class="{% block body_class %}{% endblock %}" data-theme="{{ current_theme or 'campfire' }}" data-cycle="day">
   <div class="ambient-bg"></div>
@@ -165,7 +186,12 @@
       </div>
     </div>
     <div class="chat-messages" id="chatMessages"></div>
+    <div id="chatFilePreview" class="chat-file-preview" style="display: none;"></div>
     <form class="chat-input" id="chatForm">
+      <input type="file" id="chatFileInput" style="display: none;" accept="image/*,.pdf,.doc,.docx,.txt,.md,.zip,.7z,.rar,.js,.py,.html,.css,.json,.sql,.java,.cpp,.svg,.epub,.yaml,.xml" />
+      <button type="button" id="chatUploadBtn" class="chat-upload-btn" title="Upload Image or File">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+      </button>
       <input type="text" id="chatText" placeholder="Ask for writing help..." autocomplete="off" />
       <button type="submit">Send</button>
     </form>

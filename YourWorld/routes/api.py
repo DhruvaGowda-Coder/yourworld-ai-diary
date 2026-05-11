@@ -13,7 +13,7 @@ from werkzeug.utils import secure_filename
 import firebase_db
 from extensions import csrf, limiter
 from config import (
-    ALLOWED_IMAGE_EXT, ALLOWED_AUDIO_EXT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,
+    ALLOWED_IMAGE_EXT, ALLOWED_AUDIO_EXT, ALLOWED_FILE_EXT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,
     R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_DEV_URL,
     GROQ_API_KEY, GROQ_CHAT_MODEL, THEME_CHAT_PROFILES,
     HUGGINGFACE_API_KEY, HUGGINGFACE_IMAGE_MODEL, SITE_URL, SHARE_CODE_RE
@@ -26,10 +26,23 @@ api_bp = Blueprint('api', __name__)
 MAX_UPLOAD_BYTES = {
     "image": 5 * 1024 * 1024,
     "audio": 20 * 1024 * 1024,
+    "file": 10 * 1024 * 1024,
 }
 ALLOWED_MIME_TYPES = {
-    "image": {"image/png", "image/jpeg", "image/gif", "image/webp"},
+    "image": {"image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml"},
     "audio": {"audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/mp4", "audio/m4a", "audio/flac", "audio/x-flac"},
+    "file": {
+        "application/pdf", "application/msword", 
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+        "text/plain", "text/markdown", "text/x-markdown", "application/zip", "application/x-zip-compressed",
+        "application/x-7z-compressed", "application/vnd.rar", "application/x-rar-compressed",
+        "application/javascript", "text/javascript", "text/x-python", "application/x-python",
+        "text/html", "text/css", "application/json", "application/sql", "text/x-sql",
+        "text/x-java-source", "text/x-c++src", "text/x-c++hdr", "image/svg+xml",
+        "application/epub+zip", "text/yaml", "application/x-yaml", "application/xml", "text/xml",
+        "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    },
 }
 
 # ── Cached R2 client singleton ──
@@ -76,6 +89,8 @@ def _file_signature_matches(file_type, header):
             or header.startswith(b"GIF89a")
             or (header.startswith(b"RIFF") and header[8:12] == b"WEBP")
         )
+    if file_type == "file":
+        return True # Skip signature check for generic files
     return (
         header.startswith(b"ID3")
         or header[:2] in {b"\xff\xfb", b"\xff\xf3", b"\xff\xf2"}
@@ -90,7 +105,7 @@ def _validate_upload(file_type, file):
     if not filename:
         return None, None, "No selected file"
     ext = os.path.splitext(filename)[1].lower()
-    allowed_ext = ALLOWED_IMAGE_EXT if file_type == "image" else ALLOWED_AUDIO_EXT
+    allowed_ext = ALLOWED_IMAGE_EXT if file_type == "image" else (ALLOWED_AUDIO_EXT if file_type == "audio" else ALLOWED_FILE_EXT)
     if ext not in allowed_ext:
         return None, None, f"File type {ext} not allowed"
     size = _stream_size(file)
@@ -111,7 +126,7 @@ def _validate_upload(file_type, file):
 @auth_required
 @limiter.limit("20 per hour")
 def api_upload(file_type):
-    if file_type not in ("image", "audio"):
+    if file_type not in ("image", "audio", "file"):
         return jsonify({"error": "Invalid file type"}), 400
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
@@ -356,19 +371,20 @@ def api_entry_save():
 def api_chat():
     data = request.get_json(force=True)
     message = (data.get("message") or "").strip()
+    attachment = data.get("attachment")
     history = data.get("history") or []
     session_id = data.get("session_id")
     context_data = data.get("context") or {}
     user_id = session.get("user_id")
     
     # Sync-only support for when we just want to save the history
-    if not message and data.get("sync_only"):
+    if not message and not attachment and data.get("sync_only"):
         if user_id and not str(user_id).startswith("guest_"):
             new_id = firebase_db.save_chat_session(user_id, session_id, history)
             return jsonify({"success": True, "session_id": new_id})
         return jsonify({"success": True})
 
-    if not message: return jsonify({"error": "Message required"}), 400
+    if not message and not attachment: return jsonify({"error": "Message required"}), 400
 
     active_theme = get_user_theme(user_id)
     
@@ -388,9 +404,21 @@ def api_chat():
     messages = [{"role": "system", "content": system_prompt}]
     if related_pages:
         messages.append({"role": "system", "content": "Recent pages:\n" + "\n".join(related_pages)})
-    # Append limited history (up to 50 messages for context)
-    messages.extend([{"role": h.get("role"), "content": h.get("content")} for h in history[-50:] if h.get("role") in {"user", "assistant"}])
-    messages.append({"role": "user", "content": message})
+    
+    # Append limited history, merging attachment info into text for AI context
+    for h in history[-50:]:
+        if h.get("role") in {"user", "assistant"}:
+            content = h.get("content") or ""
+            att = h.get("attachment")
+            if att:
+                content += f"\n\n[USER ATTACHED A FILE: {att.get('name')} - URL: {att.get('url')}]"
+            messages.append({"role": h.get("role"), "content": content})
+
+    user_content = message
+    if attachment:
+        user_content += f"\n\n[USER ATTACHED A FILE: {attachment.get('name')} - URL: {attachment.get('url')}]"
+    
+    messages.append({"role": "user", "content": user_content})
 
     if not GROQ_API_KEY: return jsonify({"reply": "AI unavailable.", "fallback": True})
     
@@ -408,7 +436,7 @@ def api_chat():
             
         # Update Cloud History for cross-device sync
         if user_id and not str(user_id).startswith("guest_"):
-            new_history = history + [{"role": "user", "content": message}, {"role": "assistant", "content": reply}]
+            new_history = history + [{"role": "user", "content": message, "attachment": attachment}, {"role": "assistant", "content": reply}]
             new_id = firebase_db.save_chat_session(user_id, session_id, new_history[-50:])
             return jsonify({"reply": reply, "session_id": new_id})
             

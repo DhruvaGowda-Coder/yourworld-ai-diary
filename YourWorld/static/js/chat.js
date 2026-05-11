@@ -31,10 +31,18 @@
       msgs.querySelectorAll('.chat-bubble').forEach(el => {
         const contentEl = el.querySelector('.bubble-content');
         if (contentEl) {
-          items.push({ 
+          const item = { 
             who: el.classList.contains('bot') ? 'bot' : 'user', 
             text: contentEl.textContent || ''
-          });
+          };
+          const img = el.querySelector('.bubble-image');
+          const file = el.querySelector('.bubble-file');
+          if (img) {
+            item.attachment = { type: 'image/png', url: img.src, name: 'Image' };
+          } else if (file) {
+            item.attachment = { type: 'file', url: file.href, name: file.querySelector('span:last-child')?.textContent || 'File' };
+          }
+          items.push(item);
         }
       });
       localStorage.setItem(CHAT_DISPLAY_KEY, JSON.stringify(items.slice(-MAX_STORED_DISPLAY)));
@@ -76,7 +84,7 @@
     content.textContent = text || '';
   }
 
-  function addMessage(text, who = 'user') {
+  function addMessage(text, who = 'user', fileData = null) {
     const msgs = document.getElementById('chatMessages');
     if (!msgs) return;
     const bubble = document.createElement('div');
@@ -84,6 +92,24 @@
     const content = document.createElement('div');
     content.className = 'bubble-content';
     _renderMessageContent(content, text, who);
+    bubble.appendChild(content);
+
+    if (fileData) {
+      if (fileData.type && fileData.type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = fileData.url;
+        img.className = 'bubble-image';
+        bubble.appendChild(img);
+      } else {
+        const link = document.createElement('a');
+        link.href = fileData.url;
+        link.className = 'bubble-file';
+        link.target = '_blank';
+        link.innerHTML = `<span>📎</span> <span>${fileData.name || 'Attached File'}</span>`;
+        bubble.appendChild(link);
+      }
+    }
+
     const del = document.createElement('button');
     del.className = 'chat-msg-delete';
     del.innerHTML = '&times;';
@@ -92,7 +118,6 @@
       bubble.remove();
       _syncHistoryToCloud();
     };
-    bubble.appendChild(content);
     bubble.appendChild(del);
     msgs.appendChild(bubble);
     msgs.scrollTop = msgs.scrollHeight;
@@ -122,7 +147,7 @@
         currentSessionId = id;
         chatHistory = data.messages || [];
         msgs.innerHTML = '';
-        chatHistory.forEach(m => addMessage(m.content, m.role === 'assistant' ? 'bot' : 'user'));
+        chatHistory.forEach(m => addMessage(m.content, m.role === 'assistant' ? 'bot' : 'user', m.attachment));
         _saveLocalState();
         _saveDisplayMessages();
         panel.classList.remove('showing-history');
@@ -139,10 +164,18 @@
     msgs.querySelectorAll('.chat-bubble').forEach(el => {
       const contentEl = el.querySelector('.bubble-content');
       if (contentEl) {
-        history.push({
+        const msg = {
           role: el.classList.contains('bot') ? 'assistant' : 'user',
           content: contentEl.textContent
-        });
+        };
+        const img = el.querySelector('.bubble-image');
+        const file = el.querySelector('.bubble-file');
+        if (img) {
+          msg.attachment = { type: 'image/png', url: img.src, name: 'Image' };
+        } else if (file) {
+          msg.attachment = { type: 'file', url: file.href, name: file.querySelector('span:last-child')?.textContent || 'File' };
+        }
+        history.push(msg);
       }
     });
     chatHistory = history;
@@ -373,25 +406,92 @@
     if (launchBtn) launchBtn.onclick = () => { panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false'); ensureGreeting(); };
     if (closeBtn) closeBtn.onclick = () => panel.classList.remove('open');
 
+    // ── File Upload Logic ──
+    const uploadBtn = document.getElementById('chatUploadBtn');
+    const fileInput = document.getElementById('chatFileInput');
+    const filePreview = document.getElementById('chatFilePreview');
+    let selectedFile = null;
+
+    if (uploadBtn && fileInput) {
+      uploadBtn.onclick = () => fileInput.click();
+      fileInput.onchange = () => {
+        if (fileInput.files.length > 0) {
+          selectedFile = fileInput.files[0];
+          filePreview.style.display = 'flex';
+          filePreview.innerHTML = `
+            <div class="preview-item">
+              <span>${selectedFile.name}</span>
+              <span class="preview-remove">&times;</span>
+            </div>
+          `;
+          filePreview.querySelector('.preview-remove').onclick = () => {
+            selectedFile = null;
+            fileInput.value = '';
+            filePreview.style.display = 'none';
+          };
+        }
+      };
+    }
+
     if (form) form.onsubmit = async (e) => {
       e.preventDefault();
       const text = textInput.value.trim();
-      if (!text) return;
-      addMessage(text, 'user');
+      if (!text && !selectedFile) return;
+
+      let fileInfo = null;
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        const fileType = selectedFile.type.startsWith('image/') ? 'image' : (selectedFile.type.startsWith('audio/') ? 'audio' : 'file');
+        
+        try {
+          const upRes = await fetch(`/api/upload/${fileType}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': _getCsrfToken() },
+            body: formData
+          });
+          if (upRes.ok) {
+            fileInfo = await upRes.json();
+          } else {
+            const err = await upRes.json();
+            alert(err.error || 'Upload failed');
+            return;
+          }
+        } catch(err) {
+          console.error('Upload error:', err);
+          alert('Upload failed');
+          return;
+        }
+      }
+
+      addMessage(text, 'user', fileInfo);
       textInput.value = '';
+      selectedFile = null;
+      if (fileInput) fileInput.value = '';
+      if (filePreview) filePreview.style.display = 'none';
+
       const typing = addMessage('Thinking...', 'bot');
       
       fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _getCsrfToken() },
-        body: JSON.stringify({ message: text, history: chatHistory, session_id: currentSessionId }),
+        body: JSON.stringify({ 
+          message: text, 
+          history: chatHistory, 
+          session_id: currentSessionId,
+          attachment: fileInfo
+        }),
       })
       .then(r => r.json())
       .then(data => {
         if (data.session_id) currentSessionId = data.session_id;
         const reply = data.reply || '...';
         _renderMessageContent(typing.querySelector('.bubble-content'), reply, 'bot');
-        chatHistory.push({ role: 'user', content: text }, { role: 'assistant', content: reply });
+        
+        chatHistory.push(
+          { role: 'user', content: text, attachment: fileInfo }, 
+          { role: 'assistant', content: reply }
+        );
         _saveLocalState();
         _saveDisplayMessages();
       })
@@ -406,7 +506,7 @@
       const stored = JSON.parse(localStorage.getItem(CHAT_DISPLAY_KEY) || '[]');
       if (stored.length) {
         msgs.innerHTML = '';
-        stored.forEach(m => addMessage(m.text || _plainTextFromHtml(m.html || ''), m.who));
+        stored.forEach(m => addMessage(m.text || _plainTextFromHtml(m.html || ''), m.who, m.attachment));
       }
       chatHistory = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
     } catch(e) {}

@@ -136,6 +136,36 @@ def view_story(code):
         can_edit=owner_row.get("can_edit", False)
     )
 
+@main_bp.route("/<page_slug>")
+def landing_page(page_slug):
+    slugs = {
+        "private-code-sharing": "Private Code Sharing",
+        "share-notes-without-login": "Share Notes Without Login",
+        "anonymous-note-sharing": "Anonymous Note Sharing",
+        "private-online-diary": "Private Online Diary",
+        "secure-story-sharing": "Secure Story Sharing",
+        "share-content-by-code": "Share Content By Code",
+        "no-login-sharing-platform": "No-Login Sharing Platform",
+        "immersive-writing-platform": "Immersive Writing Platform",
+        "ai-story-writing-platform": "AI Story Writing Platform",
+        "private-collaborative-writing": "Private Collaborative Writing"
+    }
+    if page_slug not in slugs:
+        return render_template("index.html"), 404
+        
+    return render_template("legal.html", page="landing", title=slugs[page_slug], slug=page_slug)
+
+@main_bp.route("/compare/<vs_slug>")
+def compare_page(vs_slug):
+    slugs = {
+        "google-docs": "Google Docs",
+        "pastebin": "Pastebin",
+        "notion": "Notion"
+    }
+    if vs_slug not in slugs:
+        return redirect(url_for('main.index'))
+    return render_template("legal.html", page="landing", title=f"YourWorld vs {slugs[vs_slug]}", slug=f"compare/{vs_slug}")
+
 @main_bp.route("/robots.txt")
 def robots_txt():
     body = f"""User-agent: *
@@ -149,6 +179,21 @@ Allow: /terms-and-conditions
 Allow: /faq
 Allow: /create
 Allow: /how-it-works
+Allow: /private-code-sharing
+Allow: /share-notes-without-login
+Allow: /anonymous-note-sharing
+Allow: /private-online-diary
+Allow: /secure-story-sharing
+Allow: /share-content-by-code
+Allow: /no-login-sharing-platform
+Allow: /immersive-writing-platform
+Allow: /ai-story-writing-platform
+Allow: /private-collaborative-writing
+Allow: /compare/google-docs
+Allow: /compare/pastebin
+Allow: /compare/notion
+
+# Block all user-generated and private content routes
 Disallow: /code/
 Disallow: /view/
 Disallow: /view/*
@@ -157,6 +202,36 @@ Disallow: /settings
 Disallow: /profile
 Disallow: /diary
 Disallow: /story
+
+# Block common attack patterns
+Disallow: /*.json$
+Disallow: /static/
+
+User-agent: GPTBot
+Allow: /
+Allow: /about
+Allow: /faq
+Allow: /how-it-works
+Disallow: /view/
+Disallow: /api/
+Disallow: /diary
+Disallow: /story
+
+User-agent: Claude-Web
+Allow: /
+Allow: /about
+Allow: /faq
+Allow: /how-it-works
+Disallow: /view/
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /about
+Allow: /faq
+Allow: /how-it-works
+Disallow: /view/
+Disallow: /api/
 
 Sitemap: {SITE_URL}/sitemap.xml
 """
@@ -167,11 +242,24 @@ def sitemap_xml():
     pages = [
         ("", "daily", "1.0"),
         ("/how-it-works", "weekly", "0.9"),
+        ("/faq", "weekly", "0.9"),
         ("/create", "weekly", "0.85"),
-        ("/faq", "weekly", "0.85"),
         ("/about", "weekly", "0.8"),
-        ("/privacy-policy", "monthly", "0.7"),
-        ("/terms-and-conditions", "monthly", "0.6"),
+        ("/privacy-policy", "monthly", "0.6"),
+        ("/terms-and-conditions", "monthly", "0.5"),
+        ("/private-code-sharing", "weekly", "0.9"),
+        ("/share-notes-without-login", "weekly", "0.9"),
+        ("/anonymous-note-sharing", "weekly", "0.9"),
+        ("/private-online-diary", "weekly", "0.9"),
+        ("/secure-story-sharing", "weekly", "0.9"),
+        ("/share-content-by-code", "weekly", "0.9"),
+        ("/no-login-sharing-platform", "weekly", "0.9"),
+        ("/immersive-writing-platform", "weekly", "0.9"),
+        ("/ai-story-writing-platform", "weekly", "0.9"),
+        ("/private-collaborative-writing", "weekly", "0.9"),
+        ("/compare/google-docs", "monthly", "0.8"),
+        ("/compare/pastebin", "monthly", "0.8"),
+        ("/compare/notion", "monthly", "0.8"),
     ]
     urls = "\n".join(
         f"""  <url>

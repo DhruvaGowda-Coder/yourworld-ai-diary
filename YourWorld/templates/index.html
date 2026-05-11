@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Share content using private codes | Secure sharing platform{% endblock %}
-{% block description %}YourWorld is a code sharing platform for private content sharing. Create content, generate a unique code, and let only people with that code access it.{% endblock %}
+{% block title %}YourWorld — Share Anything Privately with a Code | No Login Needed{% endblock %}
+{% block description %}YourWorld lets you create notes, stories, or any content and share it using a unique private code. No account needed — just share the code and only that person can open it.{% endblock %}
 {% block canonical %}{{ site_url }}/{% endblock %}
 {% block structured_data %}
 <script type="application/ld+json">
@@ -12,27 +12,174 @@
       "@id": "{{ site_url }}/#organization",
       "name": "YourWorld",
       "url": "{{ site_url }}/",
-      "logo": "{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}",
+        "width": 512,
+        "height": 512
+      },
       "contactPoint": {
         "@type": "ContactPoint",
         "email": "{{ contact_email }}",
-        "contactType": "customer support"
-      }
+        "contactType": "customer support",
+        "availableLanguage": "English"
+      },
+      "sameAs": ["https://worldbyyou.com"]
     },
     {
       "@type": "WebSite",
       "@id": "{{ site_url }}/#website",
       "url": "{{ site_url }}/",
       "name": "YourWorld",
-      "description": "A secure sharing by code platform for private content sharing.",
+      "description": "YourWorld is a private code sharing platform. Create any content, get a unique private code, and share it. No login required to create or view shared content.",
+      "inLanguage": "en-US",
       "publisher": {
         "@id": "{{ site_url }}/#organization"
       },
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "{{ site_url }}/view?code={share_code}",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "{{ site_url }}/view?code={share_code}"
+        },
         "query-input": "required name=share_code"
       }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "{{ site_url }}/#app",
+      "name": "YourWorld",
+      "url": "{{ site_url }}/",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web Browser",
+      "description": "A privacy-first content sharing platform. Create notes, stories, or content and receive a unique private code. Only people with the code can access your content. No account required.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Share content via private code without login",
+        "No account required to create or view shared content",
+        "Content is never publicly listed or indexed",
+        "Private notes with code-only access",
+        "AI writing assistant (Aura) for logged-in users",
+        "Immersive ambient themes with sound"
+      ],
+      "provider": {
+        "@id": "{{ site_url }}/#organization"
+      }
+    },
+    {
+      "@type": "Service",
+      "@id": "{{ site_url }}/#service",
+      "name": "Private Code Sharing",
+      "serviceType": "Content Sharing Platform",
+      "description": "Share any content privately using a unique code. No login needed. Content is not indexed and only accessible by the code holder.",
+      "provider": {
+        "@id": "{{ site_url }}/#organization"
+      },
+      "areaServed": "Worldwide",
+      "availableChannel": {
+        "@type": "ServiceChannel",
+        "serviceUrl": "{{ site_url }}/",
+        "serviceType": "Web Application"
+      }
+    },
+    {
+      "@type": "WebPage",
+      "@id": "{{ site_url }}/#webpage",
+      "url": "{{ site_url }}/",
+      "name": "YourWorld — Share Anything Privately with a Code | No Login Needed",
+      "description": "YourWorld lets you create notes, stories, or any content and share it using a unique private code. No account needed — just share the code and only that person can open it.",
+      "inLanguage": "en-US",
+      "isPartOf": {
+        "@id": "{{ site_url }}/#website"
+      },
+      "about": {
+        "@id": "{{ site_url }}/#service"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "{{ site_url }}/"
+          }
+        ]
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "{{ site_url }}/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is YourWorld?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "YourWorld is a private code sharing platform. You can create notes, stories, or any written content and receive a unique private code. Only people who have that exact code can access your content. No account or login is ever required to share or view content."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need to create an account to share content?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. You do not need an account to create content or to view shared content on YourWorld. Simply open the platform, write your content, and receive a private code. Share that code with whoever you want."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I share content on YourWorld without login?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Go to worldbyyou.com, click 'Create and share code', write your content, and the platform will generate a unique private code. Copy the code and send it to anyone you want to access your content. They can open it by entering the code on the homepage — no account required."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my shared content private?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Shared content on YourWorld is completely private. It is never listed publicly, never indexed by search engines, and is only accessible by entering the exact private code. The /view/ routes are explicitly blocked in the site's robots.txt to ensure anonymity."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What can I share on YourWorld?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You can share notes, stories, diary entries, code snippets, creative writing, or any text-based content on YourWorld. Each piece of content gets its own unique private code for sharing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is YourWorld different from Pastebin?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Unlike Pastebin, YourWorld content is never publicly listed or searchable. YourWorld uses private codes with no public directory, offers an immersive ambient writing environment with themes and sound, and includes an AI writing assistant (Aura) for registered users."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need login to view someone's shared content?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No login is needed to view shared content. Just enter the private code you received on the YourWorld homepage and the content opens instantly."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Aura AI assistant?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Aura is YourWorld's built-in AI writing assistant. It is available to logged-in users and helps with writing, editing, and creative suggestions while you work on your content."
+          }
+        }
+      ]
     }
   ]
 }
@@ -41,19 +188,22 @@
 {% block content %}
 <section class="hero trust-hero">
   <div class="hero-text">
-    <h1>Share content using private codes.</h1>
-    <p>
-      Create and share content using a unique code.
+    <div class="eyebrow">Secure & Anonymous Sharing</div>
+    <h1>Share Anything Privately Using a Unique Code — No Login Needed</h1>
+    <p class="subtitle">
+      YourWorld is a private code sharing platform. Write notes, stories, or anything — get a unique private code. Anyone with your code can instantly open your content. No account required, ever.
     </p>
     <form class="home-code-form" action="{{ url_for('main.view_by_code') }}" method="get" aria-label="Open shared content by code">
-      <label for="homeShareCode">Open content with a share code</label>
+      <label for="homeShareCode">Enter a private share code to open shared content</label>
       <div class="home-code-row">
         <input id="homeShareCode" type="text" name="code" placeholder="Enter the private content code" autocomplete="off" inputmode="text" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9_.~-]{3,31}" aria-describedby="homeCodeHelp" />
         <button class="btn primary" type="submit">Open content</button>
       </div>
+      <p id="homeCodeHelp" class="field-help">Codes are case-sensitive and unique to each shared page.</p>
     </form>
     <div class="hero-actions">
-      <a class="btn ghost" href="{{ url_for('main.story') }}">Create and share code</a>
+      <a class="btn primary" href="{{ url_for('main.story') }}">Start Sharing Now</a>
+      <a class="btn ghost" href="#how-it-works">How it Works</a>
     </div>
   </div>
   <div class="hero-visual">
@@ -69,9 +219,104 @@
       />
       <div class="campfire-text">
         <div class="campfire-title">Private share code</div>
-        <p class="campfire-desc">Write your thoughts, capture your world, and share it securely with private codes.</p>
+        <p class="campfire-desc">Create and share private notes and stories using secure access codes without requiring login. Optional sign-in unlocks AI features.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="how-section" aria-labelledby="how-heading">
+  <h2 id="how-heading">How Private Code Sharing Works</h2>
+  <ol class="how-steps">
+    <li>
+      <strong>Create content</strong> — Write notes, a story, code, or anything you want to share.
+    </li>
+    <li>
+      <strong>Get your private code</strong> — YourWorld generates a unique code for your content. No account required.
+    </li>
+    <li>
+      <strong>Share the code</strong> — Send the code to whoever you want. Only people with the exact code can open it.
+    </li>
+    <li>
+      <strong>Open with a code</strong> — Paste any code into the box above to instantly view shared content.
+    </li>
+  </ol>
+  <p class="how-note">Your content is never publicly listed or searchable. It exists only for people who have the code.</p>
+</section>
+
+<section class="use-cases-section" aria-labelledby="usecases-heading">
+  <h2 id="usecases-heading">What Can You Share?</h2>
+  <ul class="use-cases-list">
+    <li><strong>Private notes</strong> — Share personal notes without them being indexed or public.</li>
+    <li><strong>Stories &amp; writing</strong> — Share drafts or creative writing with specific people.</li>
+    <li><strong>Code snippets</strong> — Share code privately without a Pastebin account.</li>
+    <li><strong>Quick messages</strong> — Send content that only the recipient can open.</li>
+    <li><strong>Diary entries</strong> — Keep a private journal accessible only by your code.</li>
+  </ul>
+</section>
+
+<section class="why-section" aria-labelledby="why-heading">
+  <h2 id="why-heading">Why YourWorld?</h2>
+  <dl class="why-list">
+    <dt>No login to share or view</dt>
+    <dd>You never need an account to create content or to open shared content with a code.</dd>
+    <dt>Truly private by design</dt>
+    <dd>Shared content is not indexed by search engines. It is only accessible via the exact private code.</dd>
+    <dt>No tracking of shared content</dt>
+    <dd>The <code>/view/</code> routes are blocked from all search engine crawlers in robots.txt.</dd>
+    <dt>Instant sharing</dt>
+    <dd>Create content and generate a code in seconds. No forms, no email, no friction.</dd>
+  </dl>
+</section>
+
+<section class="home-section" id="comparison">
+  <div class="section-header">
+    <h2>YourWorld vs. Traditional Sharing</h2>
+    <p>How we compare to Google Docs, Pastebin, and Notion.</p>
+  </div>
+  <div class="comparison-table-wrapper">
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Google Docs</th>
+          <th>Pastebin</th>
+          <th>YourWorld</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>No-Login Sharing</td>
+          <td>❌ (Required)</td>
+          <td>✅</td>
+          <td>✅ (Best-in-class)</td>
+        </tr>
+        <tr>
+          <td>Private Code Access</td>
+          <td>❌ (Link only)</td>
+          <td>❌</td>
+          <td>✅ (Secure Codes)</td>
+        </tr>
+        <tr>
+          <td>Immersive Themes</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>✅ (Elemental)</td>
+        </tr>
+        <tr>
+          <td>AI Aura Assistant</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td>✅ (Integrated)</td>
+        </tr>
+        <tr>
+          <td>Anonymity</td>
+          <td>❌</td>
+          <td>⚠️ (Limited)</td>
+          <td>✅ (Total)</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </section>
 {% endblock %}

@@ -1547,3 +1547,329 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
     display: none !important;
   }
 }
+
+/* ─── Home SEO Sections ─── */
+.home-section {
+  padding: 80px var(--gutter);
+  position: relative;
+  overflow: hidden;
+}
+
+.section-header {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 50px;
+}
+
+.section-header h2 {
+  font-family: var(--title-font);
+  font-size: 2.4rem;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #fff, var(--theme-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.section-header p {
+  font-family: var(--ui-font);
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.feature-card {
+  padding: 32px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-5px);
+  border-color: var(--theme-accent-soft-2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.feature-card h3 {
+  font-family: var(--ui-font);
+  font-size: 1.25rem;
+  margin: 16px 0 10px;
+  color: #fff;
+}
+
+.feature-card p {
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.6;
+}
+
+.trust-band {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 60px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 60px;
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.trust-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 30px;
+}
+
+.trust-item {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.trust-num {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--theme-accent);
+  color: var(--theme-accent-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+  box-shadow: 0 4px 15px var(--theme-accent-soft);
+}
+
+.security-card {
+  padding: 40px;
+  border-radius: 30px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), transparent);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.security-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.security-list li::before {
+  content: "✓";
+  color: var(--theme-accent);
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+.theme-pill {
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--ui-font);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.theme-pill:hover {
+  background: var(--theme-accent-soft);
+  color: #fff;
+  border-color: var(--theme-accent);
+}
+
+@media (max-width: 900px) {
+  .trust-band {
+    grid-template-columns: 1fr;
+    padding: 30px;
+    gap: 40px;
+  }
+}
+
+/* ─── Comparison Table ─── */
+.comparison-table-wrapper {
+  overflow-x: auto;
+  margin: 20px 0;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--ui-font);
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.comparison-table th, .comparison-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.comparison-table th {
+  background: rgba(255, 255, 255, 0.04);
+  font-weight: 600;
+  color: var(--theme-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+}
+
+.comparison-table tr:last-child td {
+  border-bottom: none;
+}
+
+.comparison-table td:last-child {
+  background: rgba(var(--theme-accent-rgb), 0.1);
+  font-weight: 600;
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .comparison-table th, .comparison-table td {
+    padding: 12px 10px;
+    font-size: 0.85rem;
+  }
+}
+
+/* ─── Landing Pages ─── */
+.breadcrumb-nav {
+  margin-bottom: 30px;
+  font-family: var(--ui-font);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.breadcrumb-nav a {
+  color: var(--theme-accent);
+  text-decoration: none;
+}
+
+.breadcrumb-nav a:hover {
+  text-decoration: underline;
+}
+
+.lead-text {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 40px;
+  font-family: var(--ui-font);
+}
+
+.landing-section {
+  margin-bottom: 60px;
+}
+
+.landing-section h2 {
+  font-family: var(--title-font);
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.landing-section p {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 20px;
+}
+
+.landing-section ul {
+  padding-left: 20px;
+  margin-bottom: 20px;
+}
+
+.landing-section li {
+  margin-bottom: 12px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.landing-section li strong {
+  color: var(--theme-accent);
+}
+
+/* ─── SEO Content Sections ─── */
+.how-section, 
+.use-cases-section, 
+.why-section {
+  max-width: var(--container-width);
+  margin: 80px auto;
+  padding: 0 40px;
+  font-family: var(--ui-font);
+}
+
+.how-section h2,
+.use-cases-section h2,
+.why-section h2 {
+  font-family: var(--title-font);
+  font-size: 2.25rem;
+  margin-bottom: 30px;
+  color: #fff;
+}
+
+.how-steps,
+.use-cases-list {
+  padding-left: 20px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.how-steps li,
+.use-cases-list li {
+  margin-bottom: 20px;
+}
+
+.how-steps li strong,
+.use-cases-list li strong {
+  color: var(--theme-accent);
+}
+
+.how-note {
+  margin-top: 30px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.why-list dt {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--theme-accent);
+  margin-top: 30px;
+  margin-bottom: 10px;
+}
+
+.why-list dd {
+  margin-left: 0;
+  padding-left: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  border-left: 2px solid rgba(var(--theme-accent-rgb), 0.2);
+}
+
+@media (max-width: 900px) {
+  .how-section, 
+  .use-cases-section, 
+  .why-section {
+    padding: 0 24px;
+    margin: 60px auto;
+  }
+  
+  .how-section h2,
+  .use-cases-section h2,
+  .why-section h2 {
+    font-size: 1.75rem;
+  }
+}
