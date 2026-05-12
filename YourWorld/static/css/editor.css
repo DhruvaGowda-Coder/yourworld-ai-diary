@@ -2047,6 +2047,13 @@ textarea.page-content {
   padding-top: 28px;
 }
 
+/* Wider layout for profile page specifically on desktop */
+@media (min-width: 900px) {
+  .profile-page.settings {
+    max-width: 920px;
+  }
+}
+
 .settings-card {
   background: rgba(255, 255, 255, 0.05);
   padding: 24px;
@@ -2277,6 +2284,7 @@ textarea.page-content {
   grid-template-rows: repeat(7, 13px); /* Slightly larger cells for better touch */
   gap: 5px;
   width: max-content;
+  min-height: 121px; /* Prevent layout pop when cells load */
 }
 
 /* Ensure edge cells scale inwards to avoid clipping by the scroll container */
