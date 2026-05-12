@@ -209,8 +209,8 @@ def api_entry(entry_id):
 
     return jsonify({
         "id": row["id"], 
-        "title": unescape(row.get("title", "")), 
-        "content": unescape(row.get("content", "")),
+        "title": row.get("title", ""), 
+        "content": row.get("content", ""),
         "type": row.get("type", "diary"), 
         "image_url": row.get("image_url"), 
         "image_attached": row.get("image_attached"),

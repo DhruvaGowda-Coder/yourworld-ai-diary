@@ -118,8 +118,8 @@ def view_story(code):
         pages=[
             {
                 "id": r.get("id"),
-                "title": unescape(r.get("title", "")),
-                "content": unescape(r.get("content", "")),
+                "title": r.get("title", ""),
+                "content": r.get("content", ""),
                 "image_url": r.get("image_url"),
                 "image_attached": bool(r.get("image_attached")),
                 "image_style": r.get("image_style"),

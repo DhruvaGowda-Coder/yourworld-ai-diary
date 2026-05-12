@@ -741,7 +741,7 @@
       <div class="book" id="publicBook">
         <div class="page public-page" id="publicPage">
           <div class="page-scroll" id="publicPageScroll" style="background: transparent !important; padding-top: 0 !important;">
-            <div class="page-title" id="publicTitle" style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none; margin-bottom: 0; width: 100%; padding: 34px 45px 10px 34px; box-sizing: border-box; outline: none; font-size: 1.5rem; font-weight: bold; font-family: var(--ui-font);" {% if can_edit %}contenteditable="true"{% else %}contenteditable="false"{% endif %}>{{ pages[0].title | safe if pages else 'Untitled' }}</div>
+            <div class="page-title" id="publicTitle" style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none; margin-bottom: 0; width: 100%; padding: 34px 45px 10px 34px; box-sizing: border-box; outline: none; font-size: 1.5rem; font-weight: bold; font-family: var(--ui-font);" {% if can_edit %}contenteditable="true"{% else %}contenteditable="false"{% endif %}>{{ (pages[0].title | striptags) if pages else 'Untitled' }}</div>
             <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 45px 80px 34px; box-sizing: border-box; overflow: visible !important; background: transparent !important;"></div>
             <div class="page-illustrations" id="publicIllustrations">
               <!-- Multiple illustrations will be injected here -->
