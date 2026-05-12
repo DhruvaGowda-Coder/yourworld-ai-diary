@@ -211,7 +211,9 @@ if (workspace) {
   let autosaveEnabled = true;
   let autosaveTimer = null;
   let _lastSavedHash = '';  // content hash to prevent duplicate saves
+
   const defaultTitleStyle = {
+
     bold: false,
     italic: false,
     underline: false,
@@ -450,7 +452,6 @@ if (workspace) {
       delBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         e.preventDefault();
-        console.log('Delete button clicked for index:', index);
         if (confirm('Remove this image from page?')) {
           currentImages.splice(index, 1);
           markDirty();
@@ -496,11 +497,9 @@ if (workspace) {
 
   const applyStyleToElement = (element, state) => {
     if (!element) return;
-    element.style.fontWeight = state.bold ? '700' : '400';
-    element.style.fontStyle = state.italic ? 'italic' : 'normal';
-    element.style.textDecoration = state.underline ? 'underline' : 'none';
     element.style.fontSize = `${state.fontSize}rem`;
   };
+
 
   const syncActiveTargetFromFocus = () => {
     if (!titleInput || !contentInput) return;
@@ -509,12 +508,14 @@ if (workspace) {
   };
 
   const refreshToolbarState = () => {
+    if (formatBoldBtn) formatBoldBtn.classList.toggle('active', document.queryCommandState('bold'));
+    if (formatItalicBtn) formatItalicBtn.classList.toggle('active', document.queryCommandState('italic'));
+    if (formatUnderlineBtn) formatUnderlineBtn.classList.toggle('active', document.queryCommandState('underline'));
+    
     const state = getStyleState(activeEditorTarget);
-    if (formatBoldBtn) formatBoldBtn.classList.toggle('active', state.bold);
-    if (formatItalicBtn) formatItalicBtn.classList.toggle('active', state.italic);
-    if (formatUnderlineBtn) formatUnderlineBtn.classList.toggle('active', state.underline);
     if (fontSizeSelect) fontSizeSelect.value = state.fontSize;
   };
+
 
   const applyEditorStyle = () => {
     applyStyleToElement(titleInput, titleStyleState);
@@ -653,12 +654,19 @@ if (workspace) {
     updatePageIllustration();
     dirty = false;
     _lastSavedHash = _computeContentHash();
+    
+    // Highlight code blocks on load
+    if (typeof Prism !== 'undefined') {
+      setTimeout(() => { Prism.highlightAllUnder(contentInput); }, 50);
+    }
+    
     setStatus('Ready');
     updatePageCount();
     updateDeleteButton();
     updateNavButtons();
     resizeContentInput();
   };
+
 
   const navigateToIndex = (index) => {
     if (index < 0 || index >= entries.length) return;
@@ -731,11 +739,12 @@ if (workspace) {
         const payload = {
           id: resolvedEntryId,
           type: entryType,
-          title: titleInput.innerHTML,
-          content: contentText,
+          title: sanitizeHTML(titleInput.innerHTML),
+          content: sanitizeHTML(contentInput.innerHTML),
           title_style: JSON.stringify(titleStyleState),
           content_style: JSON.stringify(contentStyleState),
         };
+
         payload.image_prompt = imagePrompt ? imagePrompt.value : null;
         payload.images = currentImages;
         // Legacy fields for older viewers (first image only)
@@ -966,54 +975,34 @@ if (workspace) {
   if (formatBoldBtn) {
     formatBoldBtn.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      const state = getStyleState(activeEditorTarget);
-      if (state) {
-        state.bold = !state.bold;
-        applyEditorStyle();
-        refreshToolbarState();
-        markDirty();
-      } else {
-        document.execCommand('bold', false, null);
-        markDirty();
-      }
+      document.execCommand('bold', false, null);
+      markDirty();
+      refreshToolbarState();
     });
   }
 
   if (formatItalicBtn) {
     formatItalicBtn.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      const state = getStyleState(activeEditorTarget);
-      if (state) {
-        state.italic = !state.italic;
-        applyEditorStyle();
-        refreshToolbarState();
-        markDirty();
-      } else {
-        document.execCommand('italic', false, null);
-        markDirty();
-      }
+      document.execCommand('italic', false, null);
+      markDirty();
+      refreshToolbarState();
     });
   }
 
   if (formatUnderlineBtn) {
     formatUnderlineBtn.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      const state = getStyleState(activeEditorTarget);
-      if (state) {
-        state.underline = !state.underline;
-        applyEditorStyle();
-        refreshToolbarState();
-        markDirty();
-      } else {
-        document.execCommand('underline', false, null);
-        markDirty();
-      }
+      document.execCommand('underline', false, null);
+      markDirty();
+      refreshToolbarState();
     });
   }
 
+
   if (fontSizeSelect) {
     fontSizeSelect.addEventListener('change', () => {
-      const val = fontSizeSelect.value;
+      const val = parseFloat(fontSizeSelect.value);
       // Map rem to 1-7 for execCommand
       let size = "3"; // default
       if (val <= 0.9) size = "1";
@@ -1046,16 +1035,205 @@ if (workspace) {
   };
 
   if (contentInput) {
-    contentInput.addEventListener('paste', (event) => {
+    contentInput.addEventListener('paste', async (event) => {
+      event.preventDefault();
       const clipboard = event.clipboardData || window.clipboardData;
       if (!clipboard) return;
-      const plain = clipboard.getData('text/plain');
-      if (!plain) return;
-      event.preventDefault();
-      insertAtCursor(contentInput, plain);
-      markDirty();
+
+      const html = clipboard.getData('text/html');
+      let text = clipboard.getData('text/plain') || '';
+
+      // Optimization for large pastes
+      if (text.length > 50000) {
+        setStatus('Processing large paste...');
+      }
+
+      // Clean extension artifacts immediately
+      text = text.replace(/";$/, '"').replace(/";\n/, '"\n');
+
+      let contentToInsert = '';
+
+      // 1. Explicit Code Detection: Only create a formal code block if wrapped in triple backticks
+      const looksLikeCode = text.trim().startsWith('```');
+
+      if (looksLikeCode) {
+        const langMatch = text.trim().match(/^```(\w*)\n?/);
+        const lang = langMatch ? langMatch[1] : 'plaintext';
+        const codeBody = text.trim().replace(/^```\w*\n?/, '').replace(/\n?```$/, '');
+        const escapedBody = codeBody
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        contentToInsert = `<pre><code class="language-${lang}">${escapedBody}</code></pre><br>`;
+      } else if (html) {
+        let cleanHtml = (typeof sanitizeHTML !== 'undefined') ? sanitizeHTML(html) : html;
+        // Remove source-code newlines around block tags to prevent pre-wrap from rendering them as huge gaps
+        cleanHtml = cleanHtml.replace(/<\/(p|div|h[1-6]|ul|ol|li|blockquote)>\s+/gi, '</$1>');
+        cleanHtml = cleanHtml.replace(/\s+<(p|div|h[1-6]|ul|ol|li|blockquote)>/gi, '<$1>');
+        // Also remove consecutive <br> tags if they are excessive
+        cleanHtml = cleanHtml.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
+        contentToInsert = cleanHtml;
+      } else if (text) {
+        // Normalize Windows/Mac newlines to prevent \r from creating double-spaces in pre-wrap
+        let normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        // Compress 3 or more newlines into just 2 (1 empty line) to prevent massive vertical gaps
+        normalizedText = normalizedText.replace(/\n{3,}/g, '\n\n');
+        
+        const escaped = normalizedText
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        contentToInsert = (typeof linkify !== 'undefined' ? linkify(escaped) : escaped).replace(/\n/g, '<br>');
+      }
+
+      if (contentToInsert) {
+        // Ensure editor has focus before attempting to insert
+        contentInput.focus();
+
+        // Strategy 1: Native execCommand (best for history/cursor)
+        let success = document.execCommand('insertHTML', false, contentToInsert);
+
+        if (!success) {
+          // Strategy 2: Range-based manual insertion
+          try {
+            const selection = window.getSelection();
+            if (selection.rangeCount) {
+              const range = selection.getRangeAt(0);
+              range.deleteContents();
+              const fragment = range.createContextualFragment(contentToInsert);
+              range.insertNode(fragment);
+              selection.collapseToEnd();
+              success = true;
+            }
+          } catch (e) {}
+        }
+
+        if (!success) {
+          // Strategy 3: Direct fallback (last resort)
+          contentInput.innerHTML += contentToInsert;
+        }
+
+        markDirty();
+        if (typeof Prism !== 'undefined') {
+          Prism.highlightAllUnder(contentInput);
+        }
+      }
+    });
+
+    // Markdown Shortcut Handler: Detect triple backticks and Auto-links
+    contentInput.addEventListener('keyup', (e) => {
+      if (e.key === '`') {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        const range = selection.getRangeAt(0);
+        const node = range.startContainer;
+        const text = node.textContent;
+        const offset = range.startOffset;
+
+        // Check for triple backticks
+        if (offset >= 3 && text.slice(offset - 3, offset) === '```') {
+          // Detect language if provided after backticks
+          const lineStart = text.lastIndexOf('\n', offset - 4) + 1;
+          const lineText = text.slice(lineStart, offset);
+          const langMatch = lineText.match(/^```(\w*)$/);
+          
+          if (langMatch) {
+            const lang = langMatch[1] || 'plaintext';
+            e.preventDefault();
+            
+            // Delete the backticks
+            const newText = text.slice(0, offset - lineText.length) + text.slice(offset);
+            node.textContent = newText;
+            
+            // Create code block
+            const pre = document.createElement('pre');
+            const code = document.createElement('code');
+            code.className = `language-${lang}`;
+            code.innerHTML = '<br>'; // Placeholder for cursor
+            pre.appendChild(code);
+            
+            // Insert after current line
+            let targetNode = node;
+            while (targetNode.parentNode && targetNode.parentNode !== contentInput) {
+              targetNode = targetNode.parentNode;
+            }
+            
+            if (targetNode.nextSibling) {
+              contentInput.insertBefore(pre, targetNode.nextSibling);
+            } else {
+              contentInput.appendChild(pre);
+            }
+            
+            // Focus inside code block
+            const newRange = document.createRange();
+            newRange.setStart(code, 0);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+            
+            markDirty();
+          }
+        }
+      } else if (e.key === ' ' || e.key === 'Enter') {
+        // Simple auto-link on space or enter
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        const range = selection.getRangeAt(0);
+        const node = range.startContainer;
+        if (node.nodeType !== Node.TEXT_NODE) return;
+
+        // GUARD: Never auto-link inside code blocks or existing links
+        let ancestor = node.parentNode;
+        while (ancestor && ancestor !== contentInput) {
+          const tag = ancestor.tagName;
+          if (tag === 'A' || tag === 'CODE' || tag === 'PRE') return;
+          ancestor = ancestor.parentNode;
+        }
+        
+        const text = node.textContent;
+        const offset = range.startOffset;
+        const lastWord = text.slice(0, offset).trim().split(/\s+/).pop();
+        
+        if (lastWord && (lastWord.startsWith('http://') || lastWord.startsWith('https://'))) {
+          // Check if already in a link
+          let parent = node.parentNode;
+          let isInLink = false;
+          while (parent && parent !== contentInput) {
+            if (parent.tagName === 'A') { isInLink = true; break; }
+            parent = parent.parentNode;
+          }
+          
+          if (!isInLink) {
+            const startIdx = text.lastIndexOf(lastWord, offset - lastWord.length);
+            if (startIdx >= 0) {
+              const before = text.slice(0, startIdx);
+              const after = text.slice(offset);
+              
+              // We need to be careful with innerHTML here
+              // Better to use range/fragment to avoid cursor jumps
+              const link = document.createElement('a');
+              link.href = lastWord;
+              link.target = '_blank';
+              link.rel = 'noopener noreferrer';
+              link.textContent = lastWord;
+              
+              const rangeToReplace = document.createRange();
+              rangeToReplace.setStart(node, startIdx);
+              rangeToReplace.setEnd(node, offset);
+              rangeToReplace.deleteContents();
+              rangeToReplace.insertNode(link);
+              
+              // Move cursor after the space
+              selection.collapseToEnd();
+              markDirty();
+            }
+          }
+        }
+      }
     });
   }
+
+
 
   if (imageGenBtn && imagePrompt && imagePreview) {
     imageGenBtn.addEventListener('click', async () => {
@@ -1243,7 +1421,6 @@ if (workspace) {
         return;
       }
       
-      console.log('Inserting image into page:', generatedImageUrl);
       currentImages.push({
         url: generatedImageUrl,
         x: 0,
@@ -1262,7 +1439,7 @@ if (workspace) {
   function setupIllustrationInteractions(el, index) {
     let isDragging = false;
     let isResizing = false;
-    let startX, startY, startW, startH, startTX, startTY;
+    let startX, startY, startW, startH, startTX, startTY, startScrollY;
     let touchTimer = null;
     let isTouchActive = false;
 
@@ -1284,15 +1461,21 @@ if (workspace) {
       if (!imgState) return;
 
       if (isDragging) {
+        const scrollEl = el.closest('.page-scroll') || document.documentElement;
+        const scrollDy = scrollEl.scrollTop - (startScrollY || 0);
+        
         const dx = clientX - startX;
-        const dy = clientY - startY;
+        const dy = (clientY - startY) + scrollDy;
         imgState.x = startTX + dx;
         imgState.y = startTY + dy;
         applyImageStyle(el, imgState);
         markDirty();
       } else if (isResizing) {
+        const scrollEl = el.closest('.page-scroll') || document.documentElement;
+        const scrollDy = scrollEl.scrollTop - (startScrollY || 0);
+        
         const dx = clientX - startX;
-        const dy = clientY - startY;
+        const dy = (clientY - startY) + scrollDy;
         imgState.width = Math.max(50, startW + dx);
         imgState.height = Math.max(50, startH + dy);
         applyImageStyle(el, imgState);
@@ -1326,6 +1509,8 @@ if (workspace) {
       startY = e.clientY;
       startTX = currentImages[index].x || 0;
       startTY = currentImages[index].y || 0;
+      const scrollEl = el.closest('.page-scroll') || document.documentElement;
+      startScrollY = scrollEl.scrollTop;
       el.style.cursor = 'grabbing';
       window.addEventListener('mousemove', handleMove);
       window.addEventListener('mouseup', handleEnd);
@@ -1629,6 +1814,14 @@ if (workspace) {
       if (prevBtn) { e.preventDefault(); prevBtn.click(); }
     } else if (key === 'arrowright' || key === ']') {
       if (nextBtn) { e.preventDefault(); nextBtn.click(); }
+    }
+  });
+
+  // Highlight toolbar buttons (Bold, Italic, Underline) when cursor is on styled text
+  document.addEventListener('selectionchange', () => {
+    if (document.activeElement === titleInput || document.activeElement === contentInput) {
+      syncActiveTargetFromFocus();
+      refreshToolbarState();
     }
   });
 }

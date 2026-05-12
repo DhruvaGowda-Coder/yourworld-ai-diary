@@ -15,13 +15,13 @@ _THEME_CACHE_TTL = 300  # 5 minutes
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 CRED_PATH = os.path.join(APP_DIR, "firebase-adminsdk.json")
-STORAGE_BUCKET = os.environ.get("FIREBASE_STORAGE_BUCKET", "diary-13644.appspot.com")
+STORAGE_BUCKET = os.environ.get("FIREBASE_STORAGE_BUCKET", "diary-13644.appspot.com").strip()
 
 if not firebase_admin._apps:
     try:
         json_cred = os.environ.get("FIREBASE_ADMIN_CREDENTIALS_JSON")
         if json_cred:
-            cred_dict = json.loads(json_cred)
+            cred_dict = json.loads(json_cred.strip())
             cred = credentials.Certificate(cred_dict)
         else:
             if os.path.exists(CRED_PATH):

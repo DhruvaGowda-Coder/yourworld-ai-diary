@@ -57,8 +57,8 @@ def add_security_headers(response):
     
     nonce = g.get('csp_nonce', '')
     csp = (
-        f"default-src 'self'; script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        f"default-src 'self'; script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
         "font-src 'self' https://fonts.gstatic.com data:; "
         "img-src 'self' data: https:; media-src 'self' data: https:; "
         "connect-src 'self' https://api.groq.com https://router.huggingface.co https://*.googleapis.com https://*.firebaseio.com; "

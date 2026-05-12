@@ -303,7 +303,9 @@ def api_entry_share_delete(entry_id):
             if s.get("share_code"):
                 if firebase_db.update_share_code(session["user_id"], s["id"], None, None, False):
                     deleted = True
-        return jsonify({"deleted": True}) if deleted else jsonify({"error": "No active share code found"}), 404
+        if deleted:
+            return jsonify({"deleted": True})
+        return jsonify({"error": "No active share code found"}), 404
     else:
         if firebase_db.update_share_code(session["user_id"], entry_id, None, None, False):
             return jsonify({"deleted": True})
@@ -324,17 +326,82 @@ def api_entry_save():
         current_app.logger.info("Saving entry %s for user %s", entry_id, session.get("user_id"))
         
         content = data.get("content", "").strip()
-        allowed_tags = ['b', 'i', 'u', 'div', 'br', 'span', 'strike', 'strong', 'em', 'p', 'ul', 'ol', 'li', 'img']
+        allowed_tags = [
+            'b', 'i', 'u', 'div', 'br', 'span', 'strike', 'strong', 'em', 'p', 
+            'ul', 'ol', 'li', 'img', 'pre', 'code', 'blockquote',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'font'
+        ]
         allowed_attrs = {
-            '*': ['class', 'style'],
-            'img': ['src', 'alt', 'width', 'height', 'style']
+            '*': ['class', 'style', 'id'],
+            'img': ['src', 'alt', 'width', 'height', 'style'],
+            'a': ['href', 'title', 'target', 'rel'],
+            'font': ['size', 'color']
         }
+        allowed_styles = [
+            'color', 'background-color', 'text-align', 'font-size', 'font-family', 
+            'width', 'height', 'margin', 'padding', 'border-radius', 'transform',
+            'white-space', 'word-wrap', 'overflow-wrap', 'display', 'position',
+            'top', 'left', 'right', 'bottom', 'z-index'
+        ]
+
+        def set_link_attrs(attrs, new=False):
+            href_key = (None, 'href')
+            if href_key in attrs:
+                href = attrs[href_key]
+                if not href.startswith(('http://', 'https://', 'mailto:')):
+                    return None
+            attrs[(None, 'rel')] = 'noopener noreferrer'
+            attrs[(None, 'target')] = '_blank'
+            return attrs
+
+        # STEP 1: Clean HTML first (removes scripts, bad tags)
         try:
             from bleach.css_sanitizer import CSSSanitizer
-            css_sanitizer = CSSSanitizer(allowed_css_properties=['color', 'background-color', 'text-align', 'font-size', 'font-family', 'width', 'height', 'margin', 'padding', 'border-radius', 'transform'])
+            css_sanitizer = CSSSanitizer(allowed_css_properties=allowed_styles)
+            content = bleach.clean(
+                content, 
+                tags=allowed_tags, 
+                attributes=allowed_attrs, 
+                css_sanitizer=css_sanitizer
+            )
+        except ImportError:
+            content = bleach.clean(content, tags=allowed_tags, attributes=allowed_attrs)
+
+        # STEP 2: Linkify ONLY text nodes outside <pre> and <code>
+        from html.parser import HTMLParser
+
+        class LinkifyParser(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.result = []
+                self.in_code = 0  # nesting counter
+
+            def handle_starttag(self, tag, attrs):
+                self.result.append(self.get_starttag_text())
+                if tag in ('pre', 'code'):
+                    self.in_code += 1
+
+            def handle_endtag(self, tag):
+                self.result.append(f'</{tag}>')
+                if tag in ('pre', 'code'):
+                    self.in_code -= 1
+
+            def handle_data(self, data):
+                if self.in_code > 0:
+                    self.result.append(data)
+                else:
+                    self.result.append(bleach.linkify(data, callbacks=[set_link_attrs], parse_email=False))
+
+        parser = LinkifyParser()
+        parser.feed(content)
+        content = ''.join(parser.result)
+
+        # STEP 3: Final clean to ensure no new bad tags from linkify
+        try:
             content = bleach.clean(content, tags=allowed_tags, attributes=allowed_attrs, css_sanitizer=css_sanitizer)
         except ImportError:
             content = bleach.clean(content, tags=allowed_tags, attributes=allowed_attrs)
+
 
         title = (data.get("title") or "").strip()
         if not title:

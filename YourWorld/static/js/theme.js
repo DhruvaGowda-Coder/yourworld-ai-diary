@@ -54,7 +54,6 @@
       const isInitialLoad = !ambientAudio.src || ambientAudio.src === window.location.href;
       ambientAudio.pause();
       
-      console.log('Audio: Setting source to:', src);
       ambientAudio.src = src;
       ambientAudio.volume = themeVolumes[theme] || 0.7;
       
@@ -89,7 +88,6 @@
           
           toggleBtn.textContent = '🔊 Sound';
           toggleBtn.classList.add('is-active');
-          console.log('Audio: Now playing', theme);
         }
       } catch (err) {
         playPromise = null;

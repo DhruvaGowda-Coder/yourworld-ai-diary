@@ -23,20 +23,20 @@ GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
 
 # Site Meta
-SITE_URL = os.environ.get("SITE_URL", "https://worldbyyou.com").rstrip("/")
+SITE_URL = os.environ.get("SITE_URL", "https://worldbyyou.com").strip().rstrip("/")
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "elementaldiary@gmail.com").strip()
 SITEMAP_LASTMOD = "2026-05-11"
 SHARE_CODE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.~-]{3,31}$")
 
 # Firebase Web Config
 FIREBASE_WEB_CONFIG = {
-    "apiKey": os.environ.get("FIREBASE_API_KEY", ""),
-    "authDomain": os.environ.get("FIREBASE_AUTH_DOMAIN", ""),
-    "projectId": os.environ.get("FIREBASE_PROJECT_ID", ""),
-    "storageBucket": os.environ.get("FIREBASE_STORAGE_BUCKET", ""),
-    "messagingSenderId": os.environ.get("FIREBASE_MESSAGING_SENDER_ID", ""),
-    "appId": os.environ.get("FIREBASE_APP_ID", ""),
-    "measurementId": os.environ.get("FIREBASE_MEASUREMENT_ID", ""),
+    "apiKey": os.environ.get("FIREBASE_API_KEY", "").strip(),
+    "authDomain": os.environ.get("FIREBASE_AUTH_DOMAIN", "").strip(),
+    "projectId": os.environ.get("FIREBASE_PROJECT_ID", "").strip(),
+    "storageBucket": os.environ.get("FIREBASE_STORAGE_BUCKET", "").strip(),
+    "messagingSenderId": os.environ.get("FIREBASE_MESSAGING_SENDER_ID", "").strip(),
+    "appId": os.environ.get("FIREBASE_APP_ID", "").strip(),
+    "measurementId": os.environ.get("FIREBASE_MEASUREMENT_ID", "").strip(),
 }
 
 # Theme Definitions

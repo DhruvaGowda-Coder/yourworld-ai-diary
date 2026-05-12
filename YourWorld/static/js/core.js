@@ -1,5 +1,53 @@
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
+// Production-grade sanitization config
+const PURIFY_CONFIG = {
+  ALLOWED_TAGS: [
+    'b', 'i', 'u', 'div', 'br', 'span', 'strike', 'strong', 'em', 'p', 
+    'ul', 'ol', 'li', 'img', 'pre', 'code', 'blockquote',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'font'
+  ],
+  ALLOWED_ATTR: ['class', 'style', 'src', 'alt', 'width', 'height', 'href', 'title', 'target', 'rel', 'id', 'size', 'color'],
+  ADD_ATTR: ['target', 'rel'],
+  FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'svg', 'form', 'button'],
+  FORBID_ATTR: ['onload', 'onclick', 'onerror', 'onmouseover', 'javascript:'],
+  KEEP_CONTENT: true
+};
+
+window.sanitizeHTML = (html) => {
+  if (typeof DOMPurify === 'undefined') return html;
+  let clean = DOMPurify.sanitize(html, PURIFY_CONFIG);
+  
+  // Strip background and color styles from pasted HTML to blend perfectly with the diary theme
+  const temp = document.createElement('div');
+  temp.innerHTML = clean;
+  const elementsWithStyle = temp.querySelectorAll('[style]');
+  elementsWithStyle.forEach(el => {
+    el.style.backgroundColor = '';
+    el.style.background = '';
+    el.style.color = '';
+    el.style.fontFamily = '';
+    if (!el.getAttribute('style').trim()) {
+      el.removeAttribute('style');
+    }
+  });
+  
+  return temp.innerHTML;
+};
+
+/** Improved link detection for raw text */
+window.linkify = (text) => {
+  const urlRegex = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
+  return text.replace(urlRegex, (url) => {
+    // Skip if already inside an HTML tag or attribute
+    if (url.includes('&quot;') || url.includes('&#039;') || url.includes('<') || url.includes('>')) {
+      return url;
+    }
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+  });
+};
+
+
 /* ── Global CSRF injection for all HTML POST forms ──────────────────────
    The meta tag in base.html always renders the token correctly.
    This listener ensures every <form method="post"> includes it
