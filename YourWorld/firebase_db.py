@@ -264,8 +264,17 @@ def save_entry(user_id, entry_id, data, share_code=None):
         existing_data = existing.to_dict()
         
         is_owner = existing_data.get('user_id') == str(user_id)
+        
+        # Unauthorized if not owner AND (no can_edit on document AND no valid share_code with can_edit)
         if not is_owner and not existing_data.get('can_edit'):
-            return None # Not found or unauthorized
+            authorized_via_code = False
+            if share_code:
+                owner_entry = get_entry_by_share_code(share_code)
+                if owner_entry and owner_entry.get('can_edit') and owner_entry.get('user_id') == existing_data.get('user_id'):
+                    authorized_via_code = True
+            
+            if not authorized_via_code:
+                return None # Unauthorized
             
         # Allow all fields if the user has edit permission or is the owner
         # We preserve the original owner's user_id and creation date

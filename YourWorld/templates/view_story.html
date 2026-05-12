@@ -777,6 +777,45 @@
 
         let currentIndex = 0;
         const canEdit = JSON.parse('{{ can_edit | tojson }}');
+        let dirty = false;
+        let isSaving = false;
+        let autosaveTimer = null;
+        let _lastSavedHash = '';
+
+        const _computeContentHash = () => {
+          if (!pages.length || currentIndex < 0) return '';
+          const p = pages[currentIndex];
+          const t = (titleEl ? titleEl.innerHTML : '') +
+                    '|' + (contentEl ? contentEl.innerHTML : '') +
+                    '|' + (p.title_style || '') +
+                    '|' + (p.content_style || '') +
+                    '|' + JSON.stringify(p.images || []);
+          let h = 0;
+          for (let i = 0; i < t.length; i++) { h = ((h << 5) - h + t.charCodeAt(i)) | 0; }
+          return String(h);
+        };
+
+        const markDirty = () => {
+          if (!canEdit) return;
+          dirty = true;
+          if (saveBtn) saveBtn.textContent = 'Unsaved Changes...';
+          scheduleAutosave();
+        };
+
+        const scheduleAutosave = () => {
+          if (!canEdit) return;
+          if (autosaveTimer) clearTimeout(autosaveTimer);
+          autosaveTimer = setTimeout(() => {
+            if (!dirty || isSaving) return;
+            const hash = _computeContentHash();
+            if (hash === _lastSavedHash) {
+              dirty = false;
+              if (saveBtn) saveBtn.textContent = 'Save Changes';
+              return;
+            }
+            saveChanges({ auto: true });
+          }, 1500); // 1.5s for shared canvas to be less aggressive than private diary
+        };
 
         const titleEl = document.getElementById('publicTitle');
         const contentEl = document.getElementById('publicContent');
@@ -803,6 +842,10 @@
             contentEl.style.pointerEvents = 'auto';
             contentEl.style.cursor = 'text';
             contentEl.style.minHeight = '500px'; // Makes the whole parchment clickable
+            contentEl.addEventListener('input', markDirty);
+          }
+          if (titleEl) {
+            titleEl.addEventListener('input', markDirty);
           }
           if (illContainer) illContainer.style.pointerEvents = 'auto';
           
@@ -1059,6 +1102,8 @@
 
           if (countEl) countEl.textContent = (currentIndex + 1) + " / " + pages.length;
           updateButtonState();
+          _lastSavedHash = _computeContentHash();
+          dirty = false;
         }
 
         function navigate(delta) {
@@ -1205,38 +1250,53 @@
           deleteBtn.onclick = () => handleDeletePage(currentIndex);
         }
 
-        if (saveBtn) {
-          saveBtn.onclick = async function() {
-            const p = pages[currentIndex];
+        async function saveChanges(options = {}) {
+          if (!canEdit || isSaving) return;
+          const p = pages[currentIndex];
+          if (!p) return;
+
+          isSaving = true;
+          if (saveBtn) {
             saveBtn.disabled = true;
-            saveBtn.textContent = 'Saving...';
-            try {
-              const r = await fetch('/api/entry/save', {
-                method: 'POST',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({
-                  id: p.id,
-                  title: titleEl.innerHTML,
-                  content: contentEl.innerHTML,
-                  type: 'story',
-                  share_code: shareCode,
-                  title_style: p.title_style,
-                  content_style: p.content_style,
-                  image_url: p.images && p.images.length ? p.images[0].url : null,
-                  image_attached: p.images && p.images.length ? true : false,
-                  image_style: p.images && p.images.length ? JSON.stringify(p.images[0]) : null,
-                  images: p.images || []
-                })
-              });
-              if (r.ok) {
-                const res = await r.json();
-                p.id = res.id;
-                p.title = titleEl.innerHTML;
-                p.content = contentEl.innerHTML;
-                saveBtn.textContent = 'Saved!';
+            saveBtn.textContent = options.auto ? 'Autosaving...' : 'Saving...';
+          }
+          const hashAtStart = _computeContentHash();
+
+          try {
+            const r = await fetch('/api/entry/save', {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+              },
+              body: JSON.stringify({
+                id: p.id,
+                title: titleEl.innerHTML,
+                content: contentEl.innerHTML,
+                type: 'story',
+                share_code: shareCode,
+                title_style: p.title_style,
+                content_style: p.content_style,
+                image_url: p.images && p.images.length ? p.images[0].url : null,
+                image_attached: p.images && p.images.length ? true : false,
+                image_style: p.images && p.images.length ? JSON.stringify(p.images[0]) : null,
+                images: p.images || []
+              })
+            });
+            if (r.ok) {
+              const res = await r.json();
+              p.id = res.id;
+              p.title = titleEl.innerHTML;
+              p.content = contentEl.innerHTML;
+              
+              const currentHash = _computeContentHash();
+              if (currentHash === hashAtStart) {
+                dirty = false;
+              }
+              _lastSavedHash = hashAtStart;
+
+              if (saveBtn) {
+                saveBtn.textContent = options.auto ? 'Autosaved' : 'Saved!';
                 
                 const sidebarItem = document.querySelector(`.public-page-item[data-index="${currentIndex}"]`);
                 if (sidebarItem) {
@@ -1252,12 +1312,24 @@
                   saveBtn.disabled = false; 
                 }, 2000);
               }
-            } catch(e) {
-              alert('Save failed');
-              saveBtn.disabled = false;
-              saveBtn.textContent = 'Save Changes';
+            } else {
+               throw new Error('Save failed');
             }
-          };
+          } catch(e) {
+            console.error(e);
+            if (saveBtn) {
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Save Failed';
+              setTimeout(() => { saveBtn.textContent = 'Save Changes'; }, 3000);
+            }
+          } finally {
+            isSaving = false;
+            if (dirty) scheduleAutosave();
+          }
+        }
+
+        if (saveBtn) {
+          saveBtn.onclick = () => saveChanges();
         }
 
         render();

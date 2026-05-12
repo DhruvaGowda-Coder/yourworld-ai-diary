@@ -312,11 +312,12 @@ if (workspace) {
   };
 
   const getActiveIndex = () => {
-    const byId = entries.findIndex((entry) => entry.id === currentEntryId);
-    if (byId >= 0) return byId;
+    if (currentEntryId) {
+      const byId = entries.findIndex((entry) => entry.id === currentEntryId);
+      if (byId >= 0) return byId;
+    }
     if (currentIndex >= 0 && currentIndex < entries.length) return currentIndex;
-    if (lastActiveIndex >= 0 && lastActiveIndex < entries.length) return lastActiveIndex;
-    if (entries.length > 0) return 0;
+    // Removed the fallback to return 0 or lastActiveIndex if we are explicitly in "new" mode (currentEntryId is null and currentIndex is -1)
     return -1;
   };
 
@@ -965,24 +966,48 @@ if (workspace) {
   if (formatBoldBtn) {
     formatBoldBtn.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      document.execCommand('bold', false, null);
-      markDirty();
+      const state = getStyleState(activeEditorTarget);
+      if (state) {
+        state.bold = !state.bold;
+        applyEditorStyle();
+        refreshToolbarState();
+        markDirty();
+      } else {
+        document.execCommand('bold', false, null);
+        markDirty();
+      }
     });
   }
 
   if (formatItalicBtn) {
     formatItalicBtn.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      document.execCommand('italic', false, null);
-      markDirty();
+      const state = getStyleState(activeEditorTarget);
+      if (state) {
+        state.italic = !state.italic;
+        applyEditorStyle();
+        refreshToolbarState();
+        markDirty();
+      } else {
+        document.execCommand('italic', false, null);
+        markDirty();
+      }
     });
   }
 
   if (formatUnderlineBtn) {
     formatUnderlineBtn.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      document.execCommand('underline', false, null);
-      markDirty();
+      const state = getStyleState(activeEditorTarget);
+      if (state) {
+        state.underline = !state.underline;
+        applyEditorStyle();
+        refreshToolbarState();
+        markDirty();
+      } else {
+        document.execCommand('underline', false, null);
+        markDirty();
+      }
     });
   }
 
