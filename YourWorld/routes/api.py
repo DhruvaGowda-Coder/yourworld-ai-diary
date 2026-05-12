@@ -229,9 +229,10 @@ def api_entry(entry_id):
 @api_bp.route("/api/entry/<entry_id>", methods=["DELETE"])
 @ensure_session
 def api_entry_delete(entry_id):
-    if firebase_db.delete_entry(session["user_id"], entry_id):
+    share_code = request.args.get("share_code")
+    if firebase_db.delete_entry(session["user_id"], entry_id, share_code=share_code):
         return jsonify({"deleted": True})
-    return jsonify({"error": "Not found"}), 404
+    return jsonify({"error": "Not found or unauthorized"}), 404
 
 @api_bp.route("/api/entry/<entry_id>/share", methods=["POST"])
 @ensure_session
@@ -352,8 +353,9 @@ def api_entry_save():
         if isinstance(images, list):
             data['images'] = images[:10] # Limit to 10 images per page
         
-        saved = firebase_db.save_entry(session["user_id"], entry_id, data)
-        if not saved: return jsonify({"error": "Not found"}), 404
+        share_code = data.get("share_code")
+        saved = firebase_db.save_entry(session["user_id"], entry_id, data, share_code=share_code)
+        if not saved: return jsonify({"error": "Not found or unauthorized"}), 404
         
         try:
             firebase_db.increment_activity(session["user_id"], datetime.now(timezone.utc).date().isoformat())

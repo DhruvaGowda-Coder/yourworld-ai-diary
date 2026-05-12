@@ -219,16 +219,25 @@ def get_entry(user_id, entry_id):
             return data
     return None
 
-def delete_entry(user_id, entry_id):
+def delete_entry(user_id, entry_id, share_code=None):
     db = get_db()
     doc_ref = db.collection('entries').document(str(entry_id))
     doc = doc_ref.get()
-    if doc.exists and doc.to_dict().get('user_id') == str(user_id):
-        doc_ref.delete()
-        return True
-    return False
+    if not doc.exists: return False
+    
+    entry_data = doc.to_dict()
+    is_owner = entry_data.get('user_id') == str(user_id)
+    
+    if not is_owner:
+        if not share_code: return False
+        owner_entry = get_entry_by_share_code(share_code)
+        if not owner_entry or not owner_entry.get('can_edit'): return False
+        if owner_entry.get('user_id') != entry_data.get('user_id'): return False
 
-def save_entry(user_id, entry_id, data):
+    doc_ref.delete()
+    return True
+
+def save_entry(user_id, entry_id, data, share_code=None):
     db = get_db()
     now = utc_now_iso()
     
@@ -268,6 +277,14 @@ def save_entry(user_id, entry_id, data):
         doc_data['id'] = entry_id
         return doc_data
     else:
+        # Create new entry
+        if share_code:
+            owner_entry = get_entry_by_share_code(share_code)
+            if owner_entry and owner_entry.get('can_edit'):
+                doc_data['user_id'] = owner_entry.get('user_id')
+            else:
+                return None # Unauthorized to create under this share code
+        
         doc_data['created_at'] = now
         doc_data['share_code'] = None
         doc_data['share_type'] = None
