@@ -476,12 +476,12 @@ body[data-theme="cherry"] .chat-bubble.bot {
 @keyframes pageEnterIn {
   0% {
     opacity: 0;
-    transform: translateY(14px) scale(0.995);
-    filter: blur(4px);
+    transform: translateY(16px);
+    filter: blur(2px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
     filter: blur(0);
   }
 }
@@ -601,16 +601,11 @@ body[data-theme="cherry"] .chat-bubble.bot {
 .feature-card,
 .home-card,
 .theme-pill,
-.card-slide-up {
+.profile-header-card,
+.profile-stat,
+.activity-card {
   animation: cardSlideUp 0.55s cubic-bezier(0.22, 0.68, 0, 1) both;
 }
-
-/* Staggered delays for premium feel */
-.stagger-1 { animation-delay: 0.05s !important; }
-.stagger-2 { animation-delay: 0.1s !important; }
-.stagger-3 { animation-delay: 0.15s !important; }
-.stagger-4 { animation-delay: 0.2s !important; }
-.stagger-5 { animation-delay: 0.25s !important; }
 
 .feature-card:nth-child(1), .home-card:nth-child(1), .theme-pill:nth-child(1) { animation-delay: 0.05s; }
 .feature-card:nth-child(2), .home-card:nth-child(2), .theme-pill:nth-child(2) { animation-delay: 0.12s; }

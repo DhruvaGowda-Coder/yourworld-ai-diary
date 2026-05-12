@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="settings profile-page">
-  <div class="profile-header-card card-slide-up stagger-1">
+  <div class="profile-header-card">
     <div class="profile-avatar">
       <span class="profile-avatar-letter">{% if current_user %}{{ current_user.email[0] | upper }}{% else %}G{% endif %}</span>
     </div>
@@ -16,24 +16,24 @@
   </div>
 
   <div class="profile-stats-row">
-    <div class="profile-stat card-slide-up stagger-2">
+    <div class="profile-stat">
       <span class="profile-stat-icon">✍️</span>
       <span class="profile-stat-value" id="profilePageCount">—</span>
       <span class="profile-stat-label">Edits</span>
     </div>
-    <div class="profile-stat card-slide-up stagger-3">
+    <div class="profile-stat">
       <span class="profile-stat-icon">🔥</span>
       <span class="profile-stat-value" id="profileStreak">—</span>
       <span class="profile-stat-label">Day Streak</span>
     </div>
-    <div class="profile-stat card-slide-up stagger-4">
+    <div class="profile-stat">
       <span class="profile-stat-icon">📊</span>
       <span class="profile-stat-value" id="profileDaysActive">—</span>
       <span class="profile-stat-label">Days Active</span>
     </div>
   </div>
 
-  <div class="activity-card card-slide-up stagger-5">
+  <div class="activity-card">
     <h3>📈 Writing Activity</h3>
     <p class="activity-sub">Colors show how often you made edits.</p>
     <div class="heatmap-scroll">

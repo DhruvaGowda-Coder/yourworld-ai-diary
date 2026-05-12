@@ -2047,13 +2047,6 @@ textarea.page-content {
   padding-top: 28px;
 }
 
-/* Wider layout for profile page specifically on desktop */
-@media (min-width: 900px) {
-  .profile-page.settings {
-    max-width: 920px;
-  }
-}
-
 .settings-card {
   background: rgba(255, 255, 255, 0.05);
   padding: 24px;
