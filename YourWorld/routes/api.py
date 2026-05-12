@@ -576,8 +576,9 @@ def api_activity():
         while check_day.isoformat() in counts:
             streak += 1
             check_day -= timedelta(days=1)
+        entry_count = firebase_db.get_entry_count(session["user_id"])
             
-        return jsonify({"days": days, "counts": counts, "total_pages": total_pages, "streak": streak, "active_days": len(counts)})
+        return jsonify({"days": days, "counts": counts, "total_pages": total_pages, "total_entries": entry_count, "streak": streak, "active_days": len(counts)})
     except Exception as e:
         current_app.logger.warning("get_activity_counts failed: %s", e)
         return jsonify({"error": "Activity fetch failed"}), 500
