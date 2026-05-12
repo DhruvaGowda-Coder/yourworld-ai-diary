@@ -47,19 +47,28 @@
     if (!src) return;
 
     const targetUrl = new URL(src, window.location.origin).href;
+    const lastSrc = localStorage.getItem('yw_last_src');
     
     // 1. Stop and reset if source changed
     if (ambientAudio.src !== targetUrl) {
+      const isInitialLoad = !ambientAudio.src || ambientAudio.src === window.location.href;
       ambientAudio.pause();
-      console.log('Audio: Switching source to:', src);
+      
+      console.log('Audio: Setting source to:', src);
       ambientAudio.src = src;
       ambientAudio.volume = themeVolumes[theme] || 0.7;
+      
+      // If this is the first load of the page and the source matches the last page's source, resume.
+      if (isInitialLoad && targetUrl === lastSrc && savedTime > 0) {
+        ambientAudio.currentTime = savedTime;
+      } else {
+        ambientAudio.currentTime = 0;
+        localStorage.setItem('yw_sound_time', '0');
+      }
       ambientAudio.load();
-      // Always start from 0 for new sources
-      ambientAudio.currentTime = 0;
-      localStorage.setItem('yw_sound_time', '0');
     } else {
-      // Only apply savedTime if the source has NOT changed (e.g. resuming same theme)
+      // Source matches what is already in the <audio> element.
+      // This handles cases where loadAndPlay is called again on the same page.
       if (ambientAudio.currentTime === 0 && savedTime > 0) {
         ambientAudio.currentTime = savedTime;
       }
@@ -119,10 +128,8 @@
 
   toggleBtn.addEventListener('click', toggleAudio);
 
-  window.addEventListener('load', () => {
-    // Small delay to ensure state is ready
-    setTimeout(loadAndPlay, 150);
-  });
+  // Start immediately to minimize gaps during page transitions
+  loadAndPlay();
 
   const unlockAudio = () => {
     if (isPlaying && ambientAudio.paused) {
@@ -137,8 +144,9 @@
   setInterval(() => {
     if (isPlaying && !ambientAudio.paused) {
       localStorage.setItem('yw_sound_time', ambientAudio.currentTime);
+      localStorage.setItem('yw_last_src', ambientAudio.src);
     }
-  }, 2000);
+  }, 500);
 
   window.addEventListener('yw:themechange', () => {
     if (isPlaying) loadAndPlay();

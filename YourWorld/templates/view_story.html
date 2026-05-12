@@ -695,6 +695,7 @@
       display: none !important;
     }
   }
+  /* Autosave Toggle Styling */
 </style>
 
 
@@ -724,7 +725,7 @@
       <div class="public-page-list" id="publicPageList">
         {% for p in pages %}
           <div class="public-page-item {% if loop.first %}is-active{% endif %}" data-index="{{ loop.index0 }}" data-id="{{ p.id }}">
-            <span class="item-title">{{ p.title or 'Untitled Page' }}</span>
+            <span class="item-title">{{ (p.title | striptags) or 'Untitled Page' }}</span>
             {% if can_edit %}
               <button class="item-delete-btn" type="button" title="Delete this page">&times;</button>
             {% endif %}
@@ -740,7 +741,7 @@
       <div class="book" id="publicBook">
         <div class="page public-page" id="publicPage">
           <div class="page-scroll" id="publicPageScroll" style="background: transparent !important; padding-top: 0 !important;">
-            <input class="page-title" id="publicTitle" readonly style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none; margin-bottom: 0; width: 100%; padding: 34px 45px 10px 34px; box-sizing: border-box;" value="{{ pages[0].title if pages else 'Untitled' }}" />
+            <div class="page-title" id="publicTitle" style="color: #1d1510 !important; flex-shrink: 0; background: transparent; border: none; margin-bottom: 0; width: 100%; padding: 34px 45px 10px 34px; box-sizing: border-box; outline: none; font-size: 1.5rem; font-weight: bold; font-family: var(--ui-font);" {% if can_edit %}contenteditable="true"{% else %}contenteditable="false"{% endif %}>{{ pages[0].title | safe if pages else 'Untitled' }}</div>
             <div class="page-content" id="publicContent" style="color: #1d1510 !important; width: 100%; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; font-family: var(--editor-font); font-size: 1.08rem; line-height: 1.85; padding: 0 45px 80px 34px; box-sizing: border-box; overflow: visible !important; background: transparent !important;"></div>
             <div class="page-illustrations" id="publicIllustrations">
               <!-- Multiple illustrations will be injected here -->
@@ -793,7 +794,7 @@
 
         if (canEdit) {
           if (titleEl) {
-            titleEl.readOnly = false;
+            titleEl.contentEditable = "true";
             titleEl.style.pointerEvents = 'auto';
             titleEl.style.cursor = 'text';
           }
@@ -920,7 +921,10 @@
             }
           }
         } else {
-          if (titleEl) titleEl.style.pointerEvents = 'none';
+          if (titleEl) {
+            titleEl.style.pointerEvents = 'none';
+            titleEl.contentEditable = "false";
+          }
           if (illContainer) illContainer.style.pointerEvents = 'none';
           if (contentEl) {
             contentEl.style.pointerEvents = 'none';
@@ -964,10 +968,9 @@
         function render() {
           if (!pages.length) return;
           const p = pages[currentIndex];
-          if (titleEl) titleEl.value = p.title || 'Untitled';
+          if (titleEl) titleEl.innerHTML = p.title || 'Untitled';
           if (contentEl) {
-            let content = p.content || '';
-            contentEl.innerText = content;
+            contentEl.innerHTML = p.content || '';
           }
           
           requestAnimationFrame(() => {
@@ -1130,7 +1133,9 @@
               
               const titleSpan = document.createElement('span');
               titleSpan.className = 'item-title';
-              titleSpan.textContent = page.title || 'Untitled Page';
+              const tmp = document.createElement('div');
+              tmp.innerHTML = page.title || 'Untitled Page';
+              titleSpan.textContent = tmp.innerText || 'Untitled Page';
               item.appendChild(titleSpan);
               
               if (canEdit) {
@@ -1174,7 +1179,9 @@
             
             const titleSpan = document.createElement('span');
             titleSpan.className = 'item-title';
-            titleSpan.textContent = newPage.title;
+            const tmp = document.createElement('div');
+            tmp.innerHTML = newPage.title;
+            titleSpan.textContent = tmp.innerText || 'Untitled Page';
             item.appendChild(titleSpan);
             
             if (canEdit) {
@@ -1212,8 +1219,8 @@
                 },
                 body: JSON.stringify({
                   id: p.id,
-                  title: titleEl.value,
-                  content: contentEl.innerText,
+                  title: titleEl.innerHTML,
+                  content: contentEl.innerHTML,
                   type: 'story',
                   share_code: shareCode,
                   title_style: p.title_style,
@@ -1226,13 +1233,19 @@
               });
               if (r.ok) {
                 const res = await r.json();
-                p.id = res.id; // Update ID if it was a new page
-                p.title = titleEl.value;
-                p.content = contentEl.innerText;
+                p.id = res.id;
+                p.title = titleEl.innerHTML;
+                p.content = contentEl.innerHTML;
                 saveBtn.textContent = 'Saved!';
                 
                 const sidebarItem = document.querySelector(`.public-page-item[data-index="${currentIndex}"]`);
-                if (sidebarItem) sidebarItem.textContent = titleEl.value || 'Untitled Page';
+                if (sidebarItem) {
+                  const titleSpan = sidebarItem.querySelector('.item-title');
+                  const tmp = document.createElement('div');
+                  tmp.innerHTML = titleEl.innerHTML || 'Untitled Page';
+                  if (titleSpan) titleSpan.textContent = tmp.innerText || 'Untitled Page';
+                  else sidebarItem.textContent = tmp.innerText || 'Untitled Page';
+                }
                 
                 setTimeout(() => { 
                   saveBtn.textContent = 'Save Changes'; 

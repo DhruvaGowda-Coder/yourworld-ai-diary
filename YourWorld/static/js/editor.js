@@ -171,8 +171,8 @@ if (workspace) {
   }
 
   getChatContext = () => {
-    const title = ((titleInput && titleInput.value) || '').trim();
-    const content = ((contentInput && contentInput.value) || '').trim();
+    const title = ((titleInput && titleInput.innerText) || '').trim();
+    const content = ((contentInput && contentInput.innerText) || '').trim();
     const pageLabel = ((pageCount && pageCount.textContent) || '').trim();
     if (!title && !content) return null;
     return {
@@ -242,53 +242,10 @@ if (workspace) {
     shareCustomCodeInput.title = message || '';
   };
 
-  const showLoginPromptModal = ({
-    title = 'Unlock Image Generation',
-    message = "Sign in to generate beautiful AI images for your story. It's completely free and only takes a second.",
-  } = {}) => {
-    const existing = document.getElementById('yw-login-modal');
-    if (existing) existing.remove();
-
-    const modal = document.createElement('div');
-    modal.id = 'yw-login-modal';
-    modal.className = 'yw-modal-overlay';
-    modal.innerHTML = `
-      <div class="yw-modal-box" style="border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); background: var(--bg-card, #2a2a2a); border: 1px solid var(--border-color, #444); max-width: 400px; padding: 32px; text-align: center; animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-        <style>
-          @keyframes modalPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-          .yw-modal-overlay { display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; backdrop-filter: blur(4px); }
-          .yw-modal-icon { width: 68px; height: 68px; background: linear-gradient(135deg, var(--theme-accent, #ff7e5f), var(--theme-accent-2, #feb47b)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--theme-accent-text, #fff); box-shadow: 0 8px 24px var(--theme-accent-soft, rgba(0,0,0,0.3)), inset 0 -4px 12px rgba(0,0,0,0.15), inset 0 4px 12px rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.1); }
-          .yw-modal-box h3 { margin: 0 0 12px; font-size: 1.5rem; color: var(--text-color, #fff); font-weight: 600; }
-          .yw-modal-box p { margin: 0 0 24px; color: var(--text-color, #aaa); opacity: 0.8; line-height: 1.5; font-size: 1rem; }
-          .yw-modal-actions { display: flex; flex-direction: column; gap: 12px; }
-          .yw-modal-actions a, .yw-modal-actions button { width: 100%; display: inline-flex; justify-content: center; align-items: center; gap: 8px; padding: 12px; font-size: 1rem; box-sizing: border-box; }
-        </style>
-        <div class="yw-modal-icon">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.25));">
-            <path d="M10 2l1.528 4.708a3 3 0 001.764 1.764L18 10l-4.708 1.528a3 3 0 00-1.764 1.764L10 18l-1.528-4.708a3 3 0 00-1.764-1.764L2 10l4.708-1.528a3 3 0 001.764-1.764L10 2z"/>
-            <path d="M19 14l.764 2.354a1.5 1.5 0 00.882.882L23 18l-2.354.764a1.5 1.5 0 00-.882.882L19 22l-.764-2.354a1.5 1.5 0 00-.882-.882L15 18l2.354-.764a1.5 1.5 0 00.882-.882L19 14z" opacity="0.8"/>
-            <path d="M19 2l.509 1.57a1 1 0 00.588.588L22 4.5l-1.903.509a1 1 0 00-.588.588L19 7l-.509-1.57a1 1 0 00-.588-.588L16 4.5l1.903-.509a1 1 0 00.588-.588L19 2z" opacity="0.6"/>
-          </svg>
-        </div>
-        <h3>${title}</h3>
-        <p>${message}</p>
-        <div class="yw-modal-actions">
-          <a href="/login/google" class="btn primary" style="color: var(--theme-accent-text, #fff);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-            Continue with Google
-          </a>
-          <button type="button" class="btn ghost" data-close-login-modal>Not right now</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal || event.target.closest('[data-close-login-modal]')) {
-        modal.classList.add('closing');
-        modal.querySelector('.yw-modal-box').style.animation = 'modalPop 0.2s cubic-bezier(0.6, -0.28, 0.735, 0.045) reverse forwards';
-        setTimeout(() => modal.remove(), 200);
-      }
-    });
+  const showLoginPromptModal = (options = {}) => {
+    if (typeof window.showLoginPromptModal === 'function') {
+      window.showLoginPromptModal(options);
+    }
   };
 
   const setTime = (iso, prefix = 'Saved') => {
@@ -299,8 +256,8 @@ if (workspace) {
 
   /** Compute a simple hash of current editor content and styles to detect real changes. */
   const _computeContentHash = () => {
-    const t = (titleInput ? titleInput.value : '') +
-              '|' + (contentInput ? contentInput.value : '') +
+    const t = (titleInput ? titleInput.innerHTML : '') +
+              '|' + (contentInput ? contentInput.innerHTML : '') +
               '|' + JSON.stringify(titleStyleState) +
               '|' + JSON.stringify(contentStyleState) +
               '|' + (imagePrompt ? imagePrompt.value : '') +
@@ -335,9 +292,7 @@ if (workspace) {
 
   /** Auto-resizes the textarea to fit content height. */
   const resizeContentInput = () => {
-    if (!contentInput) return;
-    contentInput.style.height = 'auto';
-    contentInput.style.height = (contentInput.scrollHeight + 4) + 'px';
+    // No-op for contenteditable, but kept for compatibility
   };
 
   const animateTurn = (direction, callback) => {
@@ -392,7 +347,7 @@ if (workspace) {
     if (!entryList || !titleInput) return;
     const activeIndex = getActiveIndex();
     if (activeIndex < 0 || !entries[activeIndex]) return;
-    const rawTitle = titleInput.value || '';
+    const rawTitle = titleInput.innerText || '';
     const displayTitle = rawTitle.trim() || 'Untitled';
     entries[activeIndex].title = displayTitle;
     const item = entryList.querySelector(`.entry-item[data-index="${activeIndex}"]`);
@@ -595,7 +550,9 @@ if (workspace) {
     entries.forEach((entry, index) => {
       const item = document.createElement('div');
       item.className = 'entry-item' + (index === currentIndex ? ' active' : '');
-      item.textContent = entry.title || 'Untitled';
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = entry.title || 'Untitled';
+      item.textContent = tempDiv.innerText || 'Untitled';
       item.dataset.index = index;
       const handleSelect = async () => {
         try {
@@ -651,8 +608,8 @@ if (workspace) {
       return;
     }
     const data = await response.json();
-    titleInput.value = data.title || '';
-    contentInput.value = data.content || '';
+    titleInput.innerHTML = data.title || '';
+    contentInput.innerHTML = data.content || '';
     Object.assign(titleStyleState, parseStyleState(data.title_style, defaultTitleStyle));
     Object.assign(contentStyleState, parseStyleState(data.content_style, defaultContentStyle));
     applyEditorStyle(); 
@@ -721,8 +678,8 @@ if (workspace) {
   const createBlank = () => {
     currentEntryId = null;
     currentIndex = -1;
-    titleInput.value = '';
-    contentInput.value = '';
+    titleInput.innerHTML = '';
+    contentInput.innerHTML = '';
     Object.assign(titleStyleState, defaultTitleStyle);
     Object.assign(contentStyleState, defaultContentStyle);
     applyEditorStyle();
@@ -755,9 +712,9 @@ if (workspace) {
       setStatus('Saving...');
       const hashAtStart = _computeContentHash();
       try {
-        const contentText = contentInput.value || '';
-        const hasTitle = Boolean(titleInput.value.trim());
-        const hasContent = Boolean(contentText.trim());
+        const contentText = contentInput.innerHTML || '';
+        const hasTitle = Boolean(titleInput.innerText.trim());
+        const hasContent = Boolean(contentInput.innerText.trim());
         const allowEmpty = options.allowEmpty === true;
         
         // If it's a brand new entry and it's empty, don't bother the server
@@ -773,7 +730,7 @@ if (workspace) {
         const payload = {
           id: resolvedEntryId,
           type: entryType,
-          title: titleInput.value,
+          title: titleInput.innerHTML,
           content: contentText,
           title_style: JSON.stringify(titleStyleState),
           content_style: JSON.stringify(contentStyleState),
@@ -1001,63 +958,53 @@ if (workspace) {
     });
     contentInput.addEventListener('input', () => {
       markDirty();
-      resizeContentInput();
     });
   }
   if (imagePrompt) imagePrompt.addEventListener('input', markDirty);
 
   if (formatBoldBtn) {
-    formatBoldBtn.addEventListener('click', () => {
-      syncActiveTargetFromFocus();
-      const state = getStyleState(activeEditorTarget);
-      state.bold = !state.bold;
-      applyEditorStyle();
+    formatBoldBtn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      document.execCommand('bold', false, null);
       markDirty();
-      focusActiveEditor();
     });
   }
 
   if (formatItalicBtn) {
-    formatItalicBtn.addEventListener('click', () => {
-      syncActiveTargetFromFocus();
-      const state = getStyleState(activeEditorTarget);
-      state.italic = !state.italic;
-      applyEditorStyle();
+    formatItalicBtn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      document.execCommand('italic', false, null);
       markDirty();
-      focusActiveEditor();
     });
   }
 
   if (formatUnderlineBtn) {
-    formatUnderlineBtn.addEventListener('click', () => {
-      syncActiveTargetFromFocus();
-      const state = getStyleState(activeEditorTarget);
-      state.underline = !state.underline;
-      applyEditorStyle();
+    formatUnderlineBtn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      document.execCommand('underline', false, null);
       markDirty();
-      focusActiveEditor();
     });
   }
 
   if (fontSizeSelect) {
     fontSizeSelect.addEventListener('change', () => {
-      syncActiveTargetFromFocus();
-      const state = getStyleState(activeEditorTarget);
-      state.fontSize = fontSizeSelect.value || (activeEditorTarget === 'title' ? '1.4' : '1.05');
-      applyEditorStyle();
+      const val = fontSizeSelect.value;
+      // Map rem to 1-7 for execCommand
+      let size = "3"; // default
+      if (val <= 0.9) size = "1";
+      else if (val <= 1.1) size = "3";
+      else if (val <= 1.3) size = "4";
+      else if (val <= 1.5) size = "5";
+      else if (val <= 1.8) size = "6";
+      else size = "7";
+      
+      document.execCommand('fontSize', false, size);
       markDirty();
-      focusActiveEditor();
     });
   }
 
   const insertAtCursor = (element, text) => {
-    const start = element.selectionStart || 0;
-    const end = element.selectionEnd || 0;
-    const value = element.value || '';
-    element.value = value.slice(0, start) + text + value.slice(end);
-    const cursor = start + text.length;
-    element.selectionStart = cursor;
-    element.selectionEnd = cursor;
+    document.execCommand('insertText', false, text);
   };
 
   const htmlToText = (html) => {
@@ -1078,13 +1025,10 @@ if (workspace) {
       const clipboard = event.clipboardData || window.clipboardData;
       if (!clipboard) return;
       const plain = clipboard.getData('text/plain');
-      const html = clipboard.getData('text/html');
-      if (!html && !plain) return;
+      if (!plain) return;
       event.preventDefault();
-      const text = plain || htmlToText(html);
-      insertAtCursor(contentInput, text);
+      insertAtCursor(contentInput, plain);
       markDirty();
-      resizeContentInput();
     });
   }
 
@@ -1104,7 +1048,11 @@ if (workspace) {
         const data = await response.json().catch(() => ({}));
         if (response.status === 401 && data.error === 'login_required') {
           setStatus('Sign in to generate AI images. It is free.');
-          showLoginPromptModal();
+          showLoginPromptModal({
+            title: "Unlock AI Illustrations",
+            message: "Sign in to generate beautiful AI-powered illustrations for your stories and notes. It's completely free!",
+            iconType: "art"
+          });
           return;
         }
         if (!response.ok) {

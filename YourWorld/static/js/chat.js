@@ -36,11 +36,15 @@
             text: contentEl.textContent || ''
           };
           const img = el.querySelector('.bubble-image');
-          const file = el.querySelector('.bubble-file');
+          const files = el.querySelectorAll('.bubble-file');
           if (img) {
             item.attachment = { type: 'image/png', url: img.src, name: 'Image' };
-          } else if (file) {
-            item.attachment = { type: 'file', url: file.href, name: file.querySelector('span:last-child')?.textContent || 'File' };
+          } else if (files.length > 0) {
+            item.attachments = Array.from(files).map(f => ({
+              type: 'file',
+              url: f.href,
+              name: f.querySelector('span:last-child')?.textContent || 'File'
+            }));
           }
           items.push(item);
         }
@@ -84,7 +88,7 @@
     content.textContent = text || '';
   }
 
-  function addMessage(text, who = 'user', fileData = null) {
+  function addMessage(text, who = 'user', fileData = null, attachments = []) {
     const msgs = document.getElementById('chatMessages');
     if (!msgs) return;
     const bubble = document.createElement('div');
@@ -94,20 +98,23 @@
     _renderMessageContent(content, text, who);
     bubble.appendChild(content);
 
-    if (fileData) {
-      if (fileData.type && fileData.type.startsWith('image/')) {
-        const img = document.createElement('img');
-        img.src = fileData.url;
-        img.className = 'bubble-image';
-        bubble.appendChild(img);
-      } else {
-        const link = document.createElement('a');
-        link.href = fileData.url;
-        link.className = 'bubble-file';
-        link.target = '_blank';
-        link.innerHTML = `<span>📎</span> <span>${fileData.name || 'Attached File'}</span>`;
-        bubble.appendChild(link);
-      }
+    const allAttachments = Array.isArray(attachments) ? attachments : (fileData ? [fileData] : []);
+    if (allAttachments.length > 0) {
+      allAttachments.forEach(f => {
+        if (f.type && f.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.src = f.url;
+          img.className = 'bubble-image';
+          bubble.appendChild(img);
+        } else {
+          const link = document.createElement('a');
+          link.href = f.url;
+          link.className = 'bubble-file';
+          link.target = '_blank';
+          link.innerHTML = `<span>📎</span> <span>${f.name || 'Attached File'}</span>`;
+          bubble.appendChild(link);
+        }
+      });
     }
 
     const del = document.createElement('button');
@@ -147,7 +154,7 @@
         currentSessionId = id;
         chatHistory = data.messages || [];
         msgs.innerHTML = '';
-        chatHistory.forEach(m => addMessage(m.content, m.role === 'assistant' ? 'bot' : 'user', m.attachment));
+        chatHistory.forEach(m => addMessage(m.content, m.role === 'assistant' ? 'bot' : 'user', null, m.attachments || (m.attachment ? [m.attachment] : [])));
         _saveLocalState();
         _saveDisplayMessages();
         panel.classList.remove('showing-history');
@@ -169,11 +176,15 @@
           content: contentEl.textContent
         };
         const img = el.querySelector('.bubble-image');
-        const file = el.querySelector('.bubble-file');
+        const files = el.querySelectorAll('.bubble-file');
         if (img) {
           msg.attachment = { type: 'image/png', url: img.src, name: 'Image' };
-        } else if (file) {
-          msg.attachment = { type: 'file', url: file.href, name: file.querySelector('span:last-child')?.textContent || 'File' };
+        } else if (files.length > 0) {
+          msg.attachments = Array.from(files).map(f => ({
+            type: 'file',
+            url: f.href,
+            name: f.querySelector('span:last-child')?.textContent || 'File'
+          }));
         }
         history.push(msg);
       }
@@ -403,32 +414,62 @@
       }
     } catch(e) {}
 
-    if (launchBtn) launchBtn.onclick = () => { panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false'); ensureGreeting(); };
+    if (launchBtn) launchBtn.onclick = () => { 
+      const userData = document.getElementById('current-user-data')?.textContent;
+      const isGuest = !userData || userData.trim() === 'null';
+      
+      if (isGuest) {
+        window.showLoginPromptModal({
+          title: 'Sign In to Chat',
+          message: "Aura's AI writing assistance is available to signed-in users. It's completely free and saves your history!",
+          iconType: 'ai'
+        });
+        return;
+      }
+
+      panel.classList.add('open'); 
+      panel.setAttribute('aria-hidden', 'false'); 
+      ensureGreeting(); 
+    };
     if (closeBtn) closeBtn.onclick = () => panel.classList.remove('open');
 
     // ── File Upload Logic ──
     const uploadBtn = document.getElementById('chatUploadBtn');
     const fileInput = document.getElementById('chatFileInput');
     const filePreview = document.getElementById('chatFilePreview');
-    let selectedFile = null;
+    let selectedFiles = [];
+
+    const renderFilePreview = () => {
+      if (selectedFiles.length === 0) {
+        filePreview.style.display = 'none';
+        filePreview.innerHTML = '';
+        return;
+      }
+      filePreview.style.display = 'flex';
+      filePreview.innerHTML = '';
+      selectedFiles.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'preview-item';
+        item.innerHTML = `
+          <span>${file.name}</span>
+          <span class="preview-remove" data-index="${index}">&times;</span>
+        `;
+        item.querySelector('.preview-remove').onclick = () => {
+          selectedFiles.splice(index, 1);
+          renderFilePreview();
+        };
+        filePreview.appendChild(item);
+      });
+    };
 
     if (uploadBtn && fileInput) {
       uploadBtn.onclick = () => fileInput.click();
       fileInput.onchange = () => {
         if (fileInput.files.length > 0) {
-          selectedFile = fileInput.files[0];
-          filePreview.style.display = 'flex';
-          filePreview.innerHTML = `
-            <div class="preview-item">
-              <span>${selectedFile.name}</span>
-              <span class="preview-remove">&times;</span>
-            </div>
-          `;
-          filePreview.querySelector('.preview-remove').onclick = () => {
-            selectedFile = null;
-            fileInput.value = '';
-            filePreview.style.display = 'none';
-          };
+          const newFiles = Array.from(fileInput.files);
+          selectedFiles = [...selectedFiles, ...newFiles].slice(0, 5); // Limit to 5 files
+          renderFilePreview();
+          fileInput.value = '';
         }
       };
     }
@@ -436,69 +477,97 @@
     if (form) form.onsubmit = async (e) => {
       e.preventDefault();
       const text = textInput.value.trim();
-      if (!text && !selectedFile) return;
+      if (!text && selectedFiles.length === 0) return;
 
-      let fileInfo = null;
-      if (selectedFile) {
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        const fileType = selectedFile.type.startsWith('image/') ? 'image' : (selectedFile.type.startsWith('audio/') ? 'audio' : 'file');
-        
-        try {
-          const upRes = await fetch(`/api/upload/${fileType}`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': _getCsrfToken() },
-            body: formData
-          });
-          if (upRes.ok) {
-            fileInfo = await upRes.json();
-          } else {
-            const err = await upRes.json();
-            alert(err.error || 'Upload failed');
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.classList.add('sending');
+
+      const uploadedInfos = [];
+      if (selectedFiles.length > 0) {
+        for (const file of selectedFiles) {
+          const formData = new FormData();
+          formData.append('file', file);
+          const fileType = file.type.startsWith('image/') ? 'image' : (file.type.startsWith('audio/') ? 'audio' : 'file');
+          
+          try {
+            const upRes = await fetch(`/api/upload/${fileType}`, {
+              method: 'POST',
+              headers: { 'X-CSRFToken': _getCsrfToken() },
+              body: formData
+            });
+            if (upRes.ok) {
+              const info = await upRes.json();
+              uploadedInfos.push(info);
+            } else {
+              const err = await upRes.json();
+              alert(`Upload failed for ${file.name}: ${err.error || 'Unknown error'}`);
+              return;
+            }
+          } catch(err) {
+            console.error('Upload error:', err);
+            alert(`Upload failed for ${file.name}`);
             return;
           }
-        } catch(err) {
-          console.error('Upload error:', err);
-          alert('Upload failed');
-          return;
         }
       }
 
-      addMessage(text, 'user', fileInfo);
+      addMessage(text, 'user', null, uploadedInfos);
       textInput.value = '';
-      selectedFile = null;
+      selectedFiles = [];
       if (fileInput) fileInput.value = '';
-      if (filePreview) filePreview.style.display = 'none';
+      if (filePreview) renderFilePreview();
 
-      const typing = addMessage('Thinking...', 'bot');
+      const typing = addMessage('', 'bot');
+      typing.querySelector('.bubble-content').innerHTML = `
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      `;
       
-      fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _getCsrfToken() },
-        body: JSON.stringify({ 
-          message: text, 
-          history: chatHistory, 
-          session_id: currentSessionId,
-          attachment: fileInfo
-        }),
-      })
-      .then(r => r.json())
-      .then(data => {
+      try {
+        const r = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _getCsrfToken() },
+          body: JSON.stringify({ 
+            message: text, 
+            history: chatHistory, 
+            session_id: currentSessionId,
+            attachments: uploadedInfos
+          }),
+        });
+
+        const data = await r.json();
+        if (!r.ok) {
+          if (data.error === 'login_required') {
+            window.showLoginPromptModal({
+              title: 'Aura Sign-In Required',
+              message: "Please sign in to use Aura's AI features and save your conversations."
+            });
+            typing.remove();
+          } else {
+            typing.querySelector('.bubble-content').textContent = data.error || 'Error sending message.';
+          }
+          return;
+        }
+
         if (data.session_id) currentSessionId = data.session_id;
         const reply = data.reply || '...';
         _renderMessageContent(typing.querySelector('.bubble-content'), reply, 'bot');
         
         chatHistory.push(
-          { role: 'user', content: text, attachment: fileInfo }, 
+          { role: 'user', content: text, attachments: uploadedInfos }, 
           { role: 'assistant', content: reply }
         );
         _saveLocalState();
         _saveDisplayMessages();
-      })
-      .catch((err) => { 
+      } catch (err) {
         console.error('Chat error:', err);
         typing.querySelector('.bubble-content').textContent = 'Error sending message. Please refresh.'; 
-      });
+      } finally {
+        if (submitBtn) submitBtn.classList.remove('sending');
+      }
     };
 
     // Load Initial State
@@ -506,7 +575,7 @@
       const stored = JSON.parse(localStorage.getItem(CHAT_DISPLAY_KEY) || '[]');
       if (stored.length) {
         msgs.innerHTML = '';
-        stored.forEach(m => addMessage(m.text || _plainTextFromHtml(m.html || ''), m.who, m.attachment));
+        stored.forEach(m => addMessage(m.text || _plainTextFromHtml(m.html || ''), m.who, null, m.attachments || (m.attachment ? [m.attachment] : [])));
       }
       chatHistory = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
     } catch(e) {}

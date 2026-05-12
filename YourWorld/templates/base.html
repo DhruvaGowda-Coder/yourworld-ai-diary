@@ -78,7 +78,10 @@
   <canvas id="gardenCanvas" class="garden-canvas" aria-hidden="true"></canvas>
 
   <header class="site-header">
-    <a href="{{ url_for('main.index') }}" class="logo" aria-label="YourWorld Home">YourWorld</a>
+    <a href="{{ url_for('main.index') }}" class="logo" aria-label="YourWorld Home">
+      <img src="{{ url_for('static', filename='img/yourworld-symbol.svg') }}" alt="" class="logo-icon" aria-hidden="true" />
+      <span>YourWorld</span>
+    </a>
     <nav class="nav-links" id="navLinks">
       <form class="share-header" action="{{ url_for('main.view_by_code') }}" method="get">
         <label class="sr-only" for="headerShareCode">Enter a content sharing code</label>
@@ -152,7 +155,7 @@
         <a class="footer-link" href="{{ url_for('main.terms_and_conditions') }}">Terms</a>
         <a class="footer-link" href="{{ url_for('main.about') }}">About</a>
         <a class="footer-link" href="{{ url_for('main.faq') }}">FAQ</a>
-        <a class="footer-link" href="mailto:{{ contact_email }}">Contact</a>
+        <a class="footer-link" href="https://mail.google.com/mail/?view=cm&fs=1&to={{ contact_email }}" target="_blank">Contact</a>
       </nav>
       <div class="footer-meta">
         <button id="audioToggleBtn" class="btn ghost" style="padding: 4px 8px; font-size: 0.85rem;" aria-label="Toggle ambient sound">Sound</button>
@@ -188,7 +191,7 @@
     <div class="chat-messages" id="chatMessages"></div>
     <div id="chatFilePreview" class="chat-file-preview" style="display: none;"></div>
     <form class="chat-input" id="chatForm">
-      <input type="file" id="chatFileInput" style="display: none;" accept="image/*,.pdf,.doc,.docx,.txt,.md,.zip,.7z,.rar,.js,.py,.html,.css,.json,.sql,.java,.cpp,.svg,.epub,.yaml,.xml" />
+      <input type="file" id="chatFileInput" style="display: none;" multiple accept="image/*,.pdf,.doc,.docx,.txt,.md,.zip,.7z,.rar,.js,.py,.html,.css,.json,.sql,.java,.cpp,.svg,.epub,.yaml,.xml" />
       <button type="button" id="chatUploadBtn" class="chat-upload-btn" title="Upload Image or File">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
       </button>

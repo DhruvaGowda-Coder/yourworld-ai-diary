@@ -34,7 +34,7 @@ ALLOWED_MIME_TYPES = {
     "file": {
         "application/pdf", "application/msword", 
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
-        "text/plain", "text/markdown", "text/x-markdown", "application/zip", "application/x-zip-compressed",
+        "text/plain", "text/markdown", "text/x-markdown", "application/octet-stream", "application/zip", "application/x-zip-compressed",
         "application/x-7z-compressed", "application/vnd.rar", "application/x-rar-compressed",
         "application/javascript", "text/javascript", "text/x-python", "application/x-python",
         "text/html", "text/css", "application/json", "application/sql", "text/x-sql",
@@ -374,6 +374,10 @@ def api_chat():
     data = request.get_json(force=True)
     message = (data.get("message") or "").strip()
     attachment = data.get("attachment")
+    attachments = data.get("attachments") or []
+    # If a single attachment is provided in the old field, add it to the list
+    if attachment and not any(a.get('url') == attachment.get('url') for a in attachments):
+        attachments.append(attachment)
     history = data.get("history") or []
     session_id = data.get("session_id")
     context_data = data.get("context") or {}
@@ -386,7 +390,7 @@ def api_chat():
             return jsonify({"success": True, "session_id": new_id})
         return jsonify({"success": True})
 
-    if not message and not attachment: return jsonify({"error": "Message required"}), 400
+    if not message and not attachments: return jsonify({"error": "Message or attachment required"}), 400
 
     active_theme = get_user_theme(user_id)
     
@@ -411,14 +415,19 @@ def api_chat():
     for h in history[-50:]:
         if h.get("role") in {"user", "assistant"}:
             content = h.get("content") or ""
-            att = h.get("attachment")
-            if att:
+            atts = h.get("attachments") or []
+            # Legacy single attachment check
+            single_att = h.get("attachment")
+            if single_att and not any(a.get('url') == single_att.get('url') for a in atts):
+                atts.append(single_att)
+                
+            for att in atts:
                 content += f"\n\n[USER ATTACHED A FILE: {att.get('name')} - URL: {att.get('url')}]"
             messages.append({"role": h.get("role"), "content": content})
 
-    user_content = message
-    if attachment:
-        user_content += f"\n\n[USER ATTACHED A FILE: {attachment.get('name')} - URL: {attachment.get('url')}]"
+    user_content = message or "User shared files:"
+    for att in attachments:
+        user_content += f"\n\n[USER ATTACHED A FILE: {att.get('name')} - URL: {att.get('url')}]"
     
     messages.append({"role": "user", "content": user_content})
 
@@ -438,7 +447,7 @@ def api_chat():
             
         # Update Cloud History for cross-device sync
         if user_id and not str(user_id).startswith("guest_"):
-            new_history = history + [{"role": "user", "content": message, "attachment": attachment}, {"role": "assistant", "content": reply}]
+            new_history = history + [{"role": "user", "content": message, "attachments": attachments}, {"role": "assistant", "content": reply}]
             new_id = firebase_db.save_chat_session(user_id, session_id, new_history[-50:])
             return jsonify({"reply": reply, "session_id": new_id})
             
