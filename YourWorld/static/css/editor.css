@@ -1710,7 +1710,7 @@ blockquote {
   }
 
     /* Show a placeholder for hidden images on mobile */
-    .page-illustrations {
+    .page-illustrations:has(.page-illustration) {
       display: flex !important;
       order: -1 !important;
       align-items: center;
@@ -1728,6 +1728,10 @@ blockquote {
       box-sizing: border-box !important;
       padding: 6px !important;
       pointer-events: auto !important;
+    }
+
+    .page-illustrations:not(:has(.page-illustration)) {
+      display: none !important;
     }
 
     .page-illustrations::after {

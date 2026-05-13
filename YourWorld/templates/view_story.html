@@ -656,7 +656,7 @@
     }
 
     /* Compact size for Shared Canvas (editable) */
-    .workspace.public-story[data-can-edit="true"] .page-illustrations {
+    .workspace.public-story[data-can-edit="true"] .page-illustrations:has(.page-illustration) {
       display: flex !important;
       order: -1 !important; /* Move to top on mobile flex containers */
       align-items: center;
@@ -675,14 +675,23 @@
       padding: 6px !important;
     }
 
+    .workspace.public-story[data-can-edit="true"] .page-illustrations:not(:has(.page-illustration)) {
+      display: none !important;
+    }
+
     /* Override: Larger size for View Mode (non-editable) only */
-    .public-story[data-can-edit="false"] .page-illustrations {
+    .public-story[data-can-edit="false"] .page-illustrations:has(.page-illustration) {
+      display: flex !important;
       min-height: 60px !important;
       margin: 15px 0 !important;
       background: rgba(255, 255, 255, 0.04) !important;
       border: 1px dashed rgba(255, 255, 255, 0.15) !important;
       border-radius: 14px !important;
       padding: 12px !important;
+    }
+
+    .public-story[data-can-edit="false"] .page-illustrations:not(:has(.page-illustration)) {
+      display: none !important;
     }
     .public-story[data-can-edit="false"] .page-illustrations::after {
       content: "🖼️ Image is present — please view on desktop for better experience.";
