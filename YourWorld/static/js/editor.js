@@ -143,7 +143,7 @@ if (workspace) {
       try {
         const response = await fetch(`/api/entry/${targetId}/share`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': window.csrfToken },
           body: JSON.stringify({ rotate: false, mode: modeValue, can_edit: canEdit }),
         });
         if (!response.ok) throw new Error('Share update failed');
@@ -764,7 +764,7 @@ if (workspace) {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json', 
-            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || csrfToken || ''
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || window.csrfToken || ''
           },
           body: JSON.stringify(payload),
         });
@@ -897,7 +897,7 @@ if (workspace) {
       if (!window.confirm('Delete this page?')) return;
       setStatus('Deleting...');
       try {
-        const resp = await fetch(`/api/entry/${targetId}`, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } });
+        const resp = await fetch(`/api/entry/${targetId}`, { method: 'DELETE', headers: { 'X-CSRFToken': window.csrfToken } });
         if (!resp.ok) throw new Error('Delete failed');
         const indexToRemove = entries.findIndex(e => e.id === targetId);
         if (indexToRemove >= 0) entries.splice(indexToRemove, 1);
@@ -1566,6 +1566,7 @@ if (workspace) {
 
 
   const saveShareCode = async ({ useRandom = false } = {}) => {
+    console.log('saveShareCode triggered', { useRandom });
     if (!getActiveEntryId()) {
       await saveEntry({ allowEmpty: true });
     }
@@ -1606,7 +1607,7 @@ if (workspace) {
     try {
       const response = await fetch(`/api/entry/${targetId}/share`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': window.csrfToken },
         body: JSON.stringify({ rotate: useRandom, mode, custom_code: customCode, can_edit: canEdit }),
       });
       const data = await response.json().catch(() => ({}));
@@ -1654,13 +1655,13 @@ if (workspace) {
   };
 
   if (shareRandomBtn) {
-    shareRandomBtn.addEventListener('click', () => {
+    bindTap(shareRandomBtn, () => {
       saveShareCode({ useRandom: true });
     });
   }
 
   if (shareGenerateBtn) {
-    shareGenerateBtn.addEventListener('click', () => {
+    bindTap(shareGenerateBtn, () => {
       saveShareCode({ useRandom: false });
     });
   }
@@ -1686,7 +1687,7 @@ if (workspace) {
       try {
         const response = await fetch(`/api/entry/${targetId}/share`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': window.csrfToken },
           body: JSON.stringify({ rotate: false, mode, can_edit: canEdit }),
         });
         if (!response.ok) throw new Error('Permission update failed');
@@ -1710,7 +1711,7 @@ if (workspace) {
       try {
         const response = await fetch(`/api/entry/${targetId}/share`, {
           method: 'DELETE',
-          headers: { 'X-CSRFToken': csrfToken },
+          headers: { 'X-CSRFToken': window.csrfToken },
         });
         if (!response.ok) throw new Error('Remove failed');
         shareCode = null;

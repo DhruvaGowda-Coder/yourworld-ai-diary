@@ -7,13 +7,14 @@
   "create": "Create private content | YourWorld",
   "how": "How private code sharing works | YourWorld"
 } %}
-{% block title %}
+{% set page_title %}
   {% if page == "landing" and title %}
     {{ title }} — Free & Secure | YourWorld
   {% else %}
     {{ legal_titles.get(page, "YourWorld") }}
   {% endif %}
-{% endblock %}
+{% endset %}
+{% block title %}{{ page_title }}{% endblock %}
 {% block description %}
 {% if page == "privacy" %}Privacy Policy for YourWorld, a code-based private content sharing platform that does not sell or share user data.{% elif page == "terms" %}Terms and Conditions for using YourWorld safely and responsibly as a private content sharing platform.{% elif page == "faq" %}Answers about YourWorld private code sharing, account requirements, privacy, and safe use.{% elif page == "landing" and slug == "private-code-sharing" %}Learn about private code sharing on YourWorld. Create notes and stories, generate a unique code, and share privately — no login required.{% elif page == "landing" and slug == "share-notes-without-login" %}Share notes without login on YourWorld. No account needed to create or view shared content. Just write, get a code, and share.{% elif page == "landing" and slug == "anonymous-note-sharing" %}Share notes anonymously using YourWorld. No tracking, no public listing, no account required. Private code-based sharing for everyone.{% elif page == "landing" and slug == "private-online-diary" %}Keep a private online diary on YourWorld. Write personal journal entries with AI assistance and immersive elemental themes.{% elif page == "landing" and slug == "secure-story-sharing" %}Securely share stories and creative writing using unique private codes on YourWorld. No public indexing, no login required.{% elif page == "landing" and slug == "share-content-by-code" %}Share any content by code on YourWorld. Generate a unique private code for your notes, stories, or documents. Only code holders can access it.{% elif page == "landing" and slug == "no-login-sharing-platform" %}YourWorld is the best no-login sharing platform. Create and share content instantly without creating an account. Code-based private access.{% elif page == "landing" and slug == "immersive-writing-platform" %}Write in an immersive environment on YourWorld. 9 elemental themes with ambient sound, particle effects, and AI writing assistance.{% elif page == "landing" and slug == "ai-story-writing-platform" %}Use AI to write stories on YourWorld. Aura AI assistant helps with brainstorming, editing, and creative writing. Free for signed-in users.{% elif page == "landing" and slug == "private-collaborative-writing" %}Collaborate privately on YourWorld. Share editable canvases using private codes. No accounts needed for viewers — optional login for AI features.{% elif page == "landing" and slug.startswith("compare/") %}Compare YourWorld with {{ title.split('vs ')[-1] }}. See how private code sharing compares to traditional document sharing platforms.{% else %}Learn how YourWorld lets users create content and share it using unique private codes.{% endif %}
 {% endblock %}

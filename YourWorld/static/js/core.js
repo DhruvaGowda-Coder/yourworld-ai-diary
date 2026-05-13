@@ -1,4 +1,5 @@
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+window.csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+const csrfToken = window.csrfToken;
 
 // Production-grade sanitization config
 const PURIFY_CONFIG = {
