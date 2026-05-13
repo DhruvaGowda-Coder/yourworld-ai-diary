@@ -1,9 +1,22 @@
 {% extends "base.html" %}
+{% block title %}Sign In — Access Your YourWorld Account{% endblock %}
+{% block description %}Sign in to YourWorld with Google to save your content, access the Aura AI assistant, and generate AI images for your stories.{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block meta %}
+<meta property="og:title" content="Sign In — Access Your YourWorld Account">
+<meta property="og:description" content="Sign in with Google to unlock AI writing assistance, image generation, and persistent content saving.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ site_url }}/login">
+<meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Sign In — YourWorld">
+<meta name="twitter:description" content="Sign in to YourWorld for AI features and persistent content.">
+{% endblock %}
 {% block content %}
 <section class="auth-panel">
   <div class="auth-panel-accent"></div>
   <div class="auth-panel-icon">📖</div>
-  <h2>Welcome back</h2>
+  <h1>Welcome back</h1>
   <p class="auth-sub">Your private workspaces are waiting.</p>
 
   <!-- Google Sign In -->

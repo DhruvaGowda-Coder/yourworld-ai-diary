@@ -109,76 +109,49 @@
             "item": "{{ site_url }}/"
           }
         ]
+      },
+      "speakable": {
+        "@type": "SpeakableSpecification",
+        "cssSelector": [".hero-text .subtitle", ".how-steps", ".why-list"]
       }
+    },
+    {
+      "@type": "HowTo",
+      "@id": "{{ site_url }}/#howto",
+      "name": "How to Share Content Privately Using YourWorld",
+      "description": "Create content and share it using a unique private code on YourWorld. No account or login required.",
+      "totalTime": "PT2M",
+      "step": [
+        {"@type": "HowToStep", "position": 1, "name": "Create content", "text": "Write notes, a story, code, or anything you want to share on the YourWorld editor."},
+        {"@type": "HowToStep", "position": 2, "name": "Get your private code", "text": "YourWorld generates a unique private code for your content. No account required."},
+        {"@type": "HowToStep", "position": 3, "name": "Share the code", "text": "Send the code to whoever you want. Only people with the exact code can open it."},
+        {"@type": "HowToStep", "position": 4, "name": "Open with a code", "text": "Paste any code into the box on the YourWorld homepage to instantly view shared content."}
+      ]
     },
     {
       "@type": "FAQPage",
       "@id": "{{ site_url }}/#faq",
       "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "What is YourWorld?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "YourWorld is a private code sharing platform. You can create notes, stories, or any written content and receive a unique private code. Only people who have that exact code can access your content. No account or login is ever required to share or view content."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do I need to create an account to share content?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "No. You do not need an account to create content or to view shared content on YourWorld. Simply open the platform, write your content, and receive a private code. Share that code with whoever you want."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How do I share content on YourWorld without login?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Go to worldbyyou.com, click 'Create and share code', write your content, and the platform will generate a unique private code. Copy the code and send it to anyone you want to access your content. They can open it by entering the code on the homepage — no account required."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Is my shared content private?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Shared content on YourWorld is completely private. It is never listed publicly, never indexed by search engines, and is only accessible by entering the exact private code. The /view/ routes are explicitly blocked in the site's robots.txt to ensure anonymity."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What can I share on YourWorld?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "You can share notes, stories, diary entries, code snippets, creative writing, or any text-based content on YourWorld. Each piece of content gets its own unique private code for sharing."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How is YourWorld different from Pastebin?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Unlike Pastebin, YourWorld content is never publicly listed or searchable. YourWorld uses private codes with no public directory, offers an immersive ambient writing environment with themes and sound, and includes an AI writing assistant (Aura) for registered users."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do I need login to view someone's shared content?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "No login is needed to view shared content. Just enter the private code you received on the YourWorld homepage and the content opens instantly."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What is the Aura AI assistant?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Aura is YourWorld's built-in AI writing assistant. It is available to logged-in users and helps with writing, editing, and creative suggestions while you work on your content."
-          }
-        }
+        {"@type": "Question", "name": "What is YourWorld?", "acceptedAnswer": {"@type": "Answer", "text": "YourWorld is a private code sharing platform. Create notes, stories, or any written content and receive a unique private code. Only people who have that exact code can access your content. No account or login is ever required to share or view content."}},
+        {"@type": "Question", "name": "Do I need an account to share content?", "acceptedAnswer": {"@type": "Answer", "text": "No. You do not need an account to create content or to view shared content on YourWorld. Simply open the platform, write your content, and receive a private code."}},
+        {"@type": "Question", "name": "How do I share content without login?", "acceptedAnswer": {"@type": "Answer", "text": "Go to worldbyyou.com, click Start Sharing Now, write your content, and the platform generates a unique private code. Copy and send the code to anyone you want to grant access — no account required."}},
+        {"@type": "Question", "name": "Is my shared content private?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Shared content is completely private, never listed publicly, never indexed by search engines, and only accessible by entering the exact private code. The /view/ routes are explicitly blocked in robots.txt."}},
+        {"@type": "Question", "name": "What can I share on YourWorld?", "acceptedAnswer": {"@type": "Answer", "text": "You can share notes, stories, diary entries, code snippets, creative writing, or any text-based content. Each piece of content gets its own unique private code for sharing."}},
+        {"@type": "Question", "name": "How is YourWorld different from Pastebin?", "acceptedAnswer": {"@type": "Answer", "text": "Unlike Pastebin, YourWorld content is never publicly listed or searchable. It uses private codes with no public directory, offers immersive ambient themes with sound, and includes the Aura AI writing assistant for registered users."}},
+        {"@type": "Question", "name": "Do I need login to view shared content?", "acceptedAnswer": {"@type": "Answer", "text": "No login is needed. Just enter the private code on the YourWorld homepage and the content opens instantly."}},
+        {"@type": "Question", "name": "What is the Aura AI assistant?", "acceptedAnswer": {"@type": "Answer", "text": "Aura is YourWorld's built-in AI writing assistant available to logged-in users. It helps with writing, editing, brainstorming, and creative suggestions while you work on your content."}},
+        {"@type": "Question", "name": "Is YourWorld free to use?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. YourWorld is completely free. Creating content, generating share codes, viewing shared content, and using elemental themes costs nothing. AI features like Aura and image generation are also free for signed-in users."}},
+        {"@type": "Question", "name": "How secure is YourWorld?", "acceptedAnswer": {"@type": "Answer", "text": "YourWorld uses HTTPS encryption, Content Security Policy headers, CSRF protection, rate limiting, and strict input sanitization. Share codes use high-entropy identifiers making them extremely difficult to guess."}},
+        {"@type": "Question", "name": "Can I delete my shared content?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. You can delete any content you have created from the Shared Canvas or Private Notes editor. Deleting content also invalidates its share code, revoking all access instantly."}},
+        {"@type": "Question", "name": "Does YourWorld work offline?", "acceptedAnswer": {"@type": "Answer", "text": "YourWorld is a Progressive Web App (PWA) with a service worker that caches static assets. While content creation requires an internet connection to save, previously loaded pages and themes may be accessible offline."}},
+        {"@type": "Question", "name": "What file types can I upload?", "acceptedAnswer": {"@type": "Answer", "text": "YourWorld supports image uploads (PNG, JPG, GIF, WebP) for story illustrations. The Aura chat assistant accepts images, PDFs, documents, code files, markdown, and archives. Audio uploads support MP3, WAV, OGG, M4A, and FLAC."}},
+        {"@type": "Question", "name": "How is my data protected?", "acceptedAnswer": {"@type": "Answer", "text": "YourWorld does not sell or share user data. Content is stored in secured cloud infrastructure. Shared content is never publicly listed or indexed. The platform does not collect banking details, government IDs, or unnecessary personal information."}},
+        {"@type": "Question", "name": "Can I use YourWorld for business?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. YourWorld is suitable for sharing internal notes, collaborative documents, meeting summaries, or creative briefs privately within teams using share codes instead of complex permission systems."}},
+        {"@type": "Question", "name": "What is the maximum content length?", "acceptedAnswer": {"@type": "Answer", "text": "There is no strict character limit for individual pages. YourWorld supports rich text content including bold, italic, underline formatting, and multiple font sizes. You can create unlimited pages within your canvas."}},
+        {"@type": "Question", "name": "Can I collaborate with others?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. When sharing a canvas, you can enable the 'Allow code holders to edit' option. This lets anyone with the share code make changes to the content, enabling real-time private collaboration."}},
+        {"@type": "Question", "name": "What are elemental themes?", "acceptedAnswer": {"@type": "Answer", "text": "YourWorld offers 9 immersive elemental themes — Campfire, Water, Wind, Earth, Ice, Storm, Space, Garden, and Cherry Blossom. Each theme transforms the visual atmosphere, ambient sounds, and particle animations for an immersive writing experience."}},
+        {"@type": "Question", "name": "Can I revoke or change share codes?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. You can replace an existing share code with a new one at any time from the sharing panel. The old code immediately stops working, and only the new code grants access to the content."}},
+        {"@type": "Question", "name": "Is my content indexed by search engines?", "acceptedAnswer": {"@type": "Answer", "text": "No. All shared content URLs are blocked from search engine crawling via robots.txt and carry noindex, nofollow meta tags. Your private content will never appear in Google, Bing, or any other search engine results."}}
       ]
     }
   ]

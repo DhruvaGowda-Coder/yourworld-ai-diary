@@ -25,7 +25,8 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
 # Site Meta
 SITE_URL = os.environ.get("SITE_URL", "https://worldbyyou.com").strip().rstrip("/")
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "elementaldiary@gmail.com").strip()
-SITEMAP_LASTMOD = "2026-05-11"
+from datetime import date
+SITEMAP_LASTMOD = date.today().isoformat()
 SHARE_CODE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.~-]{3,31}$")
 
 # Firebase Web Config

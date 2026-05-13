@@ -1,5 +1,19 @@
 {% extends "base.html" %}
+{% block title %}Private Notes — Your Personal Online Diary | YourWorld{% endblock %}
+{% block description %}Write private diary entries, personal notes, and journal pages on YourWorld. Your content is stored securely and accessible only to you.{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block meta %}
+<meta property="og:title" content="Private Notes — Your Personal Online Diary | YourWorld">
+<meta property="og:description" content="Keep a private online diary with rich text editing, AI assistance, and beautiful immersive themes on YourWorld.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ site_url }}/diary">
+<meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Private Notes — YourWorld">
+<meta name="twitter:description" content="Your personal, private diary on YourWorld. Write notes with rich text and AI help.">
+{% endblock %}
 {% block content %}
+<h1 class="sr-only">Private Notes — Your Personal Online Diary</h1>
 <section class="workspace" data-entry-type="diary">
   <aside class="entry-sidebar">
     <div class="sidebar-header">

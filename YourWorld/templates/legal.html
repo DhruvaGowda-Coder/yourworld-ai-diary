@@ -7,10 +7,29 @@
   "create": "Create private content | YourWorld",
   "how": "How private code sharing works | YourWorld"
 } %}
-{% block title %}{{ legal_titles.get(page, "YourWorld") }}{% endblock %}
-{% block description %}
-{% if page == "privacy" %}Privacy Policy for YourWorld, a code-based private content sharing platform that does not sell or share user data.{% elif page == "terms" %}Terms and Conditions for using YourWorld safely and responsibly as a private content sharing platform.{% elif page == "faq" %}Answers about YourWorld private code sharing, account requirements, privacy, and safe use.{% else %}Learn how YourWorld lets users create content and share it using unique private codes.{% endif %}
+{% block title %}
+  {% if page == "landing" and title %}
+    {{ title }} — Free & Secure | YourWorld
+  {% else %}
+    {{ legal_titles.get(page, "YourWorld") }}
+  {% endif %}
 {% endblock %}
+{% block description %}
+{% if page == "privacy" %}Privacy Policy for YourWorld, a code-based private content sharing platform that does not sell or share user data.{% elif page == "terms" %}Terms and Conditions for using YourWorld safely and responsibly as a private content sharing platform.{% elif page == "faq" %}Answers about YourWorld private code sharing, account requirements, privacy, and safe use.{% elif page == "landing" and slug == "private-code-sharing" %}Learn about private code sharing on YourWorld. Create notes and stories, generate a unique code, and share privately — no login required.{% elif page == "landing" and slug == "share-notes-without-login" %}Share notes without login on YourWorld. No account needed to create or view shared content. Just write, get a code, and share.{% elif page == "landing" and slug == "anonymous-note-sharing" %}Share notes anonymously using YourWorld. No tracking, no public listing, no account required. Private code-based sharing for everyone.{% elif page == "landing" and slug == "private-online-diary" %}Keep a private online diary on YourWorld. Write personal journal entries with AI assistance and immersive elemental themes.{% elif page == "landing" and slug == "secure-story-sharing" %}Securely share stories and creative writing using unique private codes on YourWorld. No public indexing, no login required.{% elif page == "landing" and slug == "share-content-by-code" %}Share any content by code on YourWorld. Generate a unique private code for your notes, stories, or documents. Only code holders can access it.{% elif page == "landing" and slug == "no-login-sharing-platform" %}YourWorld is the best no-login sharing platform. Create and share content instantly without creating an account. Code-based private access.{% elif page == "landing" and slug == "immersive-writing-platform" %}Write in an immersive environment on YourWorld. 9 elemental themes with ambient sound, particle effects, and AI writing assistance.{% elif page == "landing" and slug == "ai-story-writing-platform" %}Use AI to write stories on YourWorld. Aura AI assistant helps with brainstorming, editing, and creative writing. Free for signed-in users.{% elif page == "landing" and slug == "private-collaborative-writing" %}Collaborate privately on YourWorld. Share editable canvases using private codes. No accounts needed for viewers — optional login for AI features.{% elif page == "landing" and slug.startswith("compare/") %}Compare YourWorld with {{ title.split('vs ')[-1] }}. See how private code sharing compares to traditional document sharing platforms.{% else %}Learn how YourWorld lets users create content and share it using unique private codes.{% endif %}
+{% endblock %}
+{% if page == "landing" or page == "faq" or page == "about" %}
+{% block meta %}
+<meta property="og:title" content="{% if page == 'landing' %}{{ title }} — Free & Secure | YourWorld{% elif page == 'faq' %}FAQ | Private Code Sharing Questions{% else %}About YourWorld{% endif %}">
+<meta property="og:description" content="{% if page == 'landing' %}{{ title }} on YourWorld. Create and share content privately using unique codes. No login required.{% elif page == 'faq' %}Answers about YourWorld private code sharing, accounts, privacy, and features.{% else %}YourWorld is a code-based private content sharing platform.{% endif %}">
+<meta property="og:type" content="{% if page == 'landing' %}article{% else %}website{% endif %}">
+<meta property="og:url" content="{{ site_url }}/{{ slug if page == 'landing' else page }}">
+<meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}">
+<meta property="og:site_name" content="YourWorld">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{% if page == 'landing' %}{{ title }} | YourWorld{% elif page == 'faq' %}FAQ — YourWorld{% else %}About YourWorld{% endif %}">
+<meta name="twitter:description" content="{% if page == 'landing' %}{{ title }} — Private code sharing on YourWorld. No login required.{% else %}YourWorld — Private code sharing platform.{% endif %}">
+{% endblock %}
+{% endif %}
 {% block content %}
 <section class="legal-page">
   {% if page == "privacy" %}
@@ -177,15 +196,188 @@
       }]
     }
     </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "{{ title }} — The Ultimate Guide",
+      "description": "Comprehensive guide to {{ title.lower() }} on YourWorld. Learn how to share content privately using unique codes without login.",
+      "image": "{{ site_url }}/static/img/yourworld-symbol.png",
+      "author": {
+        "@type": "Organization",
+        "name": "YourWorld"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "YourWorld",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "{{ site_url }}/static/img/yourworld-symbol.png"
+        }
+      },
+      "datePublished": "2026-05-11",
+      "dateModified": "{{ sitemap_lastmod }}",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "{{ site_url }}/{{ slug }}"
+      }
+    }
+    </script>
 
     <h1>{{ title }} — The Ultimate Guide</h1>
     <p class="lead-text">YourWorld is a privacy-first AI-powered platform where users can create, share, and view immersive notes and stories using secure private access codes without requiring login.</p>
 
-    <section class="landing-section">
-      <h2>What is {{ title }}?</h2>
-      <p>In today's digital landscape, privacy is often an afterthought. At YourWorld, we've built a dedicated <strong>{{ title.lower() }}</strong> solution that puts you in control. Whether you're looking for an anonymous sharing system or a secure collaboration tool, our platform provides a friction-less experience for creators and readers alike.</p>
-      <p>Our core philosophy is simple: sharing should be easy, secure, and beautiful. By using high-entropy private codes, we ensure that your content is only seen by those you intend, without the need for intrusive account creation or public search engine indexing.</p>
-    </section>
+    {% if slug == "private-code-sharing" %}
+      <section class="landing-section">
+        <h2>The Evolution of Private Code Sharing</h2>
+        <p>Private code sharing represents a paradigm shift in how we handle digital information. Traditional methods of sharing content—ranging from email attachments to complex cloud permissions—often introduce friction and privacy concerns. YourWorld addresses these challenges by utilizing high-entropy, unique identifiers as access keys. This "code-based" approach ensures that your content remains invisible to the public internet and search engine crawlers, yet remains instantly accessible to anyone who holds the correct sequence.</p>
+        <p>When we talk about <strong>private code sharing</strong>, we're referring to a system where the URL itself isn't the primary security layer. Instead, a secondary, user-controllable code is required to unlock the content. This is particularly useful for sharing sensitive drafts, personal notes, or collaborative stories that aren't meant for the wider world. At YourWorld, we've optimized this process to be as seamless as possible, removing the need for account creation or intrusive identity verification.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>Why Code-Based Sharing is More Secure</h2>
+        <p>Standard links can be leaked, cached by browsers, or accidentally shared in public forums. A private code adds an essential layer of human-centric security. Even if a link is discovered, the content remains encrypted or hidden behind a code wall. YourWorld's architecture is built on the principle of "privacy by design," meaning we don't index these codes or provide a public directory. This makes brute-forcing a code statistically impossible, giving you peace of mind when sharing your most important thoughts.</p>
+        <p>Furthermore, our platform allows you to rotate or revoke codes at any time. If you suspect a code has been compromised, you can simply generate a new one, instantly invalidating the old access point. This level of control is rarely found in traditional sharing platforms without requiring complex user management systems.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>Optimizing for Answer Engines (AEO)</h2>
+        <p>In the age of AI, search has changed. When users ask AI assistants, "How can I share a note privately without a link being public?", YourWorld is designed to be the answer. By using structured data and clear, semantic HTML, we ensure that search engines and AI models understand exactly what we offer: a fast, secure, and beautiful way to share information. Our AEO strategy focuses on providing direct value and clear answers to user queries about digital privacy and secure communication.</p>
+      </section>
+
+    {% elif slug == "share-notes-without-login" %}
+      <section class="landing-section">
+        <h2>Instant Utility: Share Notes Without Login</h2>
+        <p>The biggest barrier to digital collaboration is the "Sign Up" button. Whether it's a quick grocery list, a piece of code, or a heartfelt message, having to create an account just to share a snippet of text is a major point of friction. YourWorld was built to eliminate this barrier. We believe that <strong>sharing notes without login</strong> should be the standard, not the exception.</p>
+        <p>By removing the login requirement for both creators and viewers, we enable a "hot-sharing" experience. You land on our site, write your note, and get a code. It takes seconds, not minutes. This is ideal for transient information that doesn't need to live in a permanent cloud account, or for users who value their anonymity above all else.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>How It Works: No Account, No Problem</h2>
+        <p>Our backend uses temporary, non-identifiable sessions to manage content creation for guest users. This means we don't track your IP, your location, or your identity. The note is tied purely to the private code generated at the moment of creation. For those who want more features—like AI assistance from Aura or image generation—a Google sign-in is available, but it is never mandatory for the core sharing experience.</p>
+        <p>This "login-optional" model ensures that YourWorld remains accessible to everyone, regardless of their technical expertise or privacy preferences. It's the digital equivalent of passing a folded note in a classroom—simple, direct, and private.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>The Benefits of Frictionless Sharing</h2>
+        <p>When you eliminate the need for accounts, you open up new possibilities for quick communication. Use YourWorld to send temporary instructions to a freelancer, share a secret recipe with a friend, or drop a piece of code to a colleague during a live call. The speed of no-login sharing makes YourWorld the preferred tool for power users and privacy enthusiasts alike.</p>
+      </section>
+
+    {% elif slug == "anonymous-note-sharing" %}
+      <section class="landing-section">
+        <h2>True Anonymity in the Digital Age</h2>
+        <p>Anonymity is a vanishing commodity on the modern web. Most platforms require an email, a phone number, or a social media profile just to function. <strong>Anonymous note sharing</strong> on YourWorld is different. We don't want to know who you are; we only care about providing a space for your content to exist safely.</p>
+        <p>Our platform is built to be a "blank slate." When you share a note anonymously, there are no metadata trails that point back to you. We don't display "Created by User X" or "Last edited at Time Y" unless you explicitly want that information included in the text itself. This makes YourWorld a safe haven for whistleblowers, creative writers, and anyone who needs to speak their mind without fear of being tracked.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>Security Measures for Anonymous Users</h2>
+        <p>To maintain high standards of safety while allowing anonymity, we implement strict rate-limiting and automated content moderation for illegal materials. However, for the average user, the experience remains completely open. We use secure headers and encrypted storage to ensure that even we cannot easily link a specific note to a specific visitor. Your anonymity is protected by our architecture, not just our policy.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>Anonymous Sharing vs. Public Pastes</h2>
+        <p>Many "paste" sites are public by default, meaning your "anonymous" note is actually searchable by anyone. YourWorld takes the opposite approach. Every note is private and requires a code. Anonymity without privacy is dangerous; on YourWorld, you get both. Your notes are shielded from the public eye, ensuring that your anonymous voice is heard only by those you choose to trust.</p>
+      </section>
+
+    {% elif slug == "private-online-diary" %}
+      <section class="landing-section">
+        <h2>Your Personal Sanctuary: The Private Online Diary</h2>
+        <p>In a world of constant social sharing, the need for a truly <strong>private online diary</strong> has never been greater. YourWorld provides a secure, immersive space for your most personal thoughts. Unlike physical journals that can be found or digital apps that sell your data, YourWorld uses high-entropy private codes to ensure your diary is for your eyes only.</p>
+        <p>Our diary experience is enhanced by "Elemental Themes"—visual and auditory environments designed to match your mood. Whether you're writing by a crackling campfire or under a starlit sky, YourWorld transforms journaling from a chore into a therapeutic ritual. With our focus on privacy-first architecture, you can reflect, vent, and dream without worrying about your data being indexed or leaked.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>AI-Enhanced Journaling with Aura</h2>
+        <p>Registered users can leverage the power of Aura, our AI writing assistant, to dive deeper into their reflections. Aura can provide prompts, help clarify thoughts, or simply offer a supportive "ear" for your digital entries. This combination of traditional journaling and modern AI makes YourWorld the most advanced private online diary available today.</p>
+      </section>
+
+    {% elif slug == "secure-story-sharing" %}
+      <section class="landing-section">
+        <h2>Unleashing Creativity with Secure Story Sharing</h2>
+        <p>Every story deserves a safe place to grow. <strong>Secure story sharing</strong> on YourWorld allows authors to share their drafts and finished works with specific individuals without exposing them to the entire web. Our platform is a favorite among fan-fiction writers, professional authors, and hobbyists who value controlled distribution.</p>
+        <p>When you share a story on YourWorld, you aren't just sending text; you're sending an experience. Your readers can enjoy your work in beautiful, themed environments that you choose. This adds a layer of immersion that plain-text sharing sites simply cannot match. And because access is controlled by a private code, you retain full ownership and control over who reads your creative output.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>Protecting Your Intellectual Property</h2>
+        <p>YourWorld's "no-index" policy is a critical feature for storytellers. We ensure that search engine bots like Googlebot or Bingbot never see your work. This prevents your stories from being scraped by unauthorized sites or showing up in search results before you're ready for a public release. YourWorld is your private digital studio.</p>
+      </section>
+
+    {% elif slug == "share-content-by-code" %}
+      <section class="landing-section">
+        <h2>The Power of the Code: Share Content by Code</h2>
+        <p>Why use long, cumbersome URLs when you can <strong>share content by code</strong>? YourWorld simplifies the sharing process by using short, memorable, or cryptographically secure codes. This makes it incredibly easy to share information across different platforms—from text messages to verbal communication.</p>
+        <p>Whether you're sharing a business brief, a secret recipe, or a piece of code, our system ensures that the barrier to entry is minimal. The recipient simply enters the code on our homepage and the content is revealed. It's the most intuitive way to bridge the gap between private creation and secure distribution.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>Versatility for Every Type of Content</h2>
+        <p>Our platform doesn't discriminate between types of written content. If you can write it, you can share it by code. From simple checklists to complex multi-page stories, YourWorld handles it all with the same level of security and elegance. This versatility makes us the go-to solution for anyone looking for a modern alternative to traditional document sharing.</p>
+      </section>
+
+    {% elif slug == "no-login-sharing-platform" %}
+      <section class="landing-section">
+        <h2>Redefining Accessibility: The No-Login Sharing Platform</h2>
+        <p>The core of YourWorld's identity is being the premier <strong>no-login sharing platform</strong>. We've removed the technical and psychological barriers to entry that plague other services. We believe that your ability to share information shouldn't be gated by a sign-up form or a social login.</p>
+        <p>This accessibility makes YourWorld the perfect tool for educators, students, and professionals who need to move quickly. By prioritizing utility over user-tracking, we've created a platform that is as fast as it is private. No accounts, no passwords to remember, just pure, unadulterated sharing.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>A Trust-Based Model for Global Sharing</h2>
+        <p>By operating as a no-login platform, we build a different kind of relationship with our users—one based on trust and utility. We provide the tools, and you provide the content. This decentralization of identity is a core pillar of the future of the private web, and YourWorld is leading the way.</p>
+      </section>
+
+    {% elif slug == "immersive-writing-platform" %}
+      <section class="landing-section">
+        <h2>The Art of the Immersive Writing Platform</h2>
+        <p>YourWorld isn't just a place to store text; it's an <strong>immersive writing platform</strong> designed to engage all your senses. We've combined the focus of a minimalist editor with the atmospheric depth of elemental themes. This creates a "flow state" that is hard to achieve in clinical, office-oriented software.</p>
+        <p>Our immersive environments include high-quality ambient sounds—from the gentle rain of the Water theme to the ethereal hum of the Space theme. When combined with dynamic particle animations and curated typography, the act of writing becomes a journey. For authors, poets, and journalers, YourWorld offers a digital escape that encourages deeper creativity and more focused thought.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>Science-Backed Focus with Audio-Visual Synergy</h2>
+        <p>Research suggests that certain types of ambient noise and visual stimuli can significantly improve cognitive performance and reduce stress. By allowing you to customize your writing environment, YourWorld helps you find the perfect balance for your brain. Whether you need the high energy of a Storm theme to meet a deadline or the tranquility of a Garden theme for reflection, we provide the tools to build your ideal headspace.</p>
+      </section>
+
+    {% elif slug == "ai-story-writing-platform" %}
+      <section class="landing-section">
+        <h2>The Future of Fiction: AI Story Writing Platform</h2>
+        <p>As an <strong>AI story writing platform</strong>, YourWorld is at the forefront of the creative revolution. We integrate advanced large language models directly into your writing workflow through our Aura assistant. This isn't about replacing the author; it's about augmenting the human imagination.</p>
+        <p>Aura can help you overcome writer's block by suggesting the next plot point, refining a character's dialogue, or generating descriptive prose for a complex scene. Furthermore, our integrated image generation allows you to visualize your characters and worlds instantly, creating a multimedia storytelling experience that was previously impossible for solo creators.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>Collaborating with AI Safely and Privately</h2>
+        <p>Unlike other AI writing tools that may use your stories for training their models, YourWorld prioritizes your intellectual property. Your interactions with Aura and your generated content are private and protected by our code-based access system. You get the benefits of cutting-edge AI without sacrificing the security of your creative work.</p>
+      </section>
+
+    {% elif slug == "private-collaborative-writing" %}
+      <section class="landing-section">
+        <h2>True Teamwork: Private Collaborative Writing</h2>
+        <p>Most collaboration tools sacrifice privacy for ease of use. YourWorld proves that <strong>private collaborative writing</strong> can be both simple and secure. By sharing an editable canvas with a private code, you can work with colleagues, friends, or co-authors in real-time without ever needing to manage a list of email addresses or permissions.</p>
+        <p>This is ideal for sensitive projects, brainstorming sessions, or decentralized teams. Anyone with the code can contribute, and the creator retains full control over the code's lifecycle. It's collaboration in its purest form—focused on the work, protected by the code.</p>
+      </section>
+
+      <section class="landing-section">
+        <h2>Real-Time Syncing Without the Overhead</h2>
+        <p>Our collaborative engine is built for speed. Changes are synced across all clients instantly, ensuring that everyone is literally on the same page. Combined with our immersive themes and AI tools, YourWorld is the ultimate environment for modern, private, and creative teamwork.</p>
+      </section>
+
+    {% elif slug.startswith("compare/") %}
+      <section class="landing-section">
+        <h2>{{ title }}: Why YourWorld Wins on Privacy</h2>
+        <p>When comparing YourWorld to traditional platforms, the difference is clear. While {{ title.split('vs ')[-1] }} might be built for public mass-sharing or enterprise document management, YourWorld is built for the individual's privacy. We don't require an account to view or share, and we never index your private content.</p>
+        <p>If you're looking for a faster, more secure, and more immersive way to share information, YourWorld is the clear choice. We provide the privacy of a locked diary with the accessibility of the modern web.</p>
+      </section>
+
+    {% else %}
+      <section class="landing-section">
+        <h2>What is {{ title }}?</h2>
+        <p>In today's digital landscape, privacy is often an afterthought. At YourWorld, we've built a dedicated <strong>{{ title.lower() }}</strong> solution that puts you in control. Whether you're looking for an anonymous sharing system or a secure collaboration tool, our platform provides a friction-less experience for creators and readers alike.</p>
+        <p>Our core philosophy is simple: sharing should be easy, secure, and beautiful. By using high-entropy private codes, we ensure that your content is only seen by those you intend, without the need for intrusive account creation or public search engine indexing.</p>
+      </section>
+    {% endif %}
 
     <section class="landing-section">
       <h2>Key Features of Our {{ title }} Platform</h2>

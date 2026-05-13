@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found — YourWorld{% endblock %}
+{% block description %}The page you are looking for does not exist on YourWorld. Return to the homepage to share or view private content using a code.{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block meta %}
+<meta property="og:title" content="Page Not Found — YourWorld">
+<meta property="og:description" content="This page does not exist. Visit YourWorld to share content privately using unique codes.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ site_url }}/">
+<meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}">
+{% endblock %}
+{% block content %}
+<section class="legal-page" style="text-align: center; padding: 80px 20px; max-width: 600px; margin: 0 auto;">
+  <h1 style="font-family: var(--title-font); font-size: 2.5rem; margin-bottom: 16px;">404</h1>
+  <h2 style="font-family: var(--ui-font); font-weight: 400; opacity: 0.8; margin-bottom: 30px;">Page Not Found</h2>
+  <p style="margin-bottom: 40px; line-height: 1.7;">The page you are looking for does not exist or may have been moved. If you had a share code, try entering it on the homepage.</p>
+  <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+    <a href="{{ url_for('main.index') }}" class="btn primary">Go to Homepage</a>
+    <a href="{{ url_for('main.faq') }}" class="btn ghost">Read the FAQ</a>
+  </div>
+</section>
+{% endblock %}

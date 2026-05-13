@@ -1,5 +1,19 @@
 {% extends "base.html" %}
+{% block title %}Shared Canvas — Create & Share Stories Privately | YourWorld{% endblock %}
+{% block description %}Create stories, notes, and creative content on YourWorld's Shared Canvas. Use private share codes to let others read or co-edit — no login required to view.{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block meta %}
+<meta property="og:title" content="Shared Canvas — Create & Share Stories Privately | YourWorld">
+<meta property="og:description" content="Write and share stories using private codes. Rich text editor with AI writing assistant and immersive elemental themes.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ site_url }}/story">
+<meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Shared Canvas — YourWorld">
+<meta name="twitter:description" content="Create and share stories privately using unique codes on YourWorld.">
+{% endblock %}
 {% block content %}
+<h1 class="sr-only">Shared Canvas — Create & Share Stories Privately</h1>
 <section class="workspace" data-entry-type="story">
   <aside class="entry-sidebar">
     <div class="sidebar-header">

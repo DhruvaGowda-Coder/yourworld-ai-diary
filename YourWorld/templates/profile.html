@@ -1,5 +1,19 @@
 {% extends "base.html" %}
+{% block title %}Your Profile — Writing Activity & Stats | YourWorld{% endblock %}
+{% block description %}View your writing activity, streak data, and heatmap on YourWorld. Track your creative journey across diary and story entries.{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block meta %}
+<meta property="og:title" content="Your Profile — Writing Activity & Stats | YourWorld">
+<meta property="og:description" content="Track your writing activity, streaks, and daily saves on YourWorld.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ site_url }}/profile">
+<meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Profile — YourWorld">
+<meta name="twitter:description" content="Your writing stats and activity heatmap on YourWorld.">
+{% endblock %}
 {% block content %}
+<h1 class="sr-only">Your Profile — Writing Activity & Stats</h1>
 <section class="settings profile-page">
   <div class="profile-header-card">
     <div class="profile-avatar">

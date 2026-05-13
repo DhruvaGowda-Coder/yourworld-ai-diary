@@ -5,7 +5,7 @@ from flask import Flask, g, session, request, redirect, jsonify, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from extensions import csrf, limiter
-from config import FIREBASE_WEB_CONFIG, SITE_URL, CONTACT_EMAIL, THEME_DETAILS
+from config import FIREBASE_WEB_CONFIG, SITE_URL, CONTACT_EMAIL, THEME_DETAILS, SITEMAP_LASTMOD
 from utils import get_current_user, normalize_theme, get_user_theme
 import firebase_db
 
@@ -52,7 +52,9 @@ def enforce_https():
 
 @app.after_request
 def add_security_headers(response):
-    if not request.path.startswith('/static/'):
+    if request.path.startswith('/static/'):
+        response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+    else:
         response.headers['Cache-Control'] = 'no-store' if request.path.startswith('/view') else 'no-cache'
     
     nonce = g.get('csp_nonce', '')
@@ -89,6 +91,7 @@ def inject_global_context():
             "firebase_config": FIREBASE_WEB_CONFIG,
             "site_url": SITE_URL,
             "contact_email": CONTACT_EMAIL,
+            "sitemap_lastmod": SITEMAP_LASTMOD,
             "csp_nonce": g.get("csp_nonce", ""),
         }
     return g._yw_ctx
@@ -100,7 +103,7 @@ def health_check():
 
 @app.errorhandler(404)
 def not_found(e):
-    return render_template("index.html"), 404
+    return render_template("404.html"), 404
 
 @app.errorhandler(429)
 def rate_limit_error(e):

@@ -1,7 +1,20 @@
 {% extends "base.html" %}
+{% block title %}Settings — Customize Your Experience | YourWorld{% endblock %}
+{% block description %}Customize your YourWorld experience. Choose from 9 immersive elemental themes, manage audio libraries, and personalize your writing atmosphere.{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block meta %}
+<meta property="og:title" content="Settings — Customize Your YourWorld Experience">
+<meta property="og:description" content="Choose elemental themes, manage custom audio, and personalize your writing atmosphere on YourWorld.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ site_url }}/settings">
+<meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='img/yourworld-symbol.png') }}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Settings — YourWorld">
+<meta name="twitter:description" content="Personalize your YourWorld writing experience with elemental themes and audio.">
+{% endblock %}
 {% block content %}
 <section class="settings">
-  <h2>⚙️ Settings</h2>
+  <h1>⚙️ Settings</h1>
   <div class="settings-card">
     <p>Your diary is private and linked to your account.</p>
     {% if info %}
