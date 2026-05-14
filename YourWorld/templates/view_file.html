@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}{{ file.filename if file else 'File Not Found' }} - YourWorld{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+<div class="view-file-container">
+    {% if not_found %}
+    <div class="file-card error-card animate-fade-in">
+        <div class="file-icon">🔍</div>
+        <h1>File Not Found</h1>
+        <p class="file-meta">The code <strong>{{ code }}</strong> doesn't seem to exist or has already expired.</p>
+        <a href="{{ url_for('main.index') }}" class="btn primary">Go to Homepage</a>
+    </div>
+    {% else %}
+    <div class="file-card animate-slide-up">
+        <div class="file-badge">Quick Share</div>
+        
+        <div class="file-icon-wrapper">
+            <div class="file-icon">
+                {% if file.content_type.startswith('image/') %}
+                🖼️
+                {% elif file.content_type.startswith('audio/') %}
+                🎵
+                {% elif file.content_type.startswith('video/') %}
+                🎬
+                {% elif 'pdf' in file.content_type %}
+                📄
+                {% elif 'zip' in file.content_type or 'rar' in file.content_type %}
+                📦
+                {% else %}
+                📁
+                {% endif %}
+            </div>
+        </div>
+
+        <h1 class="file-name">{{ file.filename }}</h1>
+        <p class="file-info">{{ (file.size / 1024 / 1024) | round(2) }} MB • {{ file.content_type.split('/')[-1] | upper }}</p>
+        
+        <div class="expiry-box">
+            <span class="expiry-label">Expires in</span>
+            <span class="expiry-timer" id="expiryTimer" data-remaining="{{ remaining_seconds }}">--:--:--</span>
+        </div>
+
+        <div class="file-actions">
+            <a href="{{ url_for('main.download_file', code=file.id) }}" class="btn primary btn-xl" id="downloadBtn">
+                <span class="btn-icon">📥</span>
+                Download File
+            </a>
+            <p class="download-hint">Secure, anonymous download via Cloudflare R2</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .view-file-container {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .file-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 28px;
+        padding: 48px 40px;
+        width: 100%;
+        max-width: 480px;
+        text-align: center;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .file-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, var(--theme-accent), transparent);
+    }
+
+    .file-badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: var(--theme-accent-soft);
+        color: var(--theme-accent);
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-family: var(--ui-font);
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .file-icon-wrapper {
+        width: 100px;
+        height: 100px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+
+    .file-icon {
+        font-size: 3.5rem;
+        filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+    }
+
+    .file-name {
+        font-family: var(--ui-font);
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0 0 8px;
+        color: #fff;
+        word-break: break-all;
+    }
+
+    .file-info {
+        font-family: var(--ui-font);
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.5);
+        margin: 0 0 32px;
+    }
+
+    .expiry-box {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 12px 20px;
+        border-radius: 16px;
+        display: inline-flex;
+        flex-direction: column;
+        margin-bottom: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .expiry-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.4);
+        letter-spacing: 0.1em;
+        margin-bottom: 4px;
+    }
+
+    .expiry-timer {
+        font-family: 'Space Grotesk', monospace;
+        font-size: 1.25rem;
+        color: var(--theme-accent);
+        font-weight: 700;
+    }
+
+    .btn-xl {
+        width: 100%;
+        padding: 18px !important;
+        font-size: 1.1rem !important;
+        border-radius: 16px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .download-hint {
+        margin-top: 16px;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.3);
+        font-style: italic;
+    }
+
+    .error-card {
+        border-color: rgba(255, 100, 100, 0.2);
+    }
+
+    .error-card .file-icon { font-size: 4rem; margin-bottom: 16px; }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+    @media (max-width: 480px) {
+        .file-card { padding: 32px 24px; }
+    }
+</style>
+
+<script nonce="{{ csp_nonce }}">
+(function() {
+    var timerEl = document.getElementById('expiryTimer');
+    if (!timerEl) return;
+    
+    var remainingStr = timerEl.getAttribute('data-remaining');
+    var timeLeft = remainingStr ? parseInt(remainingStr, 10) : 0;
+    
+    if (isNaN(timeLeft)) {
+        timeLeft = 0;
+    }
+
+    function updateTimer() {
+        if (timeLeft <= 0) {
+            timerEl.textContent = "00:00:00";
+            var dlBtn = document.getElementById('downloadBtn');
+            if (dlBtn) {
+                dlBtn.style.opacity = '0.5';
+                dlBtn.style.pointerEvents = 'none';
+                dlBtn.textContent = "File Expired";
+            }
+            return;
+        }
+
+        var hours = Math.floor(timeLeft / 3600);
+        var mins = Math.floor((timeLeft % 3600) / 60);
+        var secs = timeLeft % 60;
+
+        var h = hours < 10 ? '0' + hours : hours;
+        var m = mins < 10 ? '0' + mins : mins;
+        var s = secs < 10 ? '0' + secs : secs;
+
+        timerEl.textContent = h + ':' + m + ':' + s;
+        timeLeft--;
+    }
+
+    setInterval(updateTimer, 1000);
+    updateTimer();
+})();
+</script>
+{% endblock %}

@@ -13,6 +13,10 @@ _theme_cache = {}  # {user_id: (theme, timestamp)}
 _theme_cache_lock = threading.Lock()
 _THEME_CACHE_TTL = 300  # 5 minutes
 
+def utc_now_iso():
+    """Return current UTC time in ISO 8601 format."""
+    return datetime.now(timezone.utc).isoformat()
+
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 CRED_PATH = os.path.join(APP_DIR, "firebase-adminsdk.json")
 STORAGE_BUCKET = os.environ.get("FIREBASE_STORAGE_BUCKET", "diary-13644.appspot.com").strip()
@@ -399,7 +403,16 @@ def cleanup_guest_data():
         if updated_at < cutoff:
             db.collection('activity').document(doc.id).delete()
             
-    return deleted_count
+    # Clean up quick shares
+    quick_docs = db.collection('quick_shares').where(filter=FieldFilter('created_at', '<', cutoff)).stream()
+    quick_urls_to_delete = []
+    for doc in quick_docs:
+        data = doc.to_dict()
+        if data.get('file_url'):
+            quick_urls_to_delete.append(data.get('file_url'))
+        db.collection('quick_shares').document(doc.id).delete()
+            
+    return deleted_count, quick_urls_to_delete
 
 def save_chat_history(user_id, messages):
     """Save the last 50 messages of AI chat history for a user."""
@@ -488,3 +501,37 @@ def delete_chat_session(user_id, session_id):
         doc_ref.delete()
         return True
     return False
+
+# ── Quick Share (Anonymous File Sharing) ──
+
+def save_quick_share(data):
+    """Save metadata for an anonymous file share."""
+    db = get_db()
+    now = utc_now_iso()
+    doc_ref = db.collection('quick_shares').document(data['id'])
+    doc_ref.set({
+        **data,
+        'created_at': now,
+        'expires_at': (datetime.now(timezone.utc) + timedelta(hours=48)).isoformat()
+    })
+    return data['id']
+
+def get_quick_share(share_id, skip_expiry_check=False):
+    """Retrieve metadata for a quick share by its ID."""
+    if not share_id: return None
+    db = get_db()
+    doc = db.collection('quick_shares').document(str(share_id)).get()
+    if doc.exists:
+        data = doc.to_dict()
+        if skip_expiry_check:
+            return data
+        # Verify expiry
+        if data.get('expires_at', '') < utc_now_iso():
+            return None
+        return data
+    return None
+
+def delete_quick_share(share_id):
+    """Permanently delete a quick share record."""
+    get_db().collection('quick_shares').document(str(share_id)).delete()
+    return True

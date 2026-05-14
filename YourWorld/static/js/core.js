@@ -79,7 +79,7 @@ const chatSubtitle = document.getElementById('chatSubtitle');
 const bodyEl = document.body;
 
 const ENABLE_CAMPFIRE_CANVAS = true;
-const ENABLE_CAMPFIRE_EMBER_FIELD = false;
+const ENABLE_CAMPFIRE_EMBER_FIELD = true;
 
 const THEME_META = {
   campfire: {

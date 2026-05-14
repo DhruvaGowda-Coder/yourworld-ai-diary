@@ -466,6 +466,32 @@ body[data-theme="cherry"] .chat-bubble.bot {
   .theme-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .page-scroll,
+  .public-page {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin;
+    scrollbar-color: var(--theme-accent, rgba(255, 255, 255, 0.4)) rgba(0, 0, 0, 0.05);
+  }
+
+  .page-scroll::-webkit-scrollbar,
+  .public-page::-webkit-scrollbar {
+    display: block !important;
+    height: 6px !important;
+  }
+
+  .page-scroll::-webkit-scrollbar-thumb,
+  .public-page::-webkit-scrollbar-thumb {
+    background: var(--theme-accent, rgba(255, 255, 255, 0.4)) !important;
+    border-radius: 10px !important;
+  }
+
+  .page-scroll::-webkit-scrollbar-track,
+  .public-page::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 10px !important;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -481,8 +507,8 @@ body[data-theme="cherry"] .chat-bubble.bot {
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
+    transform: none;
+    filter: none;
   }
 }
 

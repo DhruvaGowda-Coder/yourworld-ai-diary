@@ -1243,7 +1243,7 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
 /* 5. Snappier existing keyframes over-ride */
 @keyframes page-enter {
   0% { opacity: 0; transform: translateY(15px); }
-  100% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 1; transform: none; }
 }
 
 @keyframes dropdown-enter {
@@ -1345,7 +1345,7 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
     max-height: 80vh !important;
     margin: 12px 0 !important;
     padding: 0 !important;
-    overflow-x: hidden !important;
+    overflow-x: auto !important;
     overflow-y: scroll !important; /* Force scroll for testing and consistency */
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
@@ -1386,6 +1386,7 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
   .book::-webkit-scrollbar,
   .public-story .book::-webkit-scrollbar {
     width: 12px !important; /* Wider for touch */
+    height: 12px !important; /* Required for horizontal scrollbar visibility */
     display: block !important;
   }
   .book::-webkit-scrollbar-track,
@@ -1704,6 +1705,39 @@ textarea:focus, input:focus, .page-title:focus, .page-content:focus {
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
+  -webkit-overflow-scrolling: touch;
+
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-accent) rgba(255, 255, 255, 0.05);
+}
+
+/* Webkit (Chrome, Safari, Edge) scrollbar */
+.comparison-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.comparison-table-wrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 0 0 20px 20px;
+  margin: 0 12px;
+}
+
+.comparison-table-wrapper::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, var(--theme-accent), rgba(var(--theme-accent-rgb), 0.6));
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.comparison-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-accent);
+  background-clip: content-box;
+  border: 2px solid transparent;
+}
+
+.comparison-table-wrapper::-webkit-scrollbar-button {
+  display: none;
 }
 
 .comparison-table {

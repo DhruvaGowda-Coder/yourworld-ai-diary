@@ -1,4 +1,4 @@
-import os
+import os # Server Restart Trigger
 from datetime import timedelta
 import secrets
 from flask import Flask, g, session, request, redirect, jsonify, render_template

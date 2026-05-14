@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="description" content="{% block description %}YourWorld lets you create notes, stories, or any content and share it using a unique private code. No account needed — just share the code and only that person can open it.{% endblock %}">
-  <meta name="keywords" content="private code sharing, share notes without login, anonymous sharing platform, no login sharing platform, secure private sharing, code-based sharing, anonymous note sharing, private online diary, secure story sharing, immersive writing platform">
+  <meta name="keywords" content="private code sharing, share notes without login, anonymous sharing platform, no login sharing platform, secure private sharing, code-based sharing, anonymous note sharing, private online diary, secure story sharing, immersive writing platform, quick share files, ephemeral file sharing, anonymous file upload, temporary file sharing">
   <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
   <link rel="canonical" href="{% block canonical %}{{ site_url }}{{ request.path }}{% endblock %}">
   <title>{% block title %}YourWorld — Share Anything Privately with a Code | No Login Needed{% endblock %}</title>
@@ -37,9 +37,9 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=20260509a" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}?v=20260505k" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}?v=20260505k" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/editor.css') }}?v=20260513a" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/editor.css') }}?v=20260514c" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=20260508b" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}?v=20260511a" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}?v=20260514b" />
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='img/favicon-192x192.png') }}">
@@ -144,6 +144,50 @@
   <main class="page page-enter">
     {% block content %}{% endblock %}
   </main>
+
+  <!-- Global Modals (Moved out of main to avoid stacking context issues) -->
+  <div id="quickShareModal" class="quick-share-modal" style="display: none;">
+    <div class="qs-content">
+      <div class="qs-close" id="qsClose">&times;</div>
+      <div class="qs-drop-zone" id="qsDropZone">
+        <div class="qs-icon">📤</div>
+        <h3>Quick Share File</h3>
+        <p>Drag & drop any file here to get a share link (48h expiry).</p>
+        <button class="btn primary" id="qsBrowseBtn">Choose File</button>
+        <input type="file" id="qsFileInput" style="display: none;" />
+      </div>
+      <div class="qs-progress-area" id="qsProgressArea" style="display: none;">
+        <div class="qs-file-name" id="qsFileName"></div>
+        <div class="qs-progress-bar">
+          <div class="qs-progress-fill" id="qsProgressBar"></div>
+        </div>
+        <div class="qs-status" id="qsStatus">Uploading...</div>
+      </div>
+      <div class="qs-result-area" id="qsResultArea" style="display: none;">
+        <div class="qs-success-icon">✅</div>
+        <h3>File Ready!</h3>
+        <p>The link has been copied and added to your content.</p>
+        <div class="qs-link-box">
+          <input type="text" id="qsShareLink" readonly />
+          <button class="btn btn-primary" id="qsCopyBtn">Copy</button>
+        </div>
+        <button class="btn btn-secondary" id="qsDoneBtn" style="width: 100%; margin-top: 10px;">Finish & Close</button>
+        <div style="margin-top: 12px;">
+          <a href="#" class="qs-delete-link" id="qsDeleteLink">
+            <span>🗑️</span> Oops, delete this file now
+          </a>
+        </div>
+        <p class="qs-hint">This link will expire in 48 hours for all users.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="image-modal" id="imageModal" aria-hidden="true">
+    <div class="image-modal-card">
+      <button class="image-modal-close" id="imageModalClose" type="button">&times;</button>
+      <img id="imageModalImg" alt="" style="display: block; max-width: 100%; max-height: 80vh; border-radius: 12px;" />
+    </div>
+  </div>
 
   <footer class="site-footer">
     <div class="footer-inner">

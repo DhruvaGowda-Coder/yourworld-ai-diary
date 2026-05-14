@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}YourWorld — Share Anything Privately with a Code | No Login Needed{% endblock %}
-{% block description %}YourWorld lets you create notes, stories, or any content and share it using a unique private code. No account needed — just share the code and only that person can open it.{% endblock %}
+{% block description %}YourWorld lets you share notes, stories, and files privately using a unique code. No account needed — use Quick Share for anonymous file sharing or create immersive stories with private code access.{% endblock %}
 {% block canonical %}{{ site_url }}/{% endblock %}
 {% block structured_data %}
 <script type="application/ld+json">
@@ -60,6 +60,7 @@
       },
       "featureList": [
         "Share content via private code without login",
+        "Quick Share: Anonymous file sharing with no account required",
         "No account required to create or view shared content",
         "Content is never publicly listed or indexed",
         "Private notes with code-only access",
@@ -161,8 +162,8 @@
 {% block content %}
 <section class="hero trust-hero">
   <div class="hero-text">
-    <div class="eyebrow">Secure & Anonymous Sharing</div>
-    <h1>Share Anything Privately Using a Unique Code — No Login Needed</h1>
+    <div class="eyebrow">Privacy-First Sharing Platform</div>
+    <h1>Share Anything Privately — Notes, Stories, or Quick Files</h1>
     <p class="subtitle">
       YourWorld is a private code sharing platform. Write notes, stories, or anything — get a unique private code. Anyone with your code can instantly open your content. No account required, ever.
     </p>
@@ -220,6 +221,7 @@
 <section class="use-cases-section" aria-labelledby="usecases-heading">
   <h2 id="usecases-heading">What Can You Share?</h2>
   <ul class="use-cases-list">
+    <li><strong>Quick File Share</strong> — Send any file anonymously with a secure share link.</li>
     <li><strong>Private notes</strong> — Share personal notes without them being indexed or public.</li>
     <li><strong>Stories &amp; writing</strong> — Share drafts or creative writing with specific people.</li>
     <li><strong>Code snippets</strong> — Share code privately without a Pastebin account.</li>
@@ -245,51 +247,125 @@
 <section class="home-section" id="comparison">
   <div class="section-header">
     <h2>YourWorld vs. Traditional Sharing</h2>
-    <p>How we compare to Google Docs, Pastebin, and Notion.</p>
+    <p>See how YourWorld compares to Google Docs, Notion, Pastebin, Dontpad, Telegra.ph, and PrivateBin.</p>
   </div>
-  <div class="comparison-table-wrapper">
-    <table class="comparison-table">
-      <thead>
-        <tr>
-          <th>Feature</th>
-          <th>Google Docs</th>
-          <th>Pastebin</th>
-          <th>YourWorld</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>No-Login Sharing</td>
-          <td>❌ (Required)</td>
-          <td>✅</td>
-          <td>✅ (Best-in-class)</td>
-        </tr>
-        <tr>
-          <td>Private Code Access</td>
-          <td>❌ (Link only)</td>
-          <td>❌</td>
-          <td>✅ (Secure Codes)</td>
-        </tr>
-        <tr>
-          <td>Immersive Themes</td>
-          <td>❌</td>
-          <td>❌</td>
-          <td>✅ (Elemental)</td>
-        </tr>
-        <tr>
-          <td>AI Aura Assistant</td>
-          <td>❌</td>
-          <td>❌</td>
-          <td>✅ (Integrated)</td>
-        </tr>
-        <tr>
-          <td>Anonymity</td>
-          <td>❌</td>
-          <td>⚠️ (Limited)</td>
-          <td>✅ (Total)</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <div class="comparison-table-wrapper">
+      <table class="comparison-table" style="min-width: 1100px;">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Google Docs</th>
+            <th>Notion</th>
+            <th>Pastebin</th>
+            <th>Dontpad</th>
+            <th>Telegra.ph</th>
+            <th>PrivateBin</th>
+            <th>YourWorld</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>No-Login Creation</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>✅</td>
+            <td>✅</td>
+            <td>✅</td>
+            <td>✅</td>
+            <td>✅ (Instant)</td>
+          </tr>
+          <tr>
+            <td>Private Access Codes</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>⚠️ (URL key)</td>
+            <td>✅ (Secure)</td>
+          </tr>
+          <tr>
+            <td>Rich Text Editor</td>
+            <td>✅</td>
+            <td>✅</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>⚠️ (Basic)</td>
+            <td>❌</td>
+            <td>✅ (Premium)</td>
+          </tr>
+          <tr>
+            <td>AI Writing Assistant</td>
+            <td>⚠️ (Paid)</td>
+            <td>⚠️ (Paid)</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>✅ (Free)</td>
+          </tr>
+          <tr>
+            <td>AI Image Generation</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>✅ (Built-in)</td>
+          </tr>
+          <tr>
+            <td>Immersive Themes</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>✅ (9 Elements)</td>
+          </tr>
+          <tr>
+            <td>Ambient Audio</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>✅ (Per Theme)</td>
+          </tr>
+          <tr>
+            <td>Quick File Share</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>⚠️ (Limited)</td>
+            <td>✅ (Any File)</td>
+          </tr>
+          <tr>
+            <td>Collaborative Editing</td>
+            <td>✅</td>
+            <td>✅</td>
+            <td>❌</td>
+            <td>⚠️ (Public)</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>✅ (Code-Gated)</td>
+          </tr>
+          <tr>
+            <td>Total Anonymity</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>⚠️</td>
+            <td>⚠️</td>
+            <td>✅</td>
+            <td>✅</td>
+            <td>✅ (Full)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 </section>
 {% endblock %}

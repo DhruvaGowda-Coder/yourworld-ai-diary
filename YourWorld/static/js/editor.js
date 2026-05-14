@@ -1145,6 +1145,23 @@ if (workspace) {
             const newText = text.slice(0, offset - lineText.length) + text.slice(offset);
             node.textContent = newText;
             
+            if (data.share_url) {
+                const linkHtml = `<p><a href="${data.share_url}" target="_blank" class="shared-file-link" style="color: var(--theme-accent); text-decoration: none; font-weight: 600; border-bottom: 1px dashed var(--theme-accent-soft); padding-bottom: 2px;">📎 Shared File: ${data.share_code}</a></p><p><br></p>`;
+                
+                if (window.diaryContent) {
+                    // Append the link at the end of current content
+                    window.diaryContent.insertAdjacentHTML('beforeend', linkHtml);
+                    
+                    // Smoothly scroll to the new link
+                    const links = window.diaryContent.querySelectorAll('.shared-file-link');
+                    if (links.length > 0) {
+                        links[links.length - 1].scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }
+
+                    if (typeof window.syncToInput === 'function') window.syncToInput();
+                }
+            }
+
             // Create code block
             const pre = document.createElement('pre');
             const code = document.createElement('code');
@@ -1825,4 +1842,248 @@ if (workspace) {
       refreshToolbarState();
     }
   });
+
+  // Handle clicks on Shared File links inside the editor (since it's contenteditable)
+  if (contentInput) {
+    contentInput.addEventListener('click', (e) => {
+      const link = e.target.closest('.shared-file-link');
+      if (link && link.href) {
+        e.preventDefault();
+        window.open(link.href, '_blank');
+      }
+    });
+  }
+
+  /* ─── Quick Share Logic ─── */
+  const initQuickShare = () => {
+    const qsBtn = document.getElementById('quickShareBtn');
+    const modal = document.getElementById('quickShareModal');
+    const closeBtn = document.getElementById('qsClose');
+    const dropZone = document.getElementById('qsDropZone');
+    const fileInput = document.getElementById('qsFileInput');
+    const browseBtn = document.getElementById('qsBrowseBtn');
+    
+    const progressArea = document.getElementById('qsProgressArea');
+    const progressBar = document.getElementById('qsProgressBar');
+    const fileNameDisplay = document.getElementById('qsFileName');
+    const statusDisplay = document.getElementById('qsStatus');
+    
+    const resultArea = document.getElementById('qsResultArea');
+    const shareLinkInput = document.getElementById('qsShareLink');
+    const copyBtn = document.getElementById('qsCopyBtn');
+
+    if (!qsBtn || !modal) return;
+
+    const showModal = () => {
+      modal.style.display = 'flex';
+      resetModal();
+    };
+
+    const hideModal = () => {
+      modal.style.display = 'none';
+    };
+
+    const resetModal = () => {
+      dropZone.style.display = 'block';
+      progressArea.style.display = 'none';
+      resultArea.style.display = 'none';
+      progressBar.style.width = '0%';
+      statusDisplay.textContent = 'Uploading...';
+    };
+
+    qsBtn.addEventListener('click', showModal);
+    closeBtn.addEventListener('click', hideModal);
+    browseBtn.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) handleUpload(e.target.files[0]);
+    });
+
+    // Drag & Drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+      dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+
+    dropZone.addEventListener('dragover', () => dropZone.classList.add('dragover'));
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) handleUpload(e.dataTransfer.files[0]);
+    });
+
+    let currentShareId = null;
+    let currentDeleteToken = null;
+
+    const handleUpload = (file) => {
+      dropZone.style.display = 'none';
+      progressArea.style.display = 'block';
+      fileNameDisplay.textContent = file.name;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/quick-upload', true);
+      xhr.setRequestHeader('X-CSRFToken', window.csrfToken);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          progressBar.style.width = percent + '%';
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const res = JSON.parse(xhr.responseText);
+          currentShareId = res.id;
+          currentDeleteToken = res.delete_token;
+          showResult(res.url, file.name);
+        } else {
+          statusDisplay.textContent = 'Upload failed. Try again.';
+          statusDisplay.style.color = '#ff6b6b';
+          setTimeout(resetModal, 2000);
+        }
+      };
+
+      xhr.onerror = () => {
+        statusDisplay.textContent = 'Network error.';
+        setTimeout(resetModal, 2000);
+      };
+
+      xhr.send(formData);
+    };
+
+    const showResult = (url, fileName) => {
+      progressArea.style.display = 'none';
+      resultArea.style.display = 'block';
+      shareLinkInput.value = url;
+
+      // Copy to clipboard
+      navigator.clipboard.writeText(url).then(() => {
+        const originalText = statusDisplay.textContent;
+        statusDisplay.textContent = 'Link copied to clipboard';
+        setTimeout(() => { statusDisplay.textContent = originalText; }, 2000);
+      });
+
+      // Insert into editor as a styled block
+      if (contentInput) {
+        contentInput.focus();
+        // Move cursor to the end
+        const safeName = fileName ? fileName.replace(/</g, '&lt;').replace(/>/g, '&gt;') : 'View Download';
+        const linkHtml = `<div class="shared-file-wrapper" contenteditable="false"><a href="${url}" target="_blank" class="shared-file-link">📎 ${safeName}</a><span class="remove-file-btn" title="Remove link from page">&times;</span></div>`;
+        
+        let attachmentsArea = contentInput.querySelector('.attachments-area');
+        if (!attachmentsArea) {
+          attachmentsArea = document.createElement('div');
+          attachmentsArea.className = 'attachments-area';
+          attachmentsArea.contentEditable = "false";
+          contentInput.appendChild(document.createElement('br'));
+          contentInput.appendChild(attachmentsArea);
+        }
+        
+        // Append the new file
+        attachmentsArea.insertAdjacentHTML('beforeend', linkHtml);
+        if (typeof scheduleAutosave === 'function') scheduleAutosave();
+      }
+    };
+
+    const doneBtn = document.getElementById('qsDoneBtn');
+    if (doneBtn) {
+      doneBtn.addEventListener('click', hideModal);
+    }
+
+    const deleteLink = document.getElementById('qsDeleteLink');
+    if (deleteLink) {
+      deleteLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!currentShareId || !currentDeleteToken) return;
+        
+        if (confirm('Are you sure you want to delete this file immediately? It will be gone forever.')) {
+          fetch('/api/quick-delete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': window.csrfToken
+            },
+            body: JSON.stringify({
+              id: currentShareId,
+              token: currentDeleteToken
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              alert('File deleted successfully.');
+              hideModal();
+              // Note: We don't automatically remove the link from editor 
+              // because user might have typed more content, but the link will now be dead (404).
+            } else {
+              alert('Deletion failed: ' + (data.error || 'Unknown error'));
+            }
+          });
+        }
+      });
+    }
+  };
+
+  initQuickShare();
 }
+
+// Global handler for removing shared files from the editor
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('remove-file-btn')) {
+    e.preventDefault();
+    e.stopPropagation();
+    const wrapper = e.target.closest('.shared-file-wrapper');
+    if (wrapper) {
+      if (!confirm('Are you sure you want to remove this file link from the page?')) {
+        return;
+      }
+      wrapper.remove();
+      if (typeof scheduleAutosave === 'function') scheduleAutosave();
+      // Trigger input event to mark dirty in view_story.html
+      const contentEl = document.getElementById('publicContent') || document.getElementById('contentInput');
+      if (contentEl) {
+         contentEl.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+  }
+});
+
+// Intercept Ctrl+A to protect the attachments area
+['entryContent', 'contentInput', 'publicContent'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener('keydown', (e) => {
+      // 1. Intercept Ctrl+A
+      if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) {
+        const attachments = el.querySelector('.attachments-area');
+        if (attachments) {
+          e.preventDefault();
+          const range = document.createRange();
+          range.setStart(el, 0);
+          range.setEndBefore(attachments);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }
+      
+      // 2. Intercept Backspace/Delete if the attachments are highlighted
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        const attachments = el.querySelector('.attachments-area');
+        if (attachments) {
+           const sel = window.getSelection();
+           if (!sel.isCollapsed && sel.containsNode(attachments, true)) {
+              e.preventDefault();
+              alert("Attachments are protected. Please delete your text separately, or use the red × button to remove a file.");
+           }
+        }
+      }
+    });
+  }
+});

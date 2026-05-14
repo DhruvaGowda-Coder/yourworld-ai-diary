@@ -122,6 +122,9 @@
         <option value="1.45">Large</option>
         <option value="1.75">XL</option>
       </select>
+      <button class="tool-btn" id="quickShareBtn" type="button" title="Quick Share File (Anonymous)">
+        <span style="font-size: 1.1rem;">📎</span>
+      </button>
     </div>
     <div class="book" id="book">
       <div class="page" id="page">
@@ -139,12 +142,9 @@
       <button class="btn ghost" id="prevEntryBtn" type="button" title="Previous Canvas (Ctrl+Left)">Previous</button>
       <button class="btn ghost" id="nextEntryBtn" type="button" title="Next Canvas (Ctrl+Right)">Next</button>
     </div>
+
   </div>
 </section>
-<div class="image-modal" id="imageModal" aria-hidden="true">
-  <div class="image-modal-card">
-    <button class="image-modal-close" id="imageModalClose" type="button">&times;</button>
-    <img id="imageModalImg" alt="" style="display: block; max-width: 100%; max-height: 80vh; border-radius: 12px;" />
-  </div>
-</div>
+
+
 {% endblock %}

@@ -10,3 +10,4 @@ data/
 .tmp_frames/
 YourWorld/firebase-adminsdk.json
 YourWorld/static/uploads/
+server_log.txt

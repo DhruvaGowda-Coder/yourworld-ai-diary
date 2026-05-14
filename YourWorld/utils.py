@@ -65,8 +65,29 @@ def strip_html(text: str) -> str:
 def normalize_share_code(raw_code: str | None) -> str | None:
     if not raw_code:
         return None
-    # Preserve case but replace multiple spaces with a single dash
-    code = re.sub(r"\s+", "-", raw_code.strip())
+    
+    code = raw_code.strip()
+    
+    # 1. Handle full URLs (e.g., http://.../f/CODE or .../view/CODE)
+    if '://' in code or '/' in code:
+        # Extract the last part after the last slash
+        parts = code.rstrip('/').split('/')
+        if parts:
+            code = parts[-1]
+            # Handle query params if any (e.g., ?code=CODE)
+            if '?' in code:
+                import urllib.parse
+                parsed = urllib.parse.urlparse(raw_code.strip())
+                query = urllib.parse.parse_qs(parsed.query)
+                if 'code' in query:
+                    code = query['code'][0]
+                else:
+                    code = code.split('?')[0]
+
+    # 2. Basic cleanup
+    code = re.sub(r"\s+", "-", code)
+    
+    # 3. Validation against the regex
     if not SHARE_CODE_RE.fullmatch(code):
         return None
     return code

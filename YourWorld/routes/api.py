@@ -313,7 +313,7 @@ def api_entry_share_delete(entry_id):
 
 @api_bp.route("/api/entry/save", methods=["POST"])
 @ensure_session
-@limiter.limit("30 per minute")
+@limiter.limit("60 per minute")
 def api_entry_save():
     try:
         data = request.get_json(force=True)
@@ -354,6 +354,7 @@ def api_entry_save():
             attrs[(None, 'target')] = '_blank'
             return attrs
 
+        css_sanitizer = None
         # STEP 1: Clean HTML first (removes scripts, bad tags)
         try:
             from bleach.css_sanitizer import CSSSanitizer
@@ -375,19 +376,24 @@ def api_entry_save():
                 super().__init__()
                 self.result = []
                 self.in_code = 0  # nesting counter
+                self.in_a = 0
 
             def handle_starttag(self, tag, attrs):
                 self.result.append(self.get_starttag_text())
                 if tag in ('pre', 'code'):
                     self.in_code += 1
+                if tag == 'a':
+                    self.in_a += 1
 
             def handle_endtag(self, tag):
                 self.result.append(f'</{tag}>')
                 if tag in ('pre', 'code'):
                     self.in_code -= 1
+                if tag == 'a':
+                    self.in_a -= 1
 
             def handle_data(self, data):
-                if self.in_code > 0:
+                if self.in_code > 0 or self.in_a > 0:
                     self.result.append(data)
                 else:
                     self.result.append(bleach.linkify(data, callbacks=[set_link_attrs], parse_email=False))
@@ -405,9 +411,7 @@ def api_entry_save():
 
         title = (data.get("title") or "").strip()
         if not title:
-            plain = strip_html(content)
-            first_line = plain.strip().splitlines()[0] if plain.strip() else "Untitled"
-            title = (first_line[:40] + "...") if len(first_line) > 40 else first_line
+            title = "Untitled"
         
         data['title'] = title[:150]
         data['content'] = content
@@ -624,4 +628,130 @@ def api_system_cleanup():
     cron_secret = os.environ.get("CRON_SECRET")
     if not cron_secret or request.headers.get("Authorization") != f"Bearer {cron_secret}":
         return jsonify({"error": "Unauthorized"}), 401
-    return jsonify({"success": True, "deleted": firebase_db.cleanup_guest_data()})
+        
+    deleted_count, quick_urls = firebase_db.cleanup_guest_data()
+    
+    deleted_r2 = 0
+    if quick_urls and all([R2_ACCOUNT_ID, R2_BUCKET_NAME, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY]):
+        try:
+            r2 = get_r2_client()
+            for url in quick_urls:
+                key = url.replace(f"{R2_PUBLIC_DEV_URL}/", "") if R2_PUBLIC_DEV_URL else url.split("r2.cloudflarestorage.com/")[-1]
+                r2.delete_object(Bucket=R2_BUCKET_NAME, Key=key)
+                deleted_r2 += 1
+        except Exception as e:
+            current_app.logger.error("Failed to cleanup R2 objects: %s", e)
+            
+    return jsonify({"success": True, "deleted_entries": deleted_count, "deleted_r2_files": deleted_r2})
+
+# ── Quick Share (Anonymous File Sharing) API ──
+
+def generate_quick_id():
+    """Generate a unique, human-readable share code."""
+    prefixes = ["SKY", "FIRE", "WIND", "GOLD", "BLUE", "SILK", "MIST", "WAVE"]
+    prefix = secrets.choice(prefixes)
+    suffix = secrets.token_hex(3).upper() # 6 characters
+    return f"{prefix}-{suffix}"
+
+@api_bp.route("/api/quick-upload", methods=["POST"])
+@limiter.limit("10 per minute")
+def api_quick_upload():
+    """Handle anonymous file uploads for quick sharing."""
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+        
+    filename = secure_filename(file.filename)
+    # Get mime type and size
+    content_type = file.content_type or "application/octet-stream"
+    size = _stream_size(file)
+    
+    if size > MAX_UPLOAD_BYTES["file"]:
+        return jsonify({"error": f"File too large (Max {MAX_UPLOAD_BYTES['file'] // 1024 // 1024}MB)"}), 413
+        
+    try:
+        # Upload to R2 under 'quick/' prefix
+        r2 = get_r2_client()
+        quick_id = generate_quick_id()
+        # Verify uniqueness (simple loop)
+        for _ in range(5):
+            if not firebase_db.get_quick_share(quick_id):
+                break
+            quick_id = generate_quick_id()
+            
+        destination_path = f"quick/{quick_id}/{filename}"
+        
+        # Security: Force download for potentially dangerous files (XSS mitigation)
+        extra_args = {'ContentType': content_type}
+        # Allow images, audio, video, and PDF to render in-browser; force others to download
+        safe_prefixes = ('image/', 'audio/', 'video/', 'application/pdf')
+        if not content_type.startswith(safe_prefixes):
+            extra_args['ContentDisposition'] = f'attachment; filename="{filename}"'
+
+        # Reset stream and upload
+        file.seek(0)
+        r2.upload_fileobj(
+            file,
+            R2_BUCKET_NAME,
+            destination_path,
+            ExtraArgs=extra_args
+        )
+        
+        file_url = f"{R2_PUBLIC_DEV_URL}/{destination_path}"
+        
+        # Save to Firebase with a secure delete token
+        delete_token = secrets.token_urlsafe(16)
+        share_data = {
+            'id': quick_id,
+            'filename': filename,
+            'file_url': file_url,
+            'content_type': content_type,
+            'size': size,
+            'delete_token': delete_token
+        }
+        firebase_db.save_quick_share(share_data)
+        
+        return jsonify({
+            "success": True,
+            "id": quick_id,
+            "url": f"{SITE_URL}/f/{quick_id}",
+            "delete_token": delete_token
+        })
+    except Exception as e:
+        current_app.logger.exception("Quick upload failed: %s", e)
+        return jsonify({"error": "Upload failed"}), 500
+
+@api_bp.route("/api/quick-delete", methods=["POST"])
+def api_quick_delete():
+    """Manually delete an anonymous share using its ID and delete token."""
+    data = request.json
+    share_id = data.get("id")
+    token = data.get("token")
+    
+    if not share_id or not token:
+        return jsonify({"error": "Missing ID or token"}), 400
+        
+    share = firebase_db.get_quick_share(share_id, skip_expiry_check=True)
+    if not share:
+        return jsonify({"error": "File not found"}), 404
+        
+    if share.get("delete_token") != token:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    try:
+        # Delete from R2
+        r2 = get_r2_client()
+        # Extract key from URL
+        key = share['file_url'].replace(f"{R2_PUBLIC_DEV_URL}/", "")
+        r2.delete_object(Bucket=R2_BUCKET_NAME, Key=key)
+        
+        # Delete from Firebase
+        firebase_db.delete_quick_share(share_id)
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        current_app.logger.exception("Manual delete failed: %s", e)
+        return jsonify({"error": "Deletion failed"}), 500

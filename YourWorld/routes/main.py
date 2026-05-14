@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, sessio
 import os
 from html import unescape
 from config import THEME_ORDER, THEME_DETAILS, SITE_URL, CONTACT_EMAIL, SITEMAP_LASTMOD, APP_DIR
-from utils import ensure_session, get_user_theme, normalize_theme
+from utils import ensure_session, get_user_theme, normalize_theme, normalize_share_code
 import firebase_db
 
 main_bp = Blueprint('main', __name__)
@@ -84,21 +84,29 @@ def profile():
 
 @main_bp.route("/view")
 def view_by_code():
-    from utils import normalize_share_code
     code = normalize_share_code(request.args.get("code"))
     if not code:
         return redirect(url_for("main.index"))
+    
+    # Check if it's a file share first
+    quick_share = firebase_db.get_quick_share(code)
+    if quick_share:
+        return redirect(url_for("main.view_file", code=code))
+        
     return redirect(url_for("main.view_story", code=code))
 
 @main_bp.route("/view/<code>")
 def view_story(code):
-    from utils import normalize_share_code
     safe_code = normalize_share_code(code)
     if not safe_code:
         return redirect(url_for("main.index"))
         
     owner_row = firebase_db.get_entry_by_share_code(safe_code)
     if not owner_row:
+        # Check if it's a file share
+        quick_share = firebase_db.get_quick_share(safe_code)
+        if quick_share:
+            return redirect(url_for("main.view_file", code=safe_code))
         return render_template("view_story.html", not_found=True, code=safe_code)
 
     share_type = owner_row.get("share_type", "story")
@@ -135,6 +143,41 @@ def view_story(code):
         not_found=False,
         can_edit=owner_row.get("can_edit", False)
     )
+
+@main_bp.route("/f/<code>")
+def view_file(code):
+    safe_code = normalize_share_code(code)
+    if not safe_code:
+        return redirect(url_for("main.index"))
+        
+    file_data = firebase_db.get_quick_share(safe_code)
+    if not file_data:
+        # Fallback to check if it's actually a story (in case user used /f/ for a story)
+        if firebase_db.get_entry_by_share_code(safe_code):
+            return redirect(url_for("main.view_story", code=safe_code))
+        return render_template("view_file.html", not_found=True, code=safe_code)
+    
+    # Calculate remaining seconds for the timer
+    from datetime import datetime, timezone
+    try:
+        expires_at = datetime.fromisoformat(file_data['expires_at'].replace('Z', '+00:00'))
+        remaining = int((expires_at - datetime.now(timezone.utc)).total_seconds())
+    except:
+        remaining = 172800 # Fallback to 48h
+        
+    return render_template("view_file.html", file=file_data, remaining_seconds=max(0, remaining))
+
+@main_bp.route("/download/<code>")
+def download_file(code):
+    """Proxy route to trigger a file download."""
+    from flask import abort
+    safe_code = normalize_share_code(code)
+    file_data = firebase_db.get_quick_share(safe_code)
+    
+    if not file_data:
+        return abort(404)
+        
+    return redirect(file_data['file_url'])
 
 @main_bp.route("/<page_slug>")
 def landing_page(page_slug):
@@ -270,9 +313,12 @@ Allow: /no-login-sharing-platform
 Allow: /immersive-writing-platform
 Allow: /ai-story-writing-platform
 Allow: /private-collaborative-writing
+Allow: /ephemeral-file-sharing
 Allow: /compare/google-docs
 Allow: /compare/pastebin
 Allow: /compare/notion
+Allow: /compare/dontpad
+Allow: /compare/nologin-in
 Disallow: /view/
 Disallow: /api/
 
@@ -300,9 +346,12 @@ def sitemap_xml():
         ("/immersive-writing-platform", "weekly", "0.9"),
         ("/ai-story-writing-platform", "weekly", "0.9"),
         ("/private-collaborative-writing", "weekly", "0.9"),
+        ("/ephemeral-file-sharing", "weekly", "0.95"),
         ("/compare/google-docs", "monthly", "0.8"),
         ("/compare/pastebin", "monthly", "0.8"),
         ("/compare/notion", "monthly", "0.8"),
+        ("/compare/dontpad", "monthly", "0.8"),
+        ("/compare/nologin-in", "monthly", "0.8"),
     ]
     urls = "\n".join(
         f"""  <url>
