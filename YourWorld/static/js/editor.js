@@ -63,8 +63,8 @@ if (workspace) {
           dist = Math.sqrt((endX - startX)**2 + (endY - startY)**2);
         }
         
-        // If movement is less than 15px, it's a tap, not a scroll
-        if (dist < 15) {
+        // Increased threshold to 30px for better mobile reliability
+        if (dist < 30) {
           if (e.cancelable) { e.preventDefault(); }
           handler(e);
         }
@@ -1874,7 +1874,11 @@ if (workspace) {
 
     if (!qsBtn || !modal) return;
 
-    const showModal = () => {
+    const showModal = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       modal.style.display = 'flex';
       resetModal();
     };

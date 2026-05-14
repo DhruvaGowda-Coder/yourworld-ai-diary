@@ -905,6 +905,9 @@
             <option value="1.45">Large</option>
             <option value="1.75">XL</option>
           </select>
+          <button class="tool-btn" id="quickShareBtn" type="button" title="Quick Share File">
+            <span>📎</span>
+          </button>
         </div>
       {% endif %}
       <div class="book" id="publicBook">
@@ -1737,6 +1740,141 @@
             else if (key === 'u') { e.preventDefault(); exec('underline'); }
             else if (key === 's') { e.preventDefault(); saveChanges(); }
           });
+
+          // --- Quick Share Integration ---
+          const bindTap = (btn, handler) => {
+            if (!btn) return;
+            let startX = 0, startY = 0, isTouching = false;
+            btn.addEventListener('touchstart', (e) => {
+              isTouching = true;
+              if (e.touches && e.touches[0]) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+              }
+            }, { passive: true });
+            btn.addEventListener('touchcancel', () => isTouching = false, { passive: true });
+            btn.addEventListener('touchend', (e) => {
+              if (isTouching) {
+                let dist = 0;
+                if (e.changedTouches && e.changedTouches[0]) {
+                  const endX = e.changedTouches[0].clientX;
+                  const endY = e.changedTouches[0].clientY;
+                  dist = Math.sqrt((endX - startX)**2 + (endY - startY)**2);
+                }
+                if (dist < 30) {
+                  if (e.cancelable) e.preventDefault();
+                  handler(e);
+                }
+                setTimeout(() => { isTouching = false; }, 300);
+              }
+            });
+            btn.addEventListener('click', (e) => { if (!isTouching) handler(e); });
+          };
+
+          const initQuickShare = () => {
+            const qsBtn = document.getElementById('quickShareBtn');
+            const modal = document.getElementById('quickShareModal');
+            const closeBtn = document.getElementById('qsClose');
+            const browseBtn = document.getElementById('qsBrowseBtn');
+            const fileInput = document.getElementById('qsFileInput');
+            const progressArea = document.getElementById('qsProgressArea');
+            const progressBar = document.getElementById('qsProgressBar');
+            const statusDisplay = document.getElementById('qsStatus');
+            const resultArea = document.getElementById('qsResultArea');
+            const shareLinkInput = document.getElementById('qsShareLink');
+            const copyBtn = document.getElementById('qsCopyBtn');
+
+            if (!qsBtn || !modal) return;
+
+            const showModal = (e) => {
+              if (e) { e.preventDefault(); e.stopPropagation(); }
+              modal.style.display = 'flex';
+              resetModal();
+            };
+            const hideModal = () => { modal.style.display = 'none'; };
+            const resetModal = () => {
+              const dropZone = document.getElementById('qsDropZone');
+              if (dropZone) dropZone.style.display = 'block';
+              if (progressArea) progressArea.style.display = 'none';
+              if (resultArea) resultArea.style.display = 'none';
+              if (progressBar) progressBar.style.width = '0%';
+              if (statusDisplay) {
+                statusDisplay.textContent = 'Uploading...';
+                statusDisplay.style.color = '';
+              }
+            };
+
+            bindTap(qsBtn, showModal);
+            bindTap(closeBtn, hideModal);
+            bindTap(browseBtn, () => fileInput.click());
+            if (copyBtn) {
+              bindTap(copyBtn, () => {
+                navigator.clipboard.writeText(shareLinkInput.value).then(() => {
+                  const originalText = copyBtn.textContent;
+                  copyBtn.textContent = 'Copied!';
+                  setTimeout(() => { copyBtn.textContent = originalText; }, 2000);
+                });
+              });
+            }
+            const doneBtn = document.getElementById('qsDoneBtn');
+            if (doneBtn) bindTap(doneBtn, hideModal);
+
+            fileInput.onchange = (e) => {
+              if (e.target.files.length > 0) handleUpload(e.target.files[0]);
+            };
+
+            const handleUpload = (file) => {
+              const dropZone = document.getElementById('qsDropZone');
+              if (dropZone) dropZone.style.display = 'none';
+              if (progressArea) progressArea.style.display = 'block';
+              
+              const formData = new FormData();
+              formData.append('file', file);
+              const xhr = new XMLHttpRequest();
+              xhr.open('POST', '/api/quick-upload', true);
+              xhr.setRequestHeader('X-CSRFToken', window.csrfToken || '');
+              xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                  progressBar.style.width = Math.round((e.loaded / e.total) * 100) + '%';
+                }
+              };
+              xhr.onload = () => {
+                if (xhr.status === 200) {
+                  const res = JSON.parse(xhr.responseText);
+                  showResult(res.url, file.name);
+                } else {
+                  statusDisplay.textContent = 'Upload failed.';
+                  statusDisplay.style.color = '#ff6b6b';
+                  setTimeout(resetModal, 2000);
+                }
+              };
+              xhr.send(formData);
+            };
+
+            const showResult = (url, fileName) => {
+              progressArea.style.display = 'none';
+              resultArea.style.display = 'block';
+              shareLinkInput.value = url;
+              navigator.clipboard.writeText(url);
+
+              if (contentEl) {
+                contentEl.focus();
+                const safeName = fileName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const linkHtml = `<div class="shared-file-wrapper" contenteditable="false"><a href="${url}" target="_blank" class="shared-file-link">📎 ${safeName}</a><span class="remove-file-btn" title="Remove link from page">&times;</span></div>`;
+                let attachmentsArea = contentEl.querySelector('.attachments-area');
+                if (!attachmentsArea) {
+                  attachmentsArea = document.createElement('div');
+                  attachmentsArea.className = 'attachments-area';
+                  attachmentsArea.contentEditable = "false";
+                  contentEl.appendChild(document.createElement('br'));
+                  contentEl.appendChild(attachmentsArea);
+                }
+                attachmentsArea.insertAdjacentHTML('beforeend', linkHtml);
+                markDirty();
+              }
+            };
+          };
+          initQuickShare();
         }
 
       })();
