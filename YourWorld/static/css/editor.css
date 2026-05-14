@@ -2757,12 +2757,15 @@ blockquote {
 
 /* View mode: ensure wrappers and links remain clickable inside non-editable content */
 [contenteditable="false"] .shared-file-wrapper,
-.public-story[data-can-edit="false"] .shared-file-wrapper {
+.public-story[data-can-edit="false"] .shared-file-wrapper,
+.shared-file-wrapper {
   cursor: pointer !important;
   pointer-events: auto !important;
 }
 [contenteditable="false"] .shared-file-link,
-.public-story[data-can-edit="false"] .shared-file-link {
+.public-story[data-can-edit="false"] .shared-file-link,
+.shared-file-link,
+.shared-file-link * {
   cursor: pointer !important;
   pointer-events: auto !important;
 }

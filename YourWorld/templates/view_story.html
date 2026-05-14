@@ -788,12 +788,15 @@
   }
   /* In view mode (non-editable), ensure the wrapper doesn't block clicks */
   [contenteditable="false"] .shared-file-wrapper,
-  .public-story[data-can-edit="false"] .shared-file-wrapper {
+  .public-story[data-can-edit="false"] .shared-file-wrapper,
+  .shared-file-wrapper {
     cursor: pointer !important;
     pointer-events: auto !important;
   }
   [contenteditable="false"] .shared-file-link,
-  .public-story[data-can-edit="false"] .shared-file-link {
+  .public-story[data-can-edit="false"] .shared-file-link,
+  .shared-file-link,
+  .shared-file-link * {
     cursor: pointer !important;
     pointer-events: auto !important;
   }
@@ -1088,6 +1091,16 @@
                 if (typeof Prism !== 'undefined') {
                   Prism.highlightAllUnder(contentEl);
                 }
+              }
+            });
+
+            // Handle clicks on Shared File links inside the editable canvas
+            contentEl.addEventListener('click', (e) => {
+              const link = e.target.closest('.shared-file-link');
+              if (link && link.href) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(link.href, '_blank', 'noopener,noreferrer');
               }
             });
           }

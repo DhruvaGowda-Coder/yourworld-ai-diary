@@ -8,7 +8,7 @@ const PURIFY_CONFIG = {
     'ul', 'ol', 'li', 'img', 'pre', 'code', 'blockquote',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'font'
   ],
-  ALLOWED_ATTR: ['class', 'style', 'src', 'alt', 'width', 'height', 'href', 'title', 'target', 'rel', 'id', 'size', 'color'],
+  ALLOWED_ATTR: ['class', 'style', 'src', 'alt', 'width', 'height', 'href', 'title', 'target', 'rel', 'id', 'size', 'color', 'contenteditable'],
   ADD_ATTR: ['target', 'rel'],
   FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'svg', 'form', 'button'],
   FORBID_ATTR: ['onload', 'onclick', 'onerror', 'onmouseover', 'javascript:'],
