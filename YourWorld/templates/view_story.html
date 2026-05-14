@@ -1829,6 +1829,14 @@
               if (progressArea) progressArea.style.display = 'block';
               
               for (const file of files) {
+                if (file.size > 100 * 1024 * 1024) {
+                  if (statusDisplay) {
+                    statusDisplay.textContent = `Skipped: ${file.name} (Exceeds 100MB)`;
+                    statusDisplay.style.color = '#ff6b6b';
+                  }
+                  await new Promise(r => setTimeout(r, 2500));
+                  continue;
+                }
                 await new Promise((resolve) => {
                   if (statusDisplay) {
                     statusDisplay.textContent = `Uploading: ${file.name} (${files.indexOf(file) + 1}/${files.length})`;

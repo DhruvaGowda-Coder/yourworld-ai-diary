@@ -1927,6 +1927,13 @@ if (workspace) {
       progressArea.style.display = 'block';
       
       for (const file of files) {
+        if (file.size > 100 * 1024 * 1024) {
+          fileNameDisplay.textContent = `Skipped: ${file.name}`;
+          statusDisplay.textContent = 'File exceeds 100MB limit.';
+          statusDisplay.style.color = '#ff6b6b';
+          await new Promise(r => setTimeout(r, 2500));
+          continue;
+        }
         await new Promise((resolve) => {
           fileNameDisplay.textContent = `Uploading: ${file.name} (${files.indexOf(file) + 1}/${files.length})`;
           progressBar.style.width = '0%';
