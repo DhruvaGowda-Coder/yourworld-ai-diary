@@ -2742,10 +2742,29 @@ blockquote {
   transition: all 0.2s ease;
   font-family: var(--ui-font);
   cursor: pointer !important; /* Force the hand cursor */
+  pointer-events: auto !important; /* Ensure clicks reach the link even in contenteditable=false */
   user-select: none;
   -webkit-user-select: none;
   white-space: nowrap;
   max-width: none;
+}
+
+.shared-file-link:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* View mode: ensure wrappers and links remain clickable inside non-editable content */
+[contenteditable="false"] .shared-file-wrapper,
+.public-story[data-can-edit="false"] .shared-file-wrapper {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+[contenteditable="false"] .shared-file-link,
+.public-story[data-can-edit="false"] .shared-file-link {
+  cursor: pointer !important;
+  pointer-events: auto !important;
 }
 
 .qs-delete-link {
