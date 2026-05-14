@@ -1889,11 +1889,12 @@ if (workspace) {
       resultArea.style.display = 'none';
       progressBar.style.width = '0%';
       statusDisplay.textContent = 'Uploading...';
+      statusDisplay.style.color = '';
     };
 
-    qsBtn.addEventListener('click', showModal);
-    closeBtn.addEventListener('click', hideModal);
-    browseBtn.addEventListener('click', () => fileInput.click());
+    bindTap(qsBtn, showModal);
+    bindTap(closeBtn, hideModal);
+    bindTap(browseBtn, () => fileInput.click());
 
     fileInput.addEventListener('change', (e) => {
       if (e.target.files.length > 0) handleUpload(e.target.files[0]);
@@ -1951,6 +1952,7 @@ if (workspace) {
 
       xhr.onerror = () => {
         statusDisplay.textContent = 'Network error.';
+        statusDisplay.style.color = '#ff6b6b';
         setTimeout(resetModal, 2000);
       };
 
@@ -1991,14 +1993,26 @@ if (workspace) {
       }
     };
 
+    if (copyBtn) {
+      bindTap(copyBtn, () => {
+        const url = shareLinkInput.value;
+        if (!url) return;
+        navigator.clipboard.writeText(url).then(() => {
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => { copyBtn.textContent = originalText; }, 2000);
+        });
+      });
+    }
+
     const doneBtn = document.getElementById('qsDoneBtn');
     if (doneBtn) {
-      doneBtn.addEventListener('click', hideModal);
+      bindTap(doneBtn, hideModal);
     }
 
     const deleteLink = document.getElementById('qsDeleteLink');
     if (deleteLink) {
-      deleteLink.addEventListener('click', (e) => {
+      bindTap(deleteLink, (e) => {
         e.preventDefault();
         if (!currentShareId || !currentDeleteToken) return;
         
@@ -2019,8 +2033,6 @@ if (workspace) {
             if (data.success) {
               alert('File deleted successfully.');
               hideModal();
-              // Note: We don't automatically remove the link from editor 
-              // because user might have typed more content, but the link will now be dead (404).
             } else {
               alert('Deletion failed: ' + (data.error || 'Unknown error'));
             }

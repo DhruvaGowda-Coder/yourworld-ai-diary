@@ -623,6 +623,14 @@ button:active:not(:disabled) {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 0;
   outline: none;
+  touch-action: manipulation;
+}
+
+@media (max-width: 600px) {
+  .tool-btn {
+    width: 42px;
+    height: 42px;
+  }
 }
 
 .tool-btn:hover {
@@ -2532,9 +2540,11 @@ blockquote {
   backdrop-filter: blur(12px);
   z-index: 10000;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .qs-content {
@@ -2548,7 +2558,13 @@ blockquote {
   text-align: center;
   box-shadow: 0 32px 100px rgba(0, 0, 0, 0.5);
   animation: modalScaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  margin: auto; /* Ensure it stays perfectly centered */
+  margin: auto;
+}
+
+@media (max-width: 480px) {
+  .qs-content {
+    padding: 32px 20px;
+  }
 }
 
 @keyframes modalScaleIn {
@@ -2571,6 +2587,16 @@ blockquote {
   color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   transition: all 0.2s;
+}
+
+@media (max-width: 480px) {
+  .qs-close {
+    top: 10px;
+    right: 10px;
+    width: 44px;
+    height: 44px;
+    font-size: 28px;
+  }
 }
 
 .qs-close:hover {
