@@ -26,7 +26,7 @@ api_bp = Blueprint('api', __name__)
 MAX_UPLOAD_BYTES = {
     "image": 5 * 1024 * 1024,
     "audio": 20 * 1024 * 1024,
-    "file": 10 * 1024 * 1024,
+    "file": 100 * 1024 * 1024,
 }
 ALLOWED_MIME_TYPES = {
     "image": {"image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml"},

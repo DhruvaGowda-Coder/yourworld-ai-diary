@@ -1901,7 +1901,7 @@ if (workspace) {
     bindTap(browseBtn, () => fileInput.click());
 
     fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) handleUpload(e.target.files[0]);
+      if (e.target.files.length > 0) handleUploads(Array.from(e.target.files));
     });
 
     // Drag & Drop
@@ -1916,69 +1916,80 @@ if (workspace) {
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
     dropZone.addEventListener('drop', (e) => {
       dropZone.classList.remove('dragover');
-      if (e.dataTransfer.files.length > 0) handleUpload(e.dataTransfer.files[0]);
+      if (e.dataTransfer.files.length > 0) handleUploads(Array.from(e.dataTransfer.files));
     });
 
     let currentShareId = null;
     let currentDeleteToken = null;
 
-    const handleUpload = (file) => {
+    const handleUploads = async (files) => {
       dropZone.style.display = 'none';
       progressArea.style.display = 'block';
-      fileNameDisplay.textContent = file.name;
+      
+      for (const file of files) {
+        await new Promise((resolve) => {
+          fileNameDisplay.textContent = `Uploading: ${file.name} (${files.indexOf(file) + 1}/${files.length})`;
+          progressBar.style.width = '0%';
 
-      const formData = new FormData();
-      formData.append('file', file);
+          const formData = new FormData();
+          formData.append('file', file);
 
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/api/quick-upload', true);
-      xhr.setRequestHeader('X-CSRFToken', window.csrfToken);
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/api/quick-upload', true);
+          xhr.setRequestHeader('X-CSRFToken', window.csrfToken);
 
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          const percent = Math.round((e.loaded / e.total) * 100);
-          progressBar.style.width = percent + '%';
-        }
-      };
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const percent = Math.round((e.loaded / e.total) * 100);
+              progressBar.style.width = percent + '%';
+            }
+          };
 
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          const res = JSON.parse(xhr.responseText);
-          currentShareId = res.id;
-          currentDeleteToken = res.delete_token;
-          showResult(res.url, file.name);
-        } else {
-          statusDisplay.textContent = 'Upload failed. Try again.';
-          statusDisplay.style.color = '#ff6b6b';
-          setTimeout(resetModal, 2000);
-        }
-      };
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              const res = JSON.parse(xhr.responseText);
+              currentShareId = res.id;
+              currentDeleteToken = res.delete_token;
+              showResult(res.url, file.name);
+              resolve();
+            } else {
+              statusDisplay.textContent = 'Upload failed: ' + file.name;
+              statusDisplay.style.color = '#ff6b6b';
+              setTimeout(resolve, 2000);
+            }
+          };
 
-      xhr.onerror = () => {
-        statusDisplay.textContent = 'Network error.';
-        statusDisplay.style.color = '#ff6b6b';
-        setTimeout(resetModal, 2000);
-      };
+          xhr.onerror = () => {
+            statusDisplay.textContent = 'Network error.';
+            statusDisplay.style.color = '#ff6b6b';
+            setTimeout(resolve, 2000);
+          };
 
-      xhr.send(formData);
+          xhr.send(formData);
+        });
+      }
+      
+      // After all uploads, keep the last result area visible or show a finished state
+      statusDisplay.textContent = 'All uploads complete!';
+      statusDisplay.style.color = 'var(--theme-accent)';
     };
 
     const showResult = (url, fileName) => {
-      progressArea.style.display = 'none';
+      // Don't hide progressArea immediately if there are more files
+      // but show the resultArea
       resultArea.style.display = 'block';
       shareLinkInput.value = url;
 
-      // Copy to clipboard
+      // Copy to clipboard (last one)
       navigator.clipboard.writeText(url).then(() => {
         const originalText = statusDisplay.textContent;
         statusDisplay.textContent = 'Link copied to clipboard';
-        setTimeout(() => { statusDisplay.textContent = originalText; }, 2000);
+        setTimeout(() => { if (statusDisplay.textContent === 'Link copied to clipboard') statusDisplay.textContent = originalText; }, 2000);
       });
 
       // Insert into editor as a styled block
       if (contentInput) {
         contentInput.focus();
-        // Move cursor to the end
         const safeName = fileName ? fileName.replace(/</g, '&lt;').replace(/>/g, '&gt;') : 'View Download';
         const linkHtml = `<div class="shared-file-wrapper" contenteditable="false"><a href="${url}" target="_blank" class="shared-file-link">📎 ${safeName}</a><span class="remove-file-btn" title="Remove link from page">&times;</span></div>`;
         
@@ -1991,7 +2002,6 @@ if (workspace) {
           contentInput.appendChild(attachmentsArea);
         }
         
-        // Append the new file
         attachmentsArea.insertAdjacentHTML('beforeend', linkHtml);
         if (typeof scheduleAutosave === 'function') scheduleAutosave();
       }

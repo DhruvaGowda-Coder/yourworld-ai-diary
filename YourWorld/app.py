@@ -27,7 +27,7 @@ if not secret_key:
         print("WARNING: DIARY_SECRET_KEY not set. Using random key — sessions will not persist across restarts.")
         secret_key = secrets.token_hex(32)
 app.secret_key = secret_key
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 105 * 1024 * 1024
 app.config['SESSION_COOKIE_SECURE'] = is_production
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
